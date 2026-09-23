@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Room — Doodle Desk</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✏️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/site.css">
+<script>
+  document.documentElement.classList.add("js");
+  try {
+    var t = localStorage.getItem("doodle-theme") ||
+      (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", t);
+  } catch (e) {}
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav class="nav">
+  <div class="wrap nav__inner">
+    <a class="logo" href="dashboard.html"><span class="logo__mark">✏️</span> Doodle Desk</a>
+    <div class="nav__links" id="nav-links" data-open="false">
+      <a href="dashboard.html">My rooms</a>
+      <a href="demo.html">Practice board</a>
+      <a href="index.html">Website</a>
+    </div>
+    <div class="nav__actions">
+      <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch colour mode">🌙</button>
+      <a class="btn" href="dashboard.html">← All rooms</a>
+      <button class="icon-btn nav__burger" data-burger type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<section class="section" style="padding:2rem 0 4rem">
+  <div class="wrap">
+
+    <!-- Shown when the code in the URL doesn't match a room -->
+    <div class="empty" data-no-room hidden>
+      <span>🤔</span>
+      <p><strong>That room isn't open.</strong><br>It may have been closed, or the code has a typo in it.</p>
+      <a class="btn btn--primary" href="dashboard.html">Back to my rooms</a>
+    </div>
+
+    <div data-room-view hidden>
+
+      <!-- ---------------------------- HEADER ---------------------------- -->
+      <div class="card" style="margin-bottom:1.6rem">
+        <div class="code-display">
+          <div>
+            <h1 style="margin-bottom:.2rem;font-size:clamp(1.8rem,4vw,2.6rem)" data-room-name>Room</h1>
+            <p class="code-hint" data-room-meta></p>
+          </div>
+          <div style="margin-left:auto;text-align:center">
+            <span class="code-big" data-room-code>—</span>
+            <p class="code-hint" style="margin-top:.7rem">Students go to the join page and type this</p>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.5rem">
+            <button class="btn btn--sun" type="button" data-copy-link>📋 Copy join link</button>
+            <a class="btn" href="login.html" target="_blank" rel="noopener">Open join page ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------------------------- CONTROLS ---------------------------- -->
+      <div class="bar">
+        <div class="grow">
+          <label class="visually-hidden" for="prompt-input">Task for the class</label>
+          <input id="prompt-input" type="text" placeholder="Set today's task — students see it above their board" maxlength="160">
+        </div>
+        <button class="btn btn--primary" type="button" data-send-prompt>Send to class</button>
+        <button class="btn" type="button" data-freeze aria-pressed="false">❄️ Freeze</button>
+        <button class="btn" type="button" data-clear-all>🧹 Clear all boards</button>
+      </div>
+
+      <div class="bar">
+        <div class="chips" role="group" aria-label="Filter students">
+          <button class="chip" type="button" data-filter="all" aria-pressed="true">Everyone <b data-count-all>0</b></button>
+          <button class="chip" type="button" data-filter="working" aria-pressed="false">✏️ Working <b data-count-working>0</b></button>
+          <button class="chip" type="button" data-filter="stuck" aria-pressed="false">🤔 Stuck <b data-count-stuck>0</b></button>
+          <button class="chip" type="button" data-filter="done" aria-pressed="false">✅ Done <b data-count-done>0</b></button>
+          <button class="chip" type="button" data-filter="blank" aria-pressed="false">⬜ Not started <b data-count-blank>0</b></button>
+        </div>
+        <span class="small muted" style="margin-left:auto" data-online-count></span>
+      </div>
+
+      <!-- ---------------------------- GRID ---------------------------- -->
+      <div class="class-grid" data-class-grid></div>
+
+      <div class="empty" data-waiting hidden>
+        <span>🪑</span>
+        <p><strong>Nobody has joined yet.</strong><br>
+        Put the code on the big screen — students join from the join page in about five seconds.</p>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ============================ FOCUS VIEW ============================ -->
+<div class="focus" data-focus role="dialog" aria-modal="true" aria-labelledby="focus-title">
+  <div class="focus__panel">
+    <div class="focus__head">
+      <span class="dot" data-focus-dot></span>
+      <h3 id="focus-title" data-focus-name>Student</h3>
+      <span class="badge badge--sky" data-focus-status>working</span>
+      <button class="btn" type="button" data-focus-clear style="margin-left:auto">🧹 Clear their board</button>
+      <button class="btn btn--pink" type="button" data-focus-close>Close ✕</button>
+    </div>
+
+    <p class="small muted" data-focus-note style="margin-top:-.4rem"></p>
+
+    <div class="wb__canvas-wrap">
+      <canvas id="focus-board" width="1200" height="740" aria-label="This student's board — draw here to leave them a hint"></canvas>
+    </div>
+
+    <div class="focus__tools">
+      <span class="small muted" style="margin-right:.3rem">Mark up:</span>
+      <button class="swatch" type="button" data-colour="#ff4d9d" aria-pressed="true" aria-label="Pink" style="background:#ff4d9d;width:34px;height:34px"></button>
+      <button class="swatch" type="button" data-colour="#16c79a" aria-pressed="false" aria-label="Green" style="background:#16c79a;width:34px;height:34px"></button>
+      <button class="swatch" type="button" data-colour="#38bdf8" aria-pressed="false" aria-label="Blue" style="background:#38bdf8;width:34px;height:34px"></button>
+      <button class="size-btn" type="button" data-size="6" aria-pressed="true" aria-label="Thin" style="width:38px;height:38px"><i style="width:10px;height:10px"></i></button>
+      <button class="size-btn" type="button" data-size="14" aria-pressed="false" aria-label="Thick" style="width:38px;height:38px"><i style="width:20px;height:20px"></i></button>
+      <button class="stamp" type="button" data-stamp="⭐" aria-pressed="false" aria-label="Star stamp" style="width:38px;height:38px;font-size:1.1rem">⭐</button>
+      <button class="stamp" type="button" data-stamp="✅" aria-pressed="false" aria-label="Tick stamp" style="width:38px;height:38px;font-size:1.1rem">✅</button>
+      <button class="stamp" type="button" data-stamp="💡" aria-pressed="false" aria-label="Idea stamp" style="width:38px;height:38px;font-size:1.1rem">💡</button>
+      <button class="btn btn--sun" type="button" data-undo>↩️ Undo my mark</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" data-toast role="status" aria-live="polite"></div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/site.js"></script>
+<script src="assets/js/board-engine.js"></script>
+<script src="assets/js/board-ui.js"></script>
+<script src="assets/js/realtime.js"></script>
+<script src="assets/js/room.js"></script>
+</body>
+</html>

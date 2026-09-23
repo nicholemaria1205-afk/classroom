@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My board — Doodle Desk</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✏️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/site.css">
+<script>
+  document.documentElement.classList.add("js");
+  try {
+    var t = localStorage.getItem("doodle-theme") ||
+      (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", t);
+  } catch (e) {}
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav class="nav">
+  <div class="wrap nav__inner">
+    <a class="logo" href="index.html"><span class="logo__mark">✏️</span> Doodle Desk</a>
+    <div class="nav__links" id="nav-links" data-open="false">
+      <a href="login.html">Join another room</a>
+      <a href="demo.html">Practice board</a>
+    </div>
+    <div class="nav__actions">
+      <span class="badge badge--sky" data-room-badge hidden></span>
+      <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch colour mode">🌙</button>
+      <button class="icon-btn nav__burger" data-burger type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<section class="section" style="padding:2rem 0 4rem">
+  <div class="wrap">
+
+    <!-- ---------------------------- JOIN ---------------------------- -->
+    <div data-join-panel hidden style="max-width:520px;margin-inline:auto">
+      <form class="card" id="board-join">
+        <span class="badge badge--sky">Join a room</span>
+        <h1 style="margin-top:.8rem;font-size:1.9rem">Nearly there!</h1>
+        <p class="muted small">Type the code from the board and the name your teacher will know you by.</p>
+
+        <div class="field">
+          <label for="join-code">Room code</label>
+          <input id="join-code" name="code" type="text" placeholder="SUN-42B" autocomplete="off"
+                 style="font-family:var(--font-display);font-size:1.5rem;letter-spacing:.12em;text-align:center">
+          <span class="err"></span>
+        </div>
+
+        <div class="field">
+          <label for="join-name">Your first name</label>
+          <input id="join-name" name="nickname" type="text" placeholder="Ava" autocomplete="off" maxlength="24">
+          <span class="err"></span>
+        </div>
+
+        <button class="btn btn--mint btn--block" type="submit">Let me in 🚪</button>
+      </form>
+    </div>
+
+    <!-- ---------------------------- BOARD ---------------------------- -->
+    <div data-board-panel hidden>
+
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:.8rem;margin-bottom:1rem">
+        <h1 style="margin:0;font-size:clamp(1.5rem,3.5vw,2.1rem)" data-hello>My board</h1>
+        <span class="badge badge--mint" data-room-name-badge></span>
+        <div class="status-row" style="margin-left:auto">
+          <button class="btn status-btn" type="button" data-status="working" aria-pressed="true">✏️ Working</button>
+          <button class="btn status-btn" type="button" data-status="stuck" aria-pressed="false">🤔 I'm stuck</button>
+          <button class="btn btn--mint status-btn" type="button" data-status="done" aria-pressed="false">✅ Done</button>
+        </div>
+      </div>
+
+      <p class="prompt-banner" data-prompt hidden>
+        <span aria-hidden="true">📌</span>
+        <span><strong>Today's task:</strong> <span data-prompt-text></span></span>
+      </p>
+
+      <div class="wb">
+        <!-- Tools -->
+        <div class="wb__tools">
+          <div class="tool-group">
+            <h4>Tool</h4>
+            <div class="sizes">
+              <button class="size-btn" type="button" data-tool="pen" aria-pressed="true" title="Pen" style="font-size:1.2rem">✏️</button>
+              <button class="size-btn" type="button" data-tool="marker" aria-pressed="false" title="Highlighter" style="font-size:1.2rem">🖍️</button>
+              <button class="size-btn" type="button" data-tool="erase" aria-pressed="false" title="Eraser" style="font-size:1.2rem">🧽</button>
+            </div>
+          </div>
+
+          <div class="tool-group">
+            <h4>Colour</h4>
+            <div class="swatches">
+              <button class="swatch" type="button" data-colour="#7c3aed" aria-pressed="true" aria-label="Purple" style="background:#7c3aed"></button>
+              <button class="swatch" type="button" data-colour="#ff4d9d" aria-pressed="false" aria-label="Pink" style="background:#ff4d9d"></button>
+              <button class="swatch" type="button" data-colour="#ffc93c" aria-pressed="false" aria-label="Yellow" style="background:#ffc93c"></button>
+              <button class="swatch" type="button" data-colour="#16c79a" aria-pressed="false" aria-label="Green" style="background:#16c79a"></button>
+              <button class="swatch" type="button" data-colour="#38bdf8" aria-pressed="false" aria-label="Blue" style="background:#38bdf8"></button>
+              <button class="swatch" type="button" data-colour="#ff7a5c" aria-pressed="false" aria-label="Orange" style="background:#ff7a5c"></button>
+              <button class="swatch" type="button" data-colour="#1b1235" aria-pressed="false" aria-label="Black" style="background:#1b1235"></button>
+            </div>
+          </div>
+
+          <div class="tool-group">
+            <h4>Size</h4>
+            <div class="sizes">
+              <button class="size-btn" type="button" data-size="4" aria-pressed="false" aria-label="Thin"><i style="width:8px;height:8px"></i></button>
+              <button class="size-btn" type="button" data-size="8" aria-pressed="true" aria-label="Medium"><i style="width:15px;height:15px"></i></button>
+              <button class="size-btn" type="button" data-size="16" aria-pressed="false" aria-label="Thick"><i style="width:24px;height:24px"></i></button>
+            </div>
+          </div>
+
+          <div class="tool-group">
+            <h4>Stamps</h4>
+            <div class="stamp-row">
+              <button class="stamp" type="button" data-stamp="⭐" aria-pressed="false" aria-label="Star stamp">⭐</button>
+              <button class="stamp" type="button" data-stamp="✅" aria-pressed="false" aria-label="Tick stamp">✅</button>
+              <button class="stamp" type="button" data-stamp="🎉" aria-pressed="false" aria-label="Party stamp">🎉</button>
+              <button class="stamp" type="button" data-stamp="💡" aria-pressed="false" aria-label="Idea stamp">💡</button>
+              <button class="stamp" type="button" data-stamp="🦖" aria-pressed="false" aria-label="Dinosaur stamp">🦖</button>
+              <button class="stamp" type="button" data-stamp="❤️" aria-pressed="false" aria-label="Heart stamp">❤️</button>
+            </div>
+          </div>
+
+          <p class="small muted mb-0">Marks on board: <strong data-item-count>0</strong></p>
+        </div>
+
+        <!-- Canvas -->
+        <div>
+          <div class="wb__canvas-wrap" style="position:relative">
+            <canvas id="board" width="1200" height="740" aria-label="Your board. Draw with a mouse, finger or stylus."></canvas>
+            <div class="frozen-veil" data-frozen>
+              <div>
+                <span aria-hidden="true">❄️</span>
+                <strong>Pens down — eyes front</strong>
+                <p class="mb-0" style="color:#f0e9ff">Your teacher has frozen the boards for a moment.</p>
+              </div>
+            </div>
+            <p class="wb__hint mb-0">Draw with a mouse, finger or stylus · Ctrl/⌘ + Z to undo</p>
+          </div>
+
+          <div class="wb__actions">
+            <button class="btn btn--sun" type="button" data-undo>↩️ Undo</button>
+            <button class="btn" type="button" data-clear>🧹 Clear my board</button>
+            <button class="btn btn--mint" type="button" data-save>⬇️ Save as PNG</button>
+            <button class="btn" type="button" data-leave>🚪 Leave room</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------------------------- CLOSED ---------------------------- -->
+    <div class="empty" data-room-gone hidden>
+      <span>🚪</span>
+      <p><strong>This room has closed.</strong><br>Your teacher has finished the lesson.</p>
+      <a class="btn btn--primary" href="login.html">Join another room</a>
+    </div>
+
+  </div>
+</section>
+</main>
+
+<div class="toast" data-toast role="status" aria-live="polite"></div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/site.js"></script>
+<script src="assets/js/board-engine.js"></script>
+<script src="assets/js/board-ui.js"></script>
+<script src="assets/js/realtime.js"></script>
+<script src="assets/js/student.js"></script>
+</body>
+</html>

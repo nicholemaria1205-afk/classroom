@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classroom Student Tracker</title>
+    <style>
+        :root {
+            /* Default Theme */
+            --background-color: #f4f4f9;
+            --text-color: #333;
+            --button-bg: #007bff;
+            --button-active-bg: #0056b3;
+            --button-text: #fff;
+            --box-bg: #e0e0e0;
+            --box-border: #ccc;
+            --box-present: #28a745;
+            --box-absent: #dc3545;
+            --box-selected: #ffcc00;
+            --box-number: #666;
+            --box-number-alt: #fff;
+            --error-color: #dc3545;
+        }
+        /* Dark Theme */
+        [data-theme="dark"] {
+            --background-color: #222;
+            --text-color: #ddd;
+            --button-bg: #1e90ff;
+            --button-active-bg: #104e8b;
+            --button-text: #fff;
+            --box-bg: #444;
+            --box-border: #666;
+            --box-present: #2ecc71;
+            --box-absent: #e74c3c;
+            --box-selected: #f1c40f;
+            --box-number: #aaa;
+            --box-number-alt: #ddd;
+            --error-color: #ff6b6b;
+        }
+        /* Light Theme */
+        [data-theme="light"] {
+            --background-color: #fff;
+            --text-color: #000;
+            --button-bg: #3498db;
+            --button-active-bg: #2980b9;
+            --button-text: #fff;
+            --box-bg: #f0f0f0;
+            --box-border: #aaa;
+            --box-present: #27ae60;
+            --box-absent: #c0392b;
+            --box-selected: #f39c12;
+            --box-number: #555;
+            --box-number-alt: #fff;
+            --error-color: #e74c3c;
+        }
+        /* High Contrast Theme */
+        [data-theme="high-contrast"] {
+            --background-color: #000;
+            --text-color: #fff;
+            --button-bg: #00f;
+            --button-active-bg: #00b;
+            --button-text: #fff;
+            --box-bg: #333;
+            --box-border: #fff;
+            --box-present: #0f0;
+            --box-absent: #f00;
+            --box-selected: #ff0;
+            --box-number: #fff;
+            --box-number-alt: #000;
+            --error-color: #f0f;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            position: relative;
+            min-height: 100vh; /* Ensure body takes full height for bottom positioning */
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        .class-selector {
+            margin: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        .class-button button {
+            padding: 6px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            border-radius: 5px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .class-button button.active {
+            background-color: var(--button-active-bg);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .box {
+            background-color: var(--box-bg);
+            border: 1px solid var(--box-border);
+            padding: 20px;
+            text-align: center;
+            cursor: move;
+            font-size: 14px;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            position: relative;
+            transition: transform 0.2s;
+        }
+        .box.dragging {
+            opacity: 0.5;
+            transform: scale(1.05);
+        }
+        .box.present {
+            background-color: var(--box-present);
+            color: var(--button-text);
+        }
+        .box.absent {
+            background-color: var(--box-absent);
+            color: var(--button-text);
+        }
+        .box.selected {
+            border: 3px solid var(--box-selected);
+        }
+        .box input {
+            text-align: center;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+            max-width: 100%;
+            box-sizing: border-box;
+            color: var(--text-color);
+        }
+        .box input:focus {
+            outline: none;
+            background: var(--background-color);
+        }
+        .box-number {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            font-size: 10px;
+            color: var(--box-number);
+            font-weight: bold;
+        }
+        .box.present .box-number, .box.absent .box-number {
+            color: var(--box-number-alt);
+            opacity: 0.8;
+        }
+        .action-menu {
+            margin-top: 10px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+        .action-menu.row {
+            flex-direction: row;
+            gap: 10px;
+            justify-content: center; /* Center the dropdowns */
+        }
+        .action-buttons {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            display: none;
+        }
+        .action-buttons button, .view-toggle button {
+            padding: 6px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            border-radius: 5px;
+            white-space: nowrap;
+        }
+        .action-buttons button:hover, .view-toggle button:hover {
+            background-color: var(--button-active-bg);
+        }
+        .action-menu select, .theme-menu select {
+            padding: 6px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            border-radius: 5px;
+            width: auto;
+            min-width: 150px;
+        }
+        .action-menu select:focus, .theme-menu select:focus {
+            outline: none;
+            background-color: var(--button-active-bg);
+        }
+        .tracker {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        .error-message {
+            color: var(--error-color);
+            margin-top: 10px;
+            display: none;
+        }
+        #textRuler {
+            position: absolute;
+            visibility: hidden;
+            white-space: nowrap;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: var(--text-color);
+        }
+        .view-toggle {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <h1>Classroom Student Tracker</h1>
+        <div class="controls">
+            <div class="class-selector" id="classSelector"></div>
+            <div class="view-toggle" id="viewToggleContainer">
+                <button id="viewToggle" onclick="toggleView()">Switch to Button View</button>
+            </div>
+            <div class="action-menu">
+                <select id="actionMenu" onchange="handleAction(this.value)">
+                    <option value="" disabled selected>Select an action</option>
+                    <option value="updateClassName">Update Class Name</option>
+                    <option value="addBox">Add Student</option>
+                    <option value="removeLastBox">Remove Last Student</option>
+                    <option value="removeSelectedBox">Remove Selected Student</option>
+                    <option value="resetAttendance">Reset Attendance</option>
+                    <option value="clearCurrentClass">Clear Current Class</option>
+                    <option value="clearAllClasses">Clear All Classes</option>
+                    <option value="exportData">Export Data</option>
+                    <option value="importData">Import Data</option>
+                </select>
+                <select id="themeMenu" onchange="changeTheme(this.value)">
+                    <option value="default" selected>Default Theme</option>
+                    <option value="dark">Dark Theme</option>
+                    <option value="light">Light Theme</option>
+                    <option value="high-contrast">High Contrast Theme</option>
+                </select>
+                <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
+            </div>
+            <div class="action-buttons" style="display: none;">
+                <button onclick="updateClassName(currentClass, prompt(`Enter new name for ${data.classNames[currentClass]}:`, data.classNames[currentClass]) || `Class ${currentClass + 1}`)">Update Class Name</button>
+                <button onclick="addBox()">Add Student</button>
+                <button onclick="removeLastBox()">Remove Last Student</button>
+                <button onclick="removeSelectedBox()">Remove Selected Student</button>
+                <button onclick="handleResetAttendance()">Reset Attendance</button>
+                <button onclick="clearCurrentClass()">Clear Current Class</button>
+                <button onclick="clearAllClasses()">Clear All Classes</button>
+                <button onclick="exportData()">Export Data</button>
+                <button onclick="document.getElementById('importFile').click()">Import Data</button>
+            </div>
+        </div>
+        <div class="grid" id="grid"></div>
+        <div class="tracker" id="tracker"></div>
+        <div class="error-message" id="errorMessage"></div>
+        <span id="textRuler"></span>
+    </div>
+    <script>
+        // Initialize data structure
+        let data = (() => {
+            try {
+                return JSON.parse(localStorage.getItem('classroomData')) || {
+                    classNames: ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6'],
+                    classes: [
+                        Array(25).fill().map((_, i) => ({ name: `Student ${i + 1}`, status: 'neutral' })),
+                        Array(25).fill().map((_, i) => ({ name: `Student ${i + 1}`, status: 'neutral' })),
+                        Array(25).fill().map((_, i) => ({ name: `Student ${i + 1}`, status: 'neutral' })),
+                        Array(25).fill().map((_, i) => ({ name: `Student ${i + 1}`, status: 'neutral' })),
+                        Array(25).fill().map((_, i) => ({ name: `Student ${i + 1}`, status: 'neutral' })),
+                        Array(25).fill().map((_, i) => ({ name: `Student ${i + 1}`, status: 'neutral' }))
+                    ]
+                };
+            } catch (e) {
+                showError('Failed to load data from localStorage: ' + e.message);
+                return {
+                    classNames: ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6'],
+                    classes: [
+                        Array(25).fill().map((_, i) => ({ name: `Student ${i + 1}`, status: 'neutral' })),
+                        Array(25).fill().map((_, i) => ({ name: `Student ${i + 1}`, status: 'neutral' })),
+                        Array(25).fill().map((_, i) => ({ name: `Student ${i + 1}`, status: 'neutral' })),
+                        Array(25).fill().map((_, i) => ({ name: `Student ${i + 1}`, status: 'neutral' })),
+                        Array(25).fill().map((_, i) => ({ name: `Student ${i + 1}`, status: 'neutral' })),
+                        Array(25).fill().map((_, i) => ({ name: `Student ${i + 1}`, status: 'neutral' }))
+                    ]
+                };
+            }
+        })();
+        let currentClass = 0;
+        let selectedStudentIndex = null;
+
+        // Load theme and view preference from localStorage
+        const savedTheme = localStorage.getItem('theme') || 'default';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.getElementById('themeMenu').value = savedTheme;
+        const savedView = localStorage.getItem('viewMode') || 'dropdown';
+        updateView(savedView);
+
+        // Save data to localStorage
+        function saveData() {
+            try {
+                localStorage.setItem('classroomData', JSON.stringify(data));
+            } catch (e) {
+                showError('Failed to save data to localStorage: ' + e.message);
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        // Change theme
+        function changeTheme(theme) {
+            try {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+                document.getElementById('themeMenu').value = theme;
+            } catch (e) {
+                showError('Failed to change theme: ' + e.message);
+            }
+        }
+
+        // Toggle between button and dropdown views
+        function toggleView() {
+            const currentView = localStorage.getItem('viewMode') || 'dropdown';
+            const newView = currentView === 'dropdown' ? 'button' : 'dropdown';
+            updateView(newView);
+            localStorage.setItem('viewMode', newView);
+            document.getElementById('viewToggle').textContent = `Switch to ${newView === 'dropdown' ? 'Button' : 'Dropdown'} View`;
+        }
+
+        // Update view based on preference
+        function updateView(viewMode) {
+            const actionMenu = document.querySelector('.action-menu');
+            const actionButtons = document.querySelector('.action-buttons');
+            const viewToggleContainer = document.getElementById('viewToggleContainer');
+            if (viewMode === 'button') {
+                actionMenu.style.display = 'none';
+                actionButtons.style.display = 'flex';
+                viewToggleContainer.style.position = 'absolute';
+                viewToggleContainer.style.bottom = '20px';
+                viewToggleContainer.style.right = '20px';
+            } else {
+                actionMenu.style.display = 'flex';
+                actionMenu.classList.add('row');
+                actionButtons.style.display = 'none';
+                viewToggleContainer.style.position = 'absolute';
+                viewToggleContainer.style.bottom = '20px';
+                viewToggleContainer.style.right = '20px';
+            }
+        }
+
+        // Handle dropdown actions
+        function handleAction(action) {
+            if (action === 'updateClassName') {
+                const newName = prompt(`Enter new name for ${data.classNames[currentClass]}:`, data.classNames[currentClass]);
+                if (newName !== null) {
+                    updateClassName(currentClass, newName);
+                }
+            } else if (action === 'addBox') {
+                addBox();
+            } else if (action === 'removeLastBox') {
+                removeLastBox();
+            } else if (action === 'removeSelectedBox') {
+                removeSelectedBox();
+            } else if (action === 'resetAttendance') {
+                const classChoices = data.classNames.map((name, idx) => `${idx + 1}. ${name}`).join(', ');
+                const classIndex = prompt(`Select a class to reset attendance:\n${classChoices}\nEnter class number (1-6):`);
+                if (classIndex !== null) {
+                    const index = parseInt(classIndex) - 1;
+                    if (index >= 0 && index < 6) {
+                        if (confirm(`Are you sure you want to reset attendance for ${data.classNames[index]}?`)) {
+                            try {
+                                data.classes[index].forEach(student => {
+                                    student.status = 'neutral';
+                                });
+                                saveData();
+                                renderGrid();
+                            } catch (e) {
+                                showError('Failed to reset attendance: ' + e.message);
+                            }
+                        }
+                    } else {
+                        showError('Invalid class number. Please enter a number between 1 and 6.');
+                    }
+                }
+            } else if (action === 'clearCurrentClass') {
+                clearCurrentClass();
+            } else if (action === 'clearAllClasses') {
+                clearAllClasses();
+            } else if (action === 'exportData') {
+                exportData();
+            } else if (action === 'importData') {
+                document.getElementById('importFile').click();
+            }
+            // Reset dropdown to default
+            document.getElementById('actionMenu').value = '';
+        }
+
+        // Handle button actions (for button view)
+        function handleResetAttendance() {
+            const classChoices = data.classNames.map((name, idx) => `${idx + 1}. ${name}`).join(', ');
+            const classIndex = prompt(`Select a class to reset attendance:\n${classChoices}\nEnter class number (1-6):`);
+            if (classIndex !== null) {
+                const index = parseInt(classIndex) - 1;
+                if (index >= 0 && index < 6) {
+                    if (confirm(`Are you sure you want to reset attendance for ${data.classNames[index]}?`)) {
+                        try {
+                            data.classes[index].forEach(student => {
+                                student.status = 'neutral';
+                            });
+                            saveData();
+                            renderGrid();
+                        } catch (e) {
+                            showError('Failed to reset attendance: ' + e.message);
+                        }
+                    }
+                } else {
+                    showError('Invalid class number. Please enter a number between 1 and 6.');
+                }
+            }
+        }
+
+        // Export data to JSON file
+        function exportData() {
+            try {
+                const dataStr = JSON.stringify(data);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'classroom-data.json';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                showError('Failed to export data: ' + e.message);
+            }
+        }
+
+        // Import data from JSON file
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (importedData.classNames && importedData.classes && 
+                        importedData.classNames.length === 6 && 
+                        importedData.classes.every(cls => Array.isArray(cls) && cls.every(s => s.name && s.status))) {
+                        data = importedData;
+                        currentClass = 0;
+                        selectedStudentIndex = null;
+                        saveData();
+                        renderGrid();
+                    } else {
+                        showError('Invalid data format in imported file.');
+                    }
+                } catch (e) {
+                    showError('Failed to import data: ' + e.message);
+                }
+            };
+            reader.readAsText(file);
+            document.getElementById('importFile').value = '';
+        }
+
+        // Clear current class data
+        function clearCurrentClass() {
+            if (confirm(`Are you sure you want to clear data for ${data.classNames[currentClass]}? This will reset student names and statuses for this class only, keeping the class name.`)) {
+                try {
+                    data.classes[currentClass] = Array(25).fill().map((_, i) => ({ name: `Student ${i + 1}`, status: 'neutral' }));
+                    selectedStudentIndex = null;
+                    saveData();
+                    renderGrid();
+                } catch (e) {
+                    showError('Failed to clear current class data: ' + e.message);
+                }
+            }
+        }
+
+        // Clear all classes data
+        function clearAllClasses() {
+            if (confirm('Are you sure you want to clear all data? This will reset all class names, student names, and attendance statuses.')) {
+                try {
+                    localStorage.removeItem('classroomData');
+                    data = {
+                        classNames: ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6'],
+                        classes: [
+                            Array(25).fill().map((_, i) => ({ name: `Student ${i + 1}`, status: 'neutral' })),
+                            Array(25).fill().map((_, i) => ({ name: `Student ${i + 1}`, status: 'neutral' })),
+                            Array(25).fill().map((_, i) => ({ name: `Student ${i + 1}`, status: 'neutral' })),
+                            Array(25).fill().map((_, i) => ({ name: `Student ${i + 1}`, status: 'neutral' })),
+                            Array(25).fill().map((_, i) => ({ name: `Student ${i + 1}`, status: 'neutral' })),
+                            Array(25).fill().map((_, i) => ({ name: `Student ${i + 1}`, status: 'neutral' }))
+                        ]
+                    };
+                    currentClass = 0;
+                    selectedStudentIndex = null;
+                    saveData();
+                    renderGrid();
+                } catch (e) {
+                    showError('Failed to clear all data: ' + e.message);
+                }
+            }
+        }
+
+        // Function to measure text width
+        function getTextWidth(text) {
+            const ruler = document.getElementById('textRuler');
+            ruler.textContent = text;
+            return ruler.offsetWidth + 10;
+        }
+
+        // Render class selector
+        function renderClassSelector() {
+            const selector = document.getElementById('classSelector');
+            selector.innerHTML = '';
+            data.classNames.forEach((name, index) => {
+                const div = document.createElement('div');
+                div.className = 'class-button';
+                const button = document.createElement('button');
+                button.textContent = name;
+                button.classList.toggle('active', index === currentClass);
+                button.onclick = (e) => {
+                    if (e.target.tagName !== 'INPUT') {
+                        switchClass(index);
+                    }
+                };
+                div.appendChild(button);
+                selector.appendChild(div);
+            });
+        }
+
+        // Update class name
+        function updateClassName(index, name) {
+            data.classNames[index] = name || `Class ${index + 1}`;
+            saveData();
+            renderClassSelector();
+            renderGrid();
+        }
+
+        // Render the grid for the current class
+        function renderGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            data.classes[currentClass].forEach((student, index) => {
+                const box = document.createElement('div');
+                box.setAttribute('draggable', 'true');
+                box.className = `box ${student.status}${index === selectedStudentIndex ? ' selected' : ''}`;
+                box.setAttribute('data-index', index);
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = student.name;
+                input.style.width = `${getTextWidth(student.name)}px`;
+                input.oninput = () => {
+                    input.style.width = `${getTextWidth(input.value)}px`;
+                };
+                input.onblur = () => updateName(index, input.value);
+                input.onclick = (e) => e.stopPropagation();
+                box.onclick = (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        selectedStudentIndex = index === selectedStudentIndex ? null : index;
+                        renderGrid();
+                    } else {
+                        toggleBox(index);
+                    }
+                };
+                box.ondragstart = (e) => {
+                    e.dataTransfer.setData('text/plain', index);
+                    box.classList.add('dragging');
+                };
+                box.ondragend = () => {
+                    box.classList.remove('dragging');
+                };
+                box.ondragover = (e) => {
+                    e.preventDefault();
+                };
+                box.ondrop = (e) => {
+                    e.preventDefault();
+                    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                    const toIndex = parseInt(box.getAttribute('data-index'));
+                    if (fromIndex !== toIndex) {
+                        const [movedStudent] = data.classes[currentClass].splice(fromIndex, 1);
+                        data.classes[currentClass].splice(toIndex, 0, movedStudent);
+                        selectedStudentIndex = null; // Clear selection after move
+                        saveData();
+                        renderGrid();
+                    }
+                };
+                box.appendChild(input);
+                const number = document.createElement('span');
+                number.className = 'box-number';
+                number.textContent = index + 1;
+                box.appendChild(number);
+                grid.appendChild(box);
+            });
+
+            // Update attendance tracker
+            updateTracker();
+
+            // Update class selector buttons
+            renderClassSelector();
+        }
+
+        // Toggle box status (neutral -> present -> absent -> neutral)
+        function toggleBox(index) {
+            const currentStatus = data.classes[currentClass][index].status;
+            const nextStatus = {
+                'neutral': 'present',
+                'present': 'absent',
+                'absent': 'neutral'
+            }[currentStatus];
+            data.classes[currentClass][index].status = nextStatus;
+            saveData();
+            renderGrid();
+        }
+
+        // Update student name
+        function updateName(index, name) {
+            data.classes[currentClass][index].name = name || `Student ${index + 1}`;
+            saveData();
+            renderGrid();
+        }
+
+        // Switch between classes
+        function switchClass(classIndex) {
+            currentClass = classIndex;
+            selectedStudentIndex = null;
+            renderGrid();
+        }
+
+        // Add a new box
+        function addBox() {
+            data.classes[currentClass].push({ name: `Student ${data.classes[currentClass].length + 1}`, status: 'neutral' });
+            saveData();
+            renderGrid();
+        }
+
+        // Remove the last box
+        function removeLastBox() {
+            if (data.classes[currentClass].length > 1) {
+                data.classes[currentClass].pop();
+                if (selectedStudentIndex !== null && selectedStudentIndex >= data.classes[currentClass].length) {
+                    selectedStudentIndex = null;
+                }
+                saveData();
+                renderGrid();
+            } else {
+                alert('Cannot remove the last student.');
+            }
+        }
+
+        // Remove the selected student
+        function removeSelectedBox() {
+            if (selectedStudentIndex === null) {
+                alert('Please select a student to remove by Ctrl+clicking (or Cmd+clicking on Mac) their box.');
+                return;
+            }
+            if (data.classes[currentClass].length > 1) {
+                if (confirm(`Are you sure you want to remove ${data.classes[currentClass][selectedStudentIndex].name} from ${data.classNames[currentClass]}?`)) {
+                    try {
+                        data.classes[currentClass].splice(selectedStudentIndex, 1);
+                        selectedStudentIndex = null;
+                        saveData();
+                        renderGrid();
+                    } catch (e) {
+                        showError('Failed to remove selected student: ' + e.message);
+                    }
+                }
+            } else {
+                alert('Cannot remove the last student.');
+            }
+        }
+
+        // Update attendance tracker
+        function updateTracker() {
+            const students = data.classes[currentClass];
+            const present = students.filter(s => s.status === 'present').length;
+            const absent = students.filter(s => s.status === 'absent').length;
+            const total = students.length;
+            const tracker = document.getElementById('tracker');
+            tracker.textContent = `Present: ${present} | Absent: ${absent} | Total: ${total}`;
+        }
+
+        // Initial render
+        renderGrid();
+    </script>
+</body>
+</html>

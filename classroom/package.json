@@ -1,0 +1,8 @@
+{
+  "name": "doodle-desk",
+  "private": true,
+  "description": "Doodle Desk — the site is static; this file exists only so Netlify installs the one library its token function needs.",
+  "dependencies": {
+    "ably": "^2.0.0"
+  }
+}

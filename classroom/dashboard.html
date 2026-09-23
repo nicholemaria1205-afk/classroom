@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My rooms — Doodle Desk</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✏️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/site.css">
+<script>
+  document.documentElement.classList.add("js");
+  try {
+    var t = localStorage.getItem("doodle-theme") ||
+      (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", t);
+  } catch (e) {}
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav class="nav">
+  <div class="wrap nav__inner">
+    <a class="logo" href="dashboard.html"><span class="logo__mark">✏️</span> Doodle Desk</a>
+    <div class="nav__links" id="nav-links" data-open="false">
+      <a href="dashboard.html" aria-current="page">My rooms</a>
+      <a href="demo.html">Practice board</a>
+      <a href="index.html">Website</a>
+      <a href="pricing.html">Plan</a>
+    </div>
+    <div class="nav__actions">
+      <span class="badge badge--mint" data-teacher-badge hidden></span>
+      <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch colour mode">🌙</button>
+      <button class="icon-btn nav__burger" data-burger type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<section class="section" style="padding-top:2.5rem">
+  <div class="wrap">
+
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:1rem;margin-bottom:2rem">
+      <div style="flex:1 1 320px">
+        <h1 style="margin-bottom:.3rem">Good to see you<span data-greet-name></span> 👋</h1>
+        <p class="muted mb-0">Open a room, share the code, and the boards fill themselves in.</p>
+      </div>
+      <button class="btn btn--primary btn--lg" type="button" data-new-room>＋ New room</button>
+    </div>
+
+    <!-- ---------------------------- CREATE ---------------------------- -->
+    <form class="card" id="new-room-form" hidden style="margin-bottom:2rem">
+      <h2 style="font-size:1.4rem;margin-top:0">Open a new room</h2>
+      <div class="field-row">
+        <div class="field">
+          <label for="room-name">Room name</label>
+          <input id="room-name" name="name" type="text" placeholder="Year 5 Maths" maxlength="60">
+          <span class="err"></span>
+        </div>
+        <div class="field">
+          <label for="room-subject">Subject</label>
+          <select id="room-subject" name="subject">
+            <option>🔢 Maths</option>
+            <option>📖 English</option>
+            <option>🧪 Science</option>
+            <option>🌍 Geography</option>
+            <option>🎨 Art</option>
+            <option>🎵 Music</option>
+            <option>🏛️ History</option>
+            <option selected>✏️ General</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="room-prompt">Today's task <span class="muted">(optional — students see this at the top of their board)</span></label>
+        <input id="room-prompt" name="prompt" type="text" placeholder="Show me 3/4 as a picture" maxlength="160">
+      </div>
+      <div style="display:flex;gap:.7rem;flex-wrap:wrap">
+        <button class="btn btn--primary" type="submit">Open the room 🚪</button>
+        <button class="btn" type="button" data-cancel-room>Cancel</button>
+      </div>
+    </form>
+
+    <!-- ---------------------------- ROOM LIST ---------------------------- -->
+    <div data-room-list></div>
+
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__bottom" style="margin-top:0;border-top:none;padding-top:0">
+      <span>© <span data-year>2026</span> Doodle Desk</span>
+      <span><a href="index.html">Website</a> · <a href="demo.html">Practice board</a> · <a href="login.html">Switch user</a></span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" data-toast role="status" aria-live="polite"></div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/site.js"></script>
+<script src="assets/js/realtime.js"></script>
+<script src="assets/js/dashboard.js"></script>
+</body>
+</html>

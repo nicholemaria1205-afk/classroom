@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doodle Desk — the live classroom whiteboard kids love</title>
+<meta name="description" content="Doodle Desk gives every student their own live whiteboard, and every teacher an instant view of the whole class. Free to start, from $7 a month for unlimited classes.">
+<meta property="og:title" content="Doodle Desk — the live classroom whiteboard kids love">
+<meta property="og:description" content="Every student gets a board. You see all of them at once. Join with a room code in five seconds.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✏️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/site.css">
+<script>
+  /* Runs before first paint: sets the theme so dark-mode users never see a
+     flash, and marks the page as scripted so reveal-on-scroll can hide things
+     safely. Without JS nothing is ever hidden. */
+  document.documentElement.classList.add("js");
+  try {
+    var t = localStorage.getItem("doodle-theme") ||
+      (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", t);
+  } catch (e) {}
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav class="nav">
+  <div class="wrap nav__inner">
+    <a class="logo" href="index.html"><span class="logo__mark">✏️</span> Doodle Desk</a>
+    <div class="nav__links" id="nav-links" data-open="false">
+      <a href="index.html" aria-current="page">Home</a>
+      <a href="index.html#features">Features</a>
+      <a href="demo.html">Live demo</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="index.html#faq">FAQ</a>
+      <a href="login.html">Log in</a>
+    </div>
+    <div class="nav__actions">
+      <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch colour mode">🌙</button>
+      <a class="btn btn--primary" href="subscribe.html">Start free</a>
+      <button class="icon-btn nav__burger" data-burger type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+
+<!-- ============================ HERO ============================ -->
+<header class="hero">
+  <div class="blob" style="width:420px;height:420px;background:var(--sunny);top:-80px;left:-120px"></div>
+  <div class="blob" style="width:340px;height:340px;background:var(--sky);bottom:-60px;right:-90px;animation-delay:-4s"></div>
+  <span class="sticker" style="top:14%;right:6%;background:var(--bubble);color:#fff">🎉</span>
+  <span class="sticker" style="bottom:9%;left:52%;background:var(--mint);animation-delay:-2.5s">⭐</span>
+
+  <div class="wrap hero__grid">
+    <div>
+      <span class="badge badge--mint">✨ Free for your first class — forever</span>
+      <h1 style="margin-top:1rem">Every student gets a whiteboard.<br>You get the whole room.</h1>
+      <svg class="squiggle" viewBox="0 0 200 14" aria-hidden="true"><path d="M3 10 Q 28 1, 53 8 T 103 8 T 153 8 T 197 6"/></svg>
+      <p class="hero__lead" style="margin-top:1.2rem">
+        Share a room code. Students draw, write and solve on their own device —
+        and you watch all thirty boards fill up live, from one screen. No apps,
+        no logins, no lost passwords.
+      </p>
+      <div class="hero__cta">
+        <a class="btn btn--primary btn--lg" href="subscribe.html" data-confetti>Start free trial 🚀</a>
+        <a class="btn btn--lg" href="demo.html">Try the board →</a>
+      </div>
+      <p class="hero__note">🔒 No card needed to start · Cancel any time · Works on any browser</p>
+    </div>
+
+    <div class="window" data-board-cycle>
+      <div class="window__bar">
+        <span class="window__dot" style="background:#ff6058"></span>
+        <span class="window__dot" style="background:#ffc93c"></span>
+        <span class="window__dot" style="background:#28c840"></span>
+        <span class="window__title">Room · MATHS-4B · 27 online</span>
+      </div>
+      <div class="window__body">
+        <div class="boards">
+          <div class="board board--live" data-name="Ava"><span>🔢</span></div>
+          <div class="board" data-name="Ben"><span>✏️</span></div>
+          <div class="board" data-name="Chloe"><span>🌍</span></div>
+          <div class="board" data-name="Dev"><span>🧪</span></div>
+          <div class="board board--live" data-name="Esi"><span>🎨</span></div>
+          <div class="board" data-name="Finn"><span>📐</span></div>
+          <div class="board" data-name="Gita"><span>🎵</span></div>
+          <div class="board" data-name="Hugo"><span>⭐</span></div>
+          <div class="board board--live" data-name="Iris"><span>🦖</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============================ MARQUEE ============================ -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee__track">
+    <span>✏️ live whiteboards &nbsp;•&nbsp; 🎯 instant feedback &nbsp;•&nbsp; 🎨 stickers &amp; stamps &nbsp;•&nbsp; 📊 progress at a glance &nbsp;•&nbsp; 🔐 no student accounts &nbsp;•&nbsp; 🧮 maths symbols &nbsp;•&nbsp; 🌍 works on any device &nbsp;•&nbsp;</span>
+    <span>✏️ live whiteboards &nbsp;•&nbsp; 🎯 instant feedback &nbsp;•&nbsp; 🎨 stickers &amp; stamps &nbsp;•&nbsp; 📊 progress at a glance &nbsp;•&nbsp; 🔐 no student accounts &nbsp;•&nbsp; 🧮 maths symbols &nbsp;•&nbsp; 🌍 works on any device &nbsp;•&nbsp;</span>
+  </div>
+</div>
+
+<!-- ============================ FEATURES ============================ -->
+<section class="section" id="features">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="badge badge--sky">What's inside</span>
+      <h2 style="margin-top:.8rem">Built for the noisy, brilliant middle of a lesson</h2>
+      <p>Everything here exists because a teacher asked for it. Nothing here needs a training day.</p>
+    </div>
+
+    <div class="grid grid--3">
+      <article class="card card--lift reveal">
+        <div class="card__icon" style="background:var(--sunny)">👀</div>
+        <h3>See all boards at once</h3>
+        <p>Thirty live thumbnails on one screen. Spot the student who's stuck before they put their hand up — or before they don't.</p>
+      </article>
+      <article class="card card--lift reveal">
+        <div class="card__icon" style="background:var(--bubble);color:#fff">💬</div>
+        <h3>Feedback while it matters</h3>
+        <p>Draw straight onto a student's board, drop a sticker, or send a nudge. Help lands in seconds, not next Tuesday.</p>
+      </article>
+      <article class="card card--lift reveal">
+        <div class="card__icon" style="background:var(--mint)">🔑</div>
+        <h3>Join with a room code</h3>
+        <p>Students type a six-letter code and they're in. No email addresses, no passwords, no data you'd rather not collect.</p>
+      </article>
+      <article class="card card--lift reveal">
+        <div class="card__icon" style="background:var(--sky)">🎨</div>
+        <h3>Tools kids enjoy</h3>
+        <p>Pens, highlighters, shapes, text, maths symbols, graph paper, rulers and a silly number of stickers.</p>
+      </article>
+      <article class="card card--lift reveal">
+        <div class="card__icon" style="background:var(--coral);color:#fff">📚</div>
+        <h3>Lessons you can reuse</h3>
+        <p>Save a board as a template, push it to every student at once, and pull it out again next year in two clicks.</p>
+      </article>
+      <article class="card card--lift reveal">
+        <div class="card__icon" style="background:var(--grape);color:#fff">📈</div>
+        <h3>Progress, quietly tracked</h3>
+        <p>Who finished, who's halfway, who hasn't started. Plus the attendance tracker your form group already needs.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ HOW IT WORKS ============================ -->
+<section class="section section--tint">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="badge">Setup time: about a minute</span>
+      <h2 style="margin-top:.8rem">Three steps. That's the whole thing.</h2>
+    </div>
+
+    <div class="grid grid--3 steps">
+      <article class="card step reveal">
+        <span class="step__num">1</span>
+        <h3>Open a room</h3>
+        <p>Click <em>New room</em>. Doodle Desk hands you a code like <strong>SUN-42B</strong> and puts it on the big screen.</p>
+      </article>
+      <article class="card step reveal">
+        <span class="step__num" style="background:var(--bubble)">2</span>
+        <h3>Students join</h3>
+        <p>They go to the join page, type the code and their first name, and a blank board appears. Phones, tablets, Chromebooks — all fine.</p>
+      </article>
+      <article class="card step reveal">
+        <span class="step__num" style="background:var(--mint);color:var(--ink)">3</span>
+        <h3>Teach</h3>
+        <p>Set a task, watch the boards fill in, jump into anyone's work to help. Export the lot as a PDF when the bell goes.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ DEMO TEASER ============================ -->
+<section class="section">
+  <div class="wrap grid grid--2" style="align-items:center">
+    <div class="reveal">
+      <span class="badge badge--pink">No sign-up required</span>
+      <h2 style="margin-top:.8rem">Have a scribble right now</h2>
+      <p class="muted">
+        The demo board is the real student board: pens, highlighter, eraser,
+        stamps, undo, and a PNG export. Draw something rude, we won't tell.
+      </p>
+      <ul class="plan__list" style="margin-bottom:1.6rem">
+        <li>Works with a mouse, a finger or a stylus</li>
+        <li>Nothing is uploaded — it all stays in your browser</li>
+        <li>Save your masterpiece as a picture</li>
+      </ul>
+      <a class="btn btn--pink btn--lg" href="demo.html">Open the demo board 🖍️</a>
+    </div>
+    <div class="reveal" style="position:relative">
+      <span class="sticker" style="top:-26px;left:-14px;background:var(--sunny);z-index:4">🖍️</span>
+      <div class="window" style="rotate:-1.5deg">
+        <div class="window__bar" style="background:var(--mint)">
+          <span class="window__dot" style="background:#fff"></span>
+          <span class="window__dot" style="background:#fff"></span>
+          <span class="window__title" style="color:var(--ink)">Ava's board</span>
+        </div>
+        <div class="window__body" style="background:#fff">
+          <svg viewBox="0 0 400 260" role="img" aria-label="A sketch of a volcano labelled with the word magma">
+            <line x1="0" y1="70" x2="400" y2="70" stroke="#7c3aed" stroke-opacity=".12" stroke-width="3"/>
+            <line x1="0" y1="140" x2="400" y2="140" stroke="#7c3aed" stroke-opacity=".12" stroke-width="3"/>
+            <line x1="0" y1="210" x2="400" y2="210" stroke="#7c3aed" stroke-opacity=".12" stroke-width="3"/>
+            <path d="M60 220 L150 90 L240 220 Z" fill="#ff7a5c" stroke="#1b1235" stroke-width="5" stroke-linejoin="round"/>
+            <path d="M126 122 q24 -34 48 0 q-24 22 -48 0" fill="#ffc93c" stroke="#1b1235" stroke-width="4"/>
+            <text x="150" y="252" font-family="Fredoka, sans-serif" font-size="26" text-anchor="middle" fill="#1b1235">magma!</text>
+            <circle cx="320" cy="80" r="26" fill="#ffc93c" stroke="#1b1235" stroke-width="5"/>
+            <path d="M285 200 q30 -40 62 -6" stroke="#16c79a" stroke-width="7" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ STATS ============================ -->
+<section class="section section--ink">
+  <div class="wrap">
+    <div class="grid grid--4">
+      <div class="stat reveal"><div class="stat__num">5 sec</div><p>for a class to join a room</p></div>
+      <div class="stat reveal"><div class="stat__num">200</div><p>students in a single room on Pro</p></div>
+      <div class="stat reveal"><div class="stat__num">0</div><p>student accounts to create</p></div>
+      <div class="stat reveal"><div class="stat__num">30 days</div><p>free trial, no card up front</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ PRICING PREVIEW ============================ -->
+<section class="section" id="pricing">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="badge badge--grape">Simple pricing</span>
+      <h2 style="margin-top:.8rem">One small monthly fee. Every feature.</h2>
+      <p>No per-feature upsells, no "contact sales for the good bits". Start free and upgrade when it's earned its place.</p>
+    </div>
+
+    <div class="toggle-wrap reveal">
+      <div class="toggle" role="group" aria-label="Billing period">
+        <button type="button" data-billing="monthly" aria-pressed="false">Monthly</button>
+        <button type="button" data-billing="annual" aria-pressed="true">Yearly</button>
+      </div>
+      <span class="badge badge--mint">Save 2 months 🎁</span>
+    </div>
+
+    <div class="grid grid--3" data-plans>
+      <!-- Fallback for crawlers and no-JS visitors; pricing.js replaces this
+           with the interactive, billing-aware version on load. -->
+      <article class="card plan">
+        <div class="card__icon" style="background:var(--sky)">🎒</div>
+        <h3 class="plan__name">Starter</h3>
+        <p class="plan__blurb">Everything you need to run live boards with one class.</p>
+        <div class="plan__price"><span class="plan__amount">Free</span></div>
+        <p class="plan__sub">Free forever, no card needed</p>
+        <ul class="plan__list">
+          <li>1 live room, up to 30 students</li>
+          <li>Student whiteboards in real time</li>
+          <li>Attendance tracker</li>
+        </ul>
+        <a class="btn btn--sun btn--block" href="subscribe.html?plan=starter">Start for free</a>
+      </article>
+      <article class="card plan plan--featured">
+        <span class="badge badge--pink plan__flag">★ Most loved</span>
+        <div class="card__icon" style="background:var(--sunny)">🚀</div>
+        <h3 class="plan__name">Teacher Pro</h3>
+        <p class="plan__blurb">For the teacher who lives in the room all day, every day.</p>
+        <div class="plan__price"><span class="plan__amount">$7</span><span class="plan__per">/ month</span></div>
+        <p class="plan__sub">billed yearly as $84 — or $9 monthly</p>
+        <ul class="plan__list">
+          <li>Unlimited rooms &amp; classes</li>
+          <li>Assignments, marking &amp; rubrics</li>
+          <li>Class progress dashboard</li>
+        </ul>
+        <a class="btn btn--primary btn--block" href="subscribe.html?plan=pro">Start 30-day free trial</a>
+      </article>
+      <article class="card plan">
+        <div class="card__icon" style="background:var(--mint)">🏫</div>
+        <h3 class="plan__name">School</h3>
+        <p class="plan__blurb">Roll it out across a whole staffroom, billed to the school.</p>
+        <div class="plan__price"><span class="plan__amount">$6</span><span class="plan__per">/ month / teacher</span></div>
+        <p class="plan__sub">per teacher, billed yearly (min. 5)</p>
+        <ul class="plan__list">
+          <li>Everything in Teacher Pro</li>
+          <li>SSO, rostering &amp; admin dashboard</li>
+          <li>Invoice or purchase-order billing</li>
+        </ul>
+        <a class="btn btn--sun btn--block" href="subscribe.html?plan=school">Talk to us</a>
+      </article>
+    </div>
+
+    <p class="center muted small" style="margin-top:2rem">
+      Prices in USD. <a href="pricing.html">See the full comparison →</a>
+    </p>
+  </div>
+</section>
+
+<!-- ============================ TESTIMONIALS ============================ -->
+<!-- Placeholder copy: swap these for real, permissioned quotes before launch. -->
+<section class="section section--tint">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="badge badge--sky">Staffroom verdict</span>
+      <h2 style="margin-top:.8rem">What teachers tell us</h2>
+    </div>
+    <div class="grid grid--3">
+      <article class="card reveal">
+        <span class="tape" aria-hidden="true"></span>
+        <p class="quote">"I used to walk the room to see who was stuck. Now I can see it from the front in one glance — and I get to the right desk first time."</p>
+        <div class="quote__who">
+          <span class="avatar" style="background:var(--sunny)">👩‍🏫</span>
+          <span><strong>Priya</strong><small>Year 5 teacher</small></span>
+        </div>
+      </article>
+      <article class="card reveal">
+        <span class="tape" style="background:color-mix(in srgb, var(--mint) 70%, transparent)" aria-hidden="true"></span>
+        <p class="quote">"The kids ask for it. That's the whole review. The sticker stamps have become a currency in my classroom."</p>
+        <div class="quote__who">
+          <span class="avatar" style="background:var(--mint)">🧑‍🏫</span>
+          <span><strong>Marcus</strong><small>Middle school science</small></span>
+        </div>
+      </article>
+      <article class="card reveal">
+        <span class="tape" style="background:color-mix(in srgb, var(--bubble) 60%, transparent)" aria-hidden="true"></span>
+        <p class="quote">"No logins was the selling point for our data lead. Ten seconds and thirty-two students were working."</p>
+        <div class="quote__who">
+          <span class="avatar" style="background:var(--sky)">👨‍🏫</span>
+          <span><strong>Yara</strong><small>Head of maths</small></span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ FAQ ============================ -->
+<section class="section" id="faq">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="badge">Questions</span>
+      <h2 style="margin-top:.8rem">The things everyone asks</h2>
+    </div>
+
+    <div class="faq">
+      <details class="qa reveal" open>
+        <summary>🎒 Do students need an account?</summary>
+        <div class="qa__body"><p>No. They open the join page, type the room code and a display name, and start working. Nothing else is collected about them, and boards are wiped when you close the room unless you choose to save the lesson.</p></div>
+      </details>
+      <details class="qa reveal">
+        <summary>💳 What happens after the free trial?</summary>
+        <div class="qa__body"><p>We email you three days before it ends. If you do nothing, your account drops to the free Starter plan — you keep your saved lessons, you just go back to one room at a time. Nothing is charged without you choosing to continue.</p></div>
+      </details>
+      <details class="qa reveal">
+        <summary>🖥️ Which devices work?</summary>
+        <div class="qa__body"><p>Anything with a modern browser: Chromebooks, iPads, Android tablets, laptops, phones and interactive whiteboards. There is no app to install and nothing for IT to approve.</p></div>
+      </details>
+      <details class="qa reveal">
+        <summary>🏫 Can my school pay by invoice?</summary>
+        <div class="qa__body"><p>Yes. The School plan bills per teacher seat and supports purchase orders, invoices and annual terms. Pick <em>School</em> on the subscribe page and we'll send paperwork rather than a card form.</p></div>
+      </details>
+      <details class="qa reveal">
+        <summary>🚪 How do I cancel?</summary>
+        <div class="qa__body"><p>One button in your dashboard, no phone call, no retention maze. You keep access until the end of the period you've already paid for, and you can export every board first.</p></div>
+      </details>
+      <details class="qa reveal">
+        <summary>🔐 Where does our data live?</summary>
+        <div class="qa__body"><p>Teacher accounts store an email and a password hash. Student boards are tied to a room, not a person, and are deleted with the room. You can export or delete everything from your dashboard at any time.</p></div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ FINAL CTA ============================ -->
+<section class="section">
+  <div class="wrap">
+    <div class="card reveal" style="text-align:center;padding:clamp(2.2rem,6vw,3.6rem);background:linear-gradient(140deg,var(--grape),var(--bubble));color:#fff;position:relative;overflow:hidden">
+      <span class="sticker" style="top:18px;left:24px;background:var(--sunny)">🎈</span>
+      <span class="sticker" style="bottom:18px;right:24px;background:var(--mint);animation-delay:-1.8s">✨</span>
+      <h2 style="color:#fff">Your next lesson could look like this</h2>
+      <p style="color:#ffe9f5;max-width:52ch;margin-inline:auto">
+        Set up a room before the kettle boils. Free plan forever, Pro free for 30 days.
+      </p>
+      <div class="hero__cta" style="justify-content:center">
+        <a class="btn btn--sun btn--lg" href="subscribe.html" data-confetti>Start free 🎉</a>
+        <a class="btn btn--lg" href="pricing.html">See the plans</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__grid">
+      <div>
+        <a class="logo" href="index.html" style="color:#fff"><span class="logo__mark">✏️</span> Doodle Desk</a>
+        <p style="margin-top:.8rem;font-size:.97rem">Live whiteboards for real classrooms. Made by people who have taught a Friday period five.</p>
+        <form class="newsletter" data-newsletter novalidate>
+          <label class="visually-hidden" for="nl-email">Email address</label>
+          <input id="nl-email" type="email" placeholder="you@school.edu" required>
+          <button class="btn btn--sun" type="submit">Join</button>
+        </form>
+        <p class="small" data-newsletter-msg style="margin-top:.5rem;color:var(--sunny)"></p>
+      </div>
+      <div>
+        <h4>Product</h4>
+        <div class="footer__links">
+          <a href="index.html#features">Features</a>
+          <a href="demo.html">Live demo</a>
+          <a href="pricing.html">Pricing</a>
+          <a href="FinalAtt.html">Attendance tracker</a>
+        </div>
+      </div>
+      <div>
+        <h4>Account</h4>
+        <div class="footer__links">
+          <a href="subscribe.html">Start free trial</a>
+          <a href="login.html">Log in</a>
+          <a href="dashboard.html">My rooms</a>
+          <a href="subscribe.html?plan=school&amp;billing=annual">For schools</a>
+          <a href="index.html#faq">Help &amp; FAQ</a>
+        </div>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <div class="footer__links">
+          <a href="index.html#faq">About</a>
+          <a href="mailto:hello@doodledesk.example">Contact</a>
+          <a href="index.html#faq">Privacy</a>
+          <a href="index.html#faq">Terms</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© <span data-year>2026</span> Doodle Desk. Built with too many crayons.</span>
+      <span>Made for teachers 💛</span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/site.js"></script>
+<script src="assets/js/pricing.js"></script>
+</body>
+</html>

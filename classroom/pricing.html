@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pricing — Doodle Desk</title>
+<meta name="description" content="Doodle Desk pricing: free forever for one class, $7/month for unlimited classes, and per-seat school plans with invoicing and SSO.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✏️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/site.css">
+<script>
+  /* Runs before first paint: sets the theme so dark-mode users never see a
+     flash, and marks the page as scripted so reveal-on-scroll can hide things
+     safely. Without JS nothing is ever hidden. */
+  document.documentElement.classList.add("js");
+  try {
+    var t = localStorage.getItem("doodle-theme") ||
+      (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", t);
+  } catch (e) {}
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav class="nav">
+  <div class="wrap nav__inner">
+    <a class="logo" href="index.html"><span class="logo__mark">✏️</span> Doodle Desk</a>
+    <div class="nav__links" id="nav-links" data-open="false">
+      <a href="index.html">Home</a>
+      <a href="index.html#features">Features</a>
+      <a href="demo.html">Live demo</a>
+      <a href="pricing.html" aria-current="page">Pricing</a>
+      <a href="index.html#faq">FAQ</a>
+      <a href="login.html">Log in</a>
+    </div>
+    <div class="nav__actions">
+      <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch colour mode">🌙</button>
+      <a class="btn btn--primary" href="subscribe.html">Start free</a>
+      <button class="icon-btn nav__burger" data-burger type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+
+<section class="section" style="position:relative;overflow:hidden">
+  <div class="blob" style="width:380px;height:380px;background:var(--bubble);top:-120px;right:-100px"></div>
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="badge badge--grape">Pricing</span>
+      <h1 style="margin-top:.8rem">Cheaper than a week of<br>laminating pouches</h1>
+      <p>Start free and stay free if one class is all you need. Everything else is one flat monthly fee — every feature included, no surprise add-ons.</p>
+    </div>
+
+    <div class="toggle-wrap reveal">
+      <div class="toggle" role="group" aria-label="Billing period">
+        <button type="button" data-billing="monthly" aria-pressed="false">Monthly</button>
+        <button type="button" data-billing="annual" aria-pressed="true">Yearly</button>
+      </div>
+      <span class="badge badge--mint">Yearly = 2 months free 🎁</span>
+    </div>
+
+    <div class="grid grid--3" data-plans>
+      <!-- Fallback for crawlers and no-JS visitors; pricing.js replaces this
+           with the interactive, billing-aware version on load. -->
+      <article class="card plan">
+        <div class="card__icon" style="background:var(--sky)">🎒</div>
+        <h3 class="plan__name">Starter</h3>
+        <p class="plan__blurb">Everything you need to run live boards with one class.</p>
+        <div class="plan__price"><span class="plan__amount">Free</span></div>
+        <p class="plan__sub">Free forever, no card needed</p>
+        <ul class="plan__list">
+          <li>1 live room, up to 30 students</li>
+          <li>Student whiteboards in real time</li>
+          <li>Attendance tracker</li>
+        </ul>
+        <a class="btn btn--sun btn--block" href="subscribe.html?plan=starter">Start for free</a>
+      </article>
+      <article class="card plan plan--featured">
+        <span class="badge badge--pink plan__flag">★ Most loved</span>
+        <div class="card__icon" style="background:var(--sunny)">🚀</div>
+        <h3 class="plan__name">Teacher Pro</h3>
+        <p class="plan__blurb">For the teacher who lives in the room all day, every day.</p>
+        <div class="plan__price"><span class="plan__amount">$7</span><span class="plan__per">/ month</span></div>
+        <p class="plan__sub">billed yearly as $84 — or $9 monthly</p>
+        <ul class="plan__list">
+          <li>Unlimited rooms &amp; classes</li>
+          <li>Assignments, marking &amp; rubrics</li>
+          <li>Class progress dashboard</li>
+        </ul>
+        <a class="btn btn--primary btn--block" href="subscribe.html?plan=pro">Start 30-day free trial</a>
+      </article>
+      <article class="card plan">
+        <div class="card__icon" style="background:var(--mint)">🏫</div>
+        <h3 class="plan__name">School</h3>
+        <p class="plan__blurb">Roll it out across a whole staffroom, billed to the school.</p>
+        <div class="plan__price"><span class="plan__amount">$6</span><span class="plan__per">/ month / teacher</span></div>
+        <p class="plan__sub">per teacher, billed yearly (min. 5)</p>
+        <ul class="plan__list">
+          <li>Everything in Teacher Pro</li>
+          <li>SSO, rostering &amp; admin dashboard</li>
+          <li>Invoice or purchase-order billing</li>
+        </ul>
+        <a class="btn btn--sun btn--block" href="subscribe.html?plan=school">Talk to us</a>
+      </article>
+    </div>
+
+    <p class="center muted small" style="margin-top:2.5rem">
+      All prices in USD and exclude local tax. Schools can pay by invoice or purchase order.
+    </p>
+  </div>
+</section>
+
+<!-- ============================ COMPARISON ============================ -->
+<section class="section section--tint">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <h2>Line by line</h2>
+      <p>The boring table, for the people who like the boring table.</p>
+    </div>
+
+    <div class="table-scroll reveal">
+      <table class="compare">
+        <caption class="visually-hidden">Feature comparison across the Starter, Teacher Pro and School plans</caption>
+        <thead>
+          <tr>
+            <th scope="col">Feature</th>
+            <th scope="col">🎒 Starter</th>
+            <th scope="col">🚀 Teacher Pro</th>
+            <th scope="col">🏫 School</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Live student whiteboards</th><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><th scope="row">Rooms running at once</th><td>1</td><td>Unlimited</td><td>Unlimited</td></tr>
+          <tr><th scope="row">Students per room</th><td>30</td><td>200</td><td>200</td></tr>
+          <tr><th scope="row">Join by room code (no accounts)</th><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><th scope="row">Pens, shapes, text, stickers</th><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><th scope="row">Maths symbols &amp; graph paper</th><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><th scope="row">Attendance tracker</th><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><th scope="row">Save &amp; reuse lesson packs</th><td>—</td><td>✅</td><td>✅</td></tr>
+          <tr><th scope="row">Assignments &amp; marking</th><td>—</td><td>✅</td><td>✅</td></tr>
+          <tr><th scope="row">Class progress dashboard</th><td>—</td><td>✅</td><td>✅</td></tr>
+          <tr><th scope="row">Export boards to PDF / PNG</th><td>PNG only</td><td>✅</td><td>✅</td></tr>
+          <tr><th scope="row">Shared department library</th><td>—</td><td>—</td><td>✅</td></tr>
+          <tr><th scope="row">Google / Microsoft SSO</th><td>—</td><td>—</td><td>✅</td></tr>
+          <tr><th scope="row">Admin dashboard &amp; rostering</th><td>—</td><td>—</td><td>✅</td></tr>
+          <tr><th scope="row">Invoice / purchase-order billing</th><td>—</td><td>—</td><td>✅</td></tr>
+          <tr><th scope="row">Support</th><td>Community</td><td>Priority email</td><td>Named contact</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ BILLING FAQ ============================ -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="badge badge--sky">Billing</span>
+      <h2 style="margin-top:.8rem">Money questions, answered plainly</h2>
+    </div>
+
+    <div class="faq">
+      <details class="qa reveal" open>
+        <summary>💳 When am I charged?</summary>
+        <div class="qa__body"><p>Never during the 30-day trial, and never without an email first. The first charge lands the day the trial ends, then monthly or yearly on that date depending on what you picked.</p></div>
+      </details>
+      <details class="qa reveal">
+        <summary>🔄 Can I switch between monthly and yearly?</summary>
+        <div class="qa__body"><p>Any time, in one click. Switching to yearly credits whatever you've already paid for the current month. Switching back takes effect at the end of the year you've paid for.</p></div>
+      </details>
+      <details class="qa reveal">
+        <summary>👥 How do school seats work?</summary>
+        <div class="qa__body"><p>One seat per teacher, minimum five, added or removed whenever staffing changes. Seats added mid-term are pro-rated, so you never pay for a full year of someone who joined in May.</p></div>
+      </details>
+      <details class="qa reveal">
+        <summary>🧾 Do you do refunds?</summary>
+        <div class="qa__body"><p>Yes — if you cancel within 14 days of a charge and haven't used the plan, email us and we'll refund it. If something broke and ruined a lesson, tell us anyway; we'd rather fix it and refund you than argue.</p></div>
+      </details>
+      <details class="qa reveal">
+        <summary>🎓 Is there a discount for small schools?</summary>
+        <div class="qa__body"><p>There is. Schools under 150 students, charities and after-school clubs get School-plan features at Pro pricing. Mention it when you get in touch.</p></div>
+      </details>
+    </div>
+
+    <div class="center" style="margin-top:2.5rem">
+      <a class="btn btn--primary btn--lg" href="subscribe.html" data-confetti>Start your free trial 🚀</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__grid">
+      <div>
+        <a class="logo" href="index.html" style="color:#fff"><span class="logo__mark">✏️</span> Doodle Desk</a>
+        <p style="margin-top:.8rem;font-size:.97rem">Live whiteboards for real classrooms. Made by people who have taught a Friday period five.</p>
+        <form class="newsletter" data-newsletter novalidate>
+          <label class="visually-hidden" for="nl-email">Email address</label>
+          <input id="nl-email" type="email" placeholder="you@school.edu" required>
+          <button class="btn btn--sun" type="submit">Join</button>
+        </form>
+        <p class="small" data-newsletter-msg style="margin-top:.5rem;color:var(--sunny)"></p>
+      </div>
+      <div>
+        <h4>Product</h4>
+        <div class="footer__links">
+          <a href="index.html#features">Features</a>
+          <a href="demo.html">Live demo</a>
+          <a href="pricing.html">Pricing</a>
+          <a href="FinalAtt.html">Attendance tracker</a>
+        </div>
+      </div>
+      <div>
+        <h4>Account</h4>
+        <div class="footer__links">
+          <a href="subscribe.html">Start free trial</a>
+          <a href="login.html">Log in</a>
+          <a href="dashboard.html">My rooms</a>
+          <a href="subscribe.html?plan=school&amp;billing=annual">For schools</a>
+          <a href="index.html#faq">Help &amp; FAQ</a>
+        </div>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <div class="footer__links">
+          <a href="index.html#faq">About</a>
+          <a href="mailto:hello@doodledesk.example">Contact</a>
+          <a href="index.html#faq">Privacy</a>
+          <a href="index.html#faq">Terms</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© <span data-year>2026</span> Doodle Desk. Built with too many crayons.</span>
+      <span>Made for teachers 💛</span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/site.js"></script>
+<script src="assets/js/pricing.js"></script>
+</body>
+</html>

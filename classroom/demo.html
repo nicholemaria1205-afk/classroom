@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Try the board — Doodle Desk</title>
+<meta name="description" content="Play with a real Doodle Desk student whiteboard: pens, highlighter, stamps, undo and PNG export. No sign-up needed.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✏️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/site.css">
+<script>
+  /* Runs before first paint: sets the theme so dark-mode users never see a
+     flash, and marks the page as scripted so reveal-on-scroll can hide things
+     safely. Without JS nothing is ever hidden. */
+  document.documentElement.classList.add("js");
+  try {
+    var t = localStorage.getItem("doodle-theme") ||
+      (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", t);
+  } catch (e) {}
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav class="nav">
+  <div class="wrap nav__inner">
+    <a class="logo" href="index.html"><span class="logo__mark">✏️</span> Doodle Desk</a>
+    <div class="nav__links" id="nav-links" data-open="false">
+      <a href="index.html">Home</a>
+      <a href="index.html#features">Features</a>
+      <a href="demo.html" aria-current="page">Live demo</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="index.html#faq">FAQ</a>
+      <a href="login.html">Log in</a>
+    </div>
+    <div class="nav__actions">
+      <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch colour mode">🌙</button>
+      <a class="btn btn--primary" href="subscribe.html">Start free</a>
+      <button class="icon-btn nav__burger" data-burger type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<section class="section" style="padding-top:2.5rem">
+  <div class="wrap">
+    <div class="section-head" style="margin-bottom:1.8rem">
+      <span class="badge badge--pink">Demo board</span>
+      <h1 style="margin-top:.8rem;font-size:clamp(2rem,5vw,3rem)">Go on — draw something</h1>
+      <p>This is the actual student board. Everything stays in your browser; nothing is uploaded anywhere.</p>
+    </div>
+
+    <div class="wb">
+      <!-- ---------------------------- TOOLS ---------------------------- -->
+      <div class="wb__tools">
+        <div class="tool-group">
+          <h4>Tool</h4>
+          <div class="sizes">
+            <button class="size-btn" type="button" data-tool="pen" aria-pressed="true" title="Pen" style="font-size:1.2rem">✏️</button>
+            <button class="size-btn" type="button" data-tool="marker" aria-pressed="false" title="Highlighter" style="font-size:1.2rem">🖍️</button>
+            <button class="size-btn" type="button" data-tool="erase" aria-pressed="false" title="Eraser" style="font-size:1.2rem">🧽</button>
+          </div>
+        </div>
+
+        <div class="tool-group">
+          <h4>Colour</h4>
+          <div class="swatches">
+            <button class="swatch" type="button" data-colour="#7c3aed" aria-pressed="true" aria-label="Purple" style="background:#7c3aed"></button>
+            <button class="swatch" type="button" data-colour="#ff4d9d" aria-pressed="false" aria-label="Pink" style="background:#ff4d9d"></button>
+            <button class="swatch" type="button" data-colour="#ffc93c" aria-pressed="false" aria-label="Yellow" style="background:#ffc93c"></button>
+            <button class="swatch" type="button" data-colour="#16c79a" aria-pressed="false" aria-label="Green" style="background:#16c79a"></button>
+            <button class="swatch" type="button" data-colour="#38bdf8" aria-pressed="false" aria-label="Blue" style="background:#38bdf8"></button>
+            <button class="swatch" type="button" data-colour="#ff7a5c" aria-pressed="false" aria-label="Orange" style="background:#ff7a5c"></button>
+            <button class="swatch" type="button" data-colour="#1b1235" aria-pressed="false" aria-label="Black" style="background:#1b1235"></button>
+          </div>
+        </div>
+
+        <div class="tool-group">
+          <h4>Size</h4>
+          <div class="sizes">
+            <button class="size-btn" type="button" data-size="4" aria-pressed="false" aria-label="Thin"><i style="width:8px;height:8px"></i></button>
+            <button class="size-btn" type="button" data-size="8" aria-pressed="true" aria-label="Medium"><i style="width:15px;height:15px"></i></button>
+            <button class="size-btn" type="button" data-size="16" aria-pressed="false" aria-label="Thick"><i style="width:24px;height:24px"></i></button>
+          </div>
+        </div>
+
+        <div class="tool-group">
+          <h4>Stamps</h4>
+          <div class="stamp-row">
+            <button class="stamp" type="button" data-stamp="⭐" aria-pressed="false" aria-label="Star stamp">⭐</button>
+            <button class="stamp" type="button" data-stamp="✅" aria-pressed="false" aria-label="Tick stamp">✅</button>
+            <button class="stamp" type="button" data-stamp="🎉" aria-pressed="false" aria-label="Party stamp">🎉</button>
+            <button class="stamp" type="button" data-stamp="💡" aria-pressed="false" aria-label="Idea stamp">💡</button>
+            <button class="stamp" type="button" data-stamp="🦖" aria-pressed="false" aria-label="Dinosaur stamp">🦖</button>
+            <button class="stamp" type="button" data-stamp="❤️" aria-pressed="false" aria-label="Heart stamp">❤️</button>
+          </div>
+        </div>
+
+        <p class="small muted mb-0">Marks on board: <strong data-item-count>0</strong></p>
+      </div>
+
+      <!-- ---------------------------- CANVAS ---------------------------- -->
+      <div>
+        <div class="wb__canvas-wrap">
+          <canvas id="board" width="1200" height="740" role="img" aria-label="Drawing canvas. Use a mouse, finger or stylus to draw."></canvas>
+          <p class="wb__hint mb-0">Draw with a mouse, finger or stylus · Ctrl/⌘ + Z to undo</p>
+        </div>
+
+        <div class="wb__actions">
+          <button class="btn btn--sun" type="button" data-undo>↩️ Undo</button>
+          <button class="btn" type="button" data-clear>🧹 Clear board</button>
+          <button class="btn btn--mint" type="button" data-save>⬇️ Save as PNG</button>
+          <a class="btn btn--primary" href="subscribe.html" data-confetti>Get the real thing 🚀</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ TEACHER VIEW ============================ -->
+<section class="section section--tint">
+  <div class="wrap grid grid--2" style="align-items:center">
+    <div class="reveal">
+      <span class="badge badge--grape">Teacher view</span>
+      <h2 style="margin-top:.8rem">On your screen, all of them at once</h2>
+      <p class="muted">
+        While students work on their own boards, you see every one of them updating live.
+        Click any thumbnail to zoom in, draw a hint on it, or send a sticker. The green ring
+        means someone is drawing right now.
+      </p>
+      <ul class="plan__list" style="margin-bottom:1.6rem">
+        <li>Sort by "finished", "stuck" or "not started"</li>
+        <li>Push a starter template to every board</li>
+        <li>Freeze the room when you need eyes front</li>
+        <li>Export the whole class as one PDF</li>
+      </ul>
+      <a class="btn btn--primary btn--lg" href="pricing.html">See what you get 💛</a>
+    </div>
+
+    <div class="window reveal">
+      <div class="window__bar">
+        <span class="window__dot" style="background:#ff6058"></span>
+        <span class="window__dot" style="background:#ffc93c"></span>
+        <span class="window__dot" style="background:#28c840"></span>
+        <span class="window__title">Room · SUN-42B · 8 online</span>
+      </div>
+      <div class="window__body">
+        <div class="boards" data-mini-boards style="grid-template-columns:repeat(4,1fr)"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ OTHER TOOL ============================ -->
+<section class="section">
+  <div class="wrap">
+    <div class="card reveal" style="text-align:center;padding:clamp(2rem,5vw,3rem)">
+      <span class="tape" aria-hidden="true"></span>
+      <h2>Also in the box: the attendance tracker</h2>
+      <p class="muted" style="max-width:56ch;margin-inline:auto">
+        Tap a name, get a register. Drag students into seating-plan order, switch classes,
+        export the data. It's free on every plan, including Starter.
+      </p>
+      <a class="btn btn--mint btn--lg" href="FinalAtt.html">Open the tracker 📋</a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__grid">
+      <div>
+        <a class="logo" href="index.html" style="color:#fff"><span class="logo__mark">✏️</span> Doodle Desk</a>
+        <p style="margin-top:.8rem;font-size:.97rem">Live whiteboards for real classrooms. Made by people who have taught a Friday period five.</p>
+        <form class="newsletter" data-newsletter novalidate>
+          <label class="visually-hidden" for="nl-email">Email address</label>
+          <input id="nl-email" type="email" placeholder="you@school.edu" required>
+          <button class="btn btn--sun" type="submit">Join</button>
+        </form>
+        <p class="small" data-newsletter-msg style="margin-top:.5rem;color:var(--sunny)"></p>
+      </div>
+      <div>
+        <h4>Product</h4>
+        <div class="footer__links">
+          <a href="index.html#features">Features</a>
+          <a href="demo.html">Live demo</a>
+          <a href="pricing.html">Pricing</a>
+          <a href="FinalAtt.html">Attendance tracker</a>
+        </div>
+      </div>
+      <div>
+        <h4>Account</h4>
+        <div class="footer__links">
+          <a href="subscribe.html">Start free trial</a>
+          <a href="login.html">Log in</a>
+          <a href="dashboard.html">My rooms</a>
+          <a href="subscribe.html?plan=school&amp;billing=annual">For schools</a>
+          <a href="index.html#faq">Help &amp; FAQ</a>
+        </div>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <div class="footer__links">
+          <a href="index.html#faq">About</a>
+          <a href="mailto:hello@doodledesk.example">Contact</a>
+          <a href="index.html#faq">Privacy</a>
+          <a href="index.html#faq">Terms</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© <span data-year>2026</span> Doodle Desk. Built with too many crayons.</span>
+      <span>Made for teachers 💛</span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/site.js"></script>
+<script src="assets/js/board-engine.js"></script>
+<script src="assets/js/board-ui.js"></script>
+<script src="assets/js/whiteboard.js"></script>
+</body>
+</html>

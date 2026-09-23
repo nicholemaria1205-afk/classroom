@@ -1,0 +1,27 @@
+# Doodle Desk — static site, nothing to build.
+# Every page is plain HTML/CSS/JS, so Netlify just serves this folder as-is.
+
+[build]
+  publish = "."
+
+# The one server-side piece: hands browsers a short-lived Ably token so live
+# sync works across devices. Needs ABLY_API_KEY set in the site's environment
+# variables. Without it the site still works — rooms just stay in one browser.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+# Fingerprint-free filenames, so let the browser revalidate rather than
+# serve a stale board engine after a deploy.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

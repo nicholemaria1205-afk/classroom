@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Start your subscription — Doodle Desk</title>
+<meta name="description" content="Create your Doodle Desk account and start a 30-day free trial. Monthly or yearly billing, cancel any time.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✏️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/site.css">
+<script>
+  /* Runs before first paint: sets the theme so dark-mode users never see a
+     flash, and marks the page as scripted so reveal-on-scroll can hide things
+     safely. Without JS nothing is ever hidden. */
+  document.documentElement.classList.add("js");
+  try {
+    var t = localStorage.getItem("doodle-theme") ||
+      (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", t);
+  } catch (e) {}
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav class="nav">
+  <div class="wrap nav__inner">
+    <a class="logo" href="index.html"><span class="logo__mark">✏️</span> Doodle Desk</a>
+    <div class="nav__links" id="nav-links" data-open="false">
+      <a href="index.html">Home</a>
+      <a href="index.html#features">Features</a>
+      <a href="demo.html">Live demo</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="index.html#faq">FAQ</a>
+      <a href="login.html">Log in</a>
+    </div>
+    <div class="nav__actions">
+      <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch colour mode">🌙</button>
+      <button class="icon-btn nav__burger" data-burger type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<section class="section" style="position:relative;overflow:hidden">
+  <div class="blob" style="width:340px;height:340px;background:var(--sunny);top:-110px;left:-120px"></div>
+  <div class="wrap">
+
+    <div class="section-head reveal" style="margin-bottom:2.2rem">
+      <span class="badge badge--pink">30 days free</span>
+      <h1 style="margin-top:.8rem">Let's get your room open</h1>
+      <p>Two minutes, no card charged today. You can change or cancel your plan from the dashboard whenever you like.</p>
+    </div>
+
+    <div class="checkout">
+
+      <!-- ------------------------------ FORM ------------------------------ -->
+      <div data-form-panel>
+        <form id="subscribe-form" class="card" novalidate>
+          <h2 style="font-size:1.5rem">1. Pick a plan</h2>
+
+          <div class="toggle-wrap" style="justify-content:flex-start;margin-bottom:1.2rem">
+            <div class="toggle" role="group" aria-label="Billing period">
+              <button type="button" data-set-billing="monthly" aria-pressed="false">Monthly</button>
+              <button type="button" data-set-billing="annual" aria-pressed="true">Yearly</button>
+            </div>
+            <span class="badge badge--mint">2 months free 🎁</span>
+          </div>
+
+          <div class="plan-pick" data-plan-pick role="radiogroup" aria-label="Subscription plan"></div>
+
+          <div class="field" data-seats-field hidden>
+            <label for="seats">How many teacher seats?</label>
+            <input id="seats" name="seats" type="number" min="5" value="5" inputmode="numeric">
+            <small>Minimum five. Add or remove seats whenever staffing changes.</small>
+            <span class="err"></span>
+          </div>
+
+          <h2 style="font-size:1.5rem;margin-top:2rem">2. Your details</h2>
+
+          <div class="field">
+            <label for="fullname">Your name</label>
+            <input id="fullname" name="fullname" type="text" autocomplete="name" placeholder="Alex Okafor">
+            <span class="err"></span>
+          </div>
+
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email" placeholder="you@school.edu">
+            <small>This is your login and where the receipt goes.</small>
+            <span class="err"></span>
+          </div>
+
+          <div class="field">
+            <label for="password">Create a password</label>
+            <input id="password" name="password" type="password" autocomplete="new-password" placeholder="At least 8 characters">
+            <span class="err"></span>
+          </div>
+
+          <div class="field">
+            <label for="school">School or organisation <span class="muted">(optional)</span></label>
+            <input id="school" name="school" type="text" autocomplete="organization" placeholder="Meadow Lane Primary">
+            <span class="err"></span>
+          </div>
+
+          <div data-card-block>
+            <h2 style="font-size:1.5rem;margin-top:2rem">3. Card for after the trial</h2>
+
+            <div class="notice">
+              <span aria-hidden="true">🔒</span>
+              <span><strong>Nothing is charged today.</strong> We only keep your card so the room doesn't
+              close the morning your trial ends. Cancel before day 30 and you pay nothing at all.</span>
+            </div>
+
+            <div class="field">
+              <label for="card">Card number</label>
+              <input id="card" name="card" type="text" inputmode="numeric" autocomplete="cc-number" placeholder="4242 4242 4242 4242">
+              <span class="err"></span>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="exp">Expiry</label>
+                <input id="exp" name="exp" type="text" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY">
+                <span class="err"></span>
+              </div>
+              <div class="field">
+                <label for="cvc">CVC</label>
+                <input id="cvc" name="cvc" type="text" inputmode="numeric" autocomplete="cc-csc" placeholder="123">
+                <span class="err"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:1.4rem">
+            <label style="display:flex;gap:.7rem;align-items:flex-start;font-weight:400;font-family:var(--font-body);font-size:.95rem">
+              <input type="checkbox" id="terms" name="terms" style="width:22px;height:22px;flex:none;accent-color:var(--grape)">
+              <span>I agree to the terms of service and privacy policy, and I'm happy to be emailed about my account.</span>
+            </label>
+          </div>
+
+          <p class="small" data-checkout-error hidden style="color:var(--coral);font-weight:700"></p>
+
+          <button class="btn btn--primary btn--lg btn--block" type="submit" style="margin-top:1rem">Start my free trial</button>
+
+          <p class="center small muted" style="margin-top:1rem">
+            Already with us? <a href="login.html">Log in instead</a>.
+          </p>
+        </form>
+      </div>
+
+      <!-- ------------------------------ SUMMARY ------------------------------ -->
+      <aside class="summary" data-summary-panel>
+        <div class="card">
+          <span class="badge badge--sky" style="margin-bottom:.8rem">Order summary</span>
+          <div data-summary></div>
+        </div>
+
+        <div class="card" style="margin-top:1.2rem;background:var(--surface-2)">
+          <h3 style="font-size:1.15rem">What happens next</h3>
+          <ul class="plan__list" style="margin-bottom:0">
+            <li>Your dashboard opens straight away</li>
+            <li>Create a room and share the code</li>
+            <li>We email a reminder before day 30</li>
+            <li>Cancel in one click, any time</li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- ------------------------------ SUCCESS ------------------------------ -->
+      <div class="card success" data-success style="grid-column:1 / -1">
+        <div class="success__mark">🎉</div>
+        <h2>You're in, <span data-success-name>friend</span>!</h2>
+        <p class="muted" style="max-width:48ch;margin-inline:auto">
+          Your <strong data-success-plan>Teacher Pro</strong> account is ready and we've sent a welcome
+          note to <strong data-success-email>you@school.edu</strong>. Time to open your first room.
+        </p>
+        <div class="hero__cta" style="justify-content:center">
+          <a class="btn btn--primary btn--lg" href="dashboard.html">Open my first room 🚪</a>
+          <a class="btn btn--lg" href="demo.html">Have a practice first</a>
+        </div>
+        <p class="small muted" style="margin-top:1.5rem">
+          Demo mode: no payment provider is connected to this site yet, so nothing was charged
+          and no account was created. See <code>README.md</code> to wire up Stripe.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__bottom" style="margin-top:0;border-top:none;padding-top:0">
+      <span>© <span data-year>2026</span> Doodle Desk. Built with too many crayons.</span>
+      <span><a href="index.html">Home</a> · <a href="pricing.html">Pricing</a> · <a href="mailto:hello@doodledesk.example">Contact</a></span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/site.js"></script>
+<script src="assets/js/checkout.js"></script>
+</body>
+</html>

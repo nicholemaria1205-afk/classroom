@@ -6,7 +6,6 @@
    ========================================================================== */
 "use strict";
 
-const { getStore } = require("@netlify/blobs");
 const jwt = require("./_lib/jwt.js");
 const passwords = require("./_lib/passwords.js");
 
@@ -45,9 +44,14 @@ exports.handler = async function (event) {
     return respond(400, { error: "Enter your email and password." });
   }
 
-  var store = getStore("doodle-teachers");
-
   try {
+    // Netlify Blobs setup lives inside the try so a failure returns a readable
+    // error instead of crashing the function (which showed up as a 502).
+    // connectLambda(event) is required for classic exports.handler functions.
+    const blobs = require("@netlify/blobs");
+    blobs.connectLambda(event);
+    var store = blobs.getStore("doodle-teachers");
+
     var record = await store.get(email, { type: "json" });
     if (!record || !passwords.verify(password, record.passwordHash)) {
       return respond(401, { error: "Email or password didn't match." });

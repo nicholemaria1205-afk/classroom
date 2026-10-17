@@ -23,6 +23,8 @@
   var board = null;
   var ui = null;
   var heartbeat = null;
+  var frozen = false;
+  var locked = false;
 
   /* ---- Join ------------------------------------------------------------- */
   function showJoin(message) {
@@ -92,29 +94,38 @@
 
     showPrompt(room.prompt);
     setFrozen(room.frozen);
+    setLocked(!!me.locked);
 
     board = window.DoodleBoard(document.getElementById("board"), {
       author: "student",
-      onStrokeEnd: function (item, items) {
+      onStrokeEnd: function () {
         if (ui) ui.refresh();
-        publish(items);
+        publish();
       },
-      onDrawing: function (items) { publish(items, true); }
+      onDrawing: function () { publish(true); }
     });
 
     ui = window.DoodleBoardUI(board, document, {
       filename: me.name + "-board",
-      onChange: function () { publish(board.getItems()); }
+      printTitle: me.name + "'s board — " + room.name,
+      onChange: function () { publish(); }
     });
     board.setTool("pen");
 
-    /* A refresh in this tab shouldn't lose the lesson */
+    /* A refresh in this tab shouldn't lose the lesson — and nor should
+       closing it: the board is also kept on this device under the student's
+       name, so rejoining the same room later brings it back. */
     var saved = net.loadMyBoard(code, me.id);
+    if (!saved.length) saved = loadKept();
     if (saved.length) {
       board.setItems(saved);
-      ui.refresh();
-      publish(saved);
+      if (saved.length > 1 || saved[0].type !== "bg") window.doodleToast("Welcome back — your board is just as you left it ✏️");
     }
+    /* The teacher's lesson template, unless this board already has its own paper */
+    var hasPaper = saved.some(function (i) { return i && i.type === "bg"; });
+    if (!hasPaper && room.template) board.setBackground(room.template, true);
+    ui.refresh();
+    if (saved.length || room.template) publish();
 
     /* Across devices a quiet teacher isn't a closed room — only an explicit
        "room-closed" ends the session. In one browser we can simply look. */
@@ -134,7 +145,26 @@
     return { id: me.id, name: me.name, status: me.status || "working", marks: me.marks || 0, joinedAt: me.joinedAt };
   }
 
-  function publish(items, throttled) {
+  function keptKey() {
+    return "doodle-keep-" + code + "-" + String(me.name || "").trim().toLowerCase();
+  }
+
+  function loadKept() {
+    try {
+      var kept = JSON.parse(localStorage.getItem(keptKey()) || "null");
+      /* Old boards are let go after a fortnight */
+      if (kept && Date.now() - kept.at < 14 * 864e5) return kept.items || [];
+    } catch (e) {}
+    return [];
+  }
+
+  function keep(items) {
+    try {
+      localStorage.setItem(keptKey(), JSON.stringify({ at: Date.now(), items: items }));
+    } catch (e) {}
+  }
+
+  function publish(throttled) {
     if (!board || !me) return;
     /* A whole class drawing at once shares one channel, so across devices
        keep mid-stroke updates well apart; the finished stroke always goes. */
@@ -143,11 +173,13 @@
     lastPublish = Date.now();
 
     var thumb = board.toThumb(300);
-    me.marks = items.length;
-    net.setStudent(code, me.id, { thumb: thumb, marks: items.length });
+    var items = board.getItems();
+    me.marks = board.count();
+    net.setStudent(code, me.id, { thumb: thumb, marks: me.marks });
     net.saveMyBoard(code, me.id, items);
+    keep(items);
 
-    var payload = { code: code, studentId: me.id, marks: items.length, student: summary() };
+    var payload = { code: code, studentId: me.id, marks: me.marks, student: summary() };
     /* In one browser the thumbnail is already in shared storage; across
        devices it has to travel with the message. */
     if (net.mode() === "remote") payload.thumb = thumb;
@@ -160,17 +192,39 @@
     if (text) document.querySelector("[data-prompt-text]").textContent = text;
   }
 
-  function setFrozen(frozen) {
-    document.querySelector("[data-frozen]").setAttribute("data-on", String(!!frozen));
+  /* Frozen is the whole class; locked is just this student. Either one
+     stops drawing, and the veil says which. */
+  function applyPause() {
+    document.querySelector("[data-frozen]").setAttribute("data-on", String(frozen));
+    document.querySelector("[data-locked]").setAttribute("data-on", String(locked && !frozen));
     var canvas = document.getElementById("board");
-    canvas.style.pointerEvents = frozen ? "none" : "";
+    canvas.style.pointerEvents = frozen || locked ? "none" : "";
+    document.querySelectorAll(".wb__tools button, .wb__tools select, [data-undo], [data-redo], [data-clear]").forEach(function (el) {
+      el.disabled = frozen || locked;
+    });
+    if (!frozen && !locked && ui) ui.refresh();
   }
 
-  function roomClosed() {
+  function setFrozen(on) {
+    frozen = !!on;
+    applyPause();
+  }
+
+  function setLocked(on) {
+    locked = !!on;
+    if (me) me.locked = locked;
+    applyPause();
+  }
+
+  function roomClosed(removed) {
     clearInterval(heartbeat);
     boardPanel.hidden = true;
     joinPanel.hidden = true;
     gonePanel.hidden = false;
+    if (removed) {
+      document.querySelector("[data-gone-text]").innerHTML =
+        "<strong>Your teacher has taken you out of this room.</strong><br>If that's a mistake, ask them and join again.";
+    }
     net.forgetMe(code);
   }
 
@@ -215,7 +269,7 @@
     if (p.studentId !== "all" && p.studentId !== me.id) return;
     board.clear(true);
     if (ui) ui.refresh();
-    publish([]);
+    publish();
     window.doodleToast("Your teacher cleared the board 🧹", "warn");
   });
 
@@ -223,7 +277,7 @@
     if (p.code !== code || !me || !board || p.studentId !== me.id) return;
     board.addItems(p.items || []);
     if (ui) ui.refresh();
-    publish(board.getItems());
+    publish();
     window.doodleToast("Your teacher left you a hint 💡");
   });
 
@@ -235,6 +289,27 @@
 
   net.on("room-closed", function (p) {
     if (p.code === code && me) roomClosed();
+  });
+
+  /* The teacher sent a lesson template — your marks stay, the paper changes */
+  net.on("template", function (p) {
+    if (p.code !== code || !me || !board || !p.template) return;
+    board.setBackground(p.template, true);
+    if (ui) ui.refresh();
+    publish();
+    window.doodleToast("New page from your teacher: " + window.DoodleTemplates.nameOf(p.template) + " 📄");
+  });
+
+  net.on("lock", function (p) {
+    if (p.code !== code || !me || p.studentId !== me.id) return;
+    if (Boolean(p.locked) === locked) return;
+    setLocked(p.locked);
+    window.doodleToast(p.locked ? "Your teacher paused your board 🔒" : "Your board is back on ✏️", p.locked ? "warn" : "good");
+  });
+
+  net.on("remove-student", function (p) {
+    if (p.code !== code || !me || p.studentId !== me.id) return;
+    roomClosed(true);
   });
 
   /* ---- Boot ------------------------------------------------------------- */

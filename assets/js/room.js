@@ -103,11 +103,113 @@
         shot +
         '<span class="pupil__foot">' +
           '<span class="dot" data-status="' + status + '"></span>' +
-          '<span class="pupil__name">' + escape(s.name) + "</span>" +
+          '<span class="pupil__name">' + (s.locked ? '<span title="Board paused" aria-label="Board paused">🔒 </span>' : "") + escape(s.name) + "</span>" +
           '<span class="pupil__marks">' + (s.marks || 0) + " marks</span>" +
         "</span>" +
         "</button>";
     }).join("");
+
+    renderRoster(students);
+  }
+
+  /* ---- Class list ------------------------------------------------------- */
+  function ago(t) {
+    if (!t) return "—";
+    var s = Math.round((Date.now() - t) / 1000);
+    if (s < 15) return "just now";
+    if (s < 60) return s + "s ago";
+    if (s < 3600) return Math.round(s / 60) + " min ago";
+    return Math.round(s / 3600) + " h ago";
+  }
+
+  var STATUS_LABEL = { working: "✏️ Working", stuck: "🤔 Stuck", done: "✅ Done", offline: "💤 Offline" };
+
+  function renderRoster(students) {
+    var online = students.filter(net.isOnline).length;
+    document.querySelector("[data-roster-summary]").textContent =
+      students.length ? online + " of " + students.length + " connected" : "";
+    document.querySelector("[data-roster-empty]").hidden = students.length > 0;
+    document.querySelector("[data-roster-table]").hidden = students.length === 0;
+    document.querySelector("[data-roster-rows]").innerHTML = students.map(function (s) {
+      var status = statusOf(s);
+      return "<tr>" +
+        '<td><span class="dot" data-status="' + status + '"></span> <strong>' + escape(s.name) + "</strong>" +
+          (s.locked ? ' <span class="small muted">· paused</span>' : "") + "</td>" +
+        "<td>" + STATUS_LABEL[status] + "</td>" +
+        '<td class="small muted">' + ago(s.lastSeen) + "</td>" +
+        '<td class="roster__actions">' +
+          '<button class="chip" type="button" data-lock-student="' + s.id + '" aria-pressed="' + String(!!s.locked) + '">' +
+            (s.locked ? "▶️ Let them draw" : "🔒 Pause") + "</button>" +
+          '<button class="chip" type="button" data-view-student="' + s.id + '">👀 Open</button>' +
+          '<button class="chip chip--danger" type="button" data-remove-student="' + s.id + '">✕ Remove</button>' +
+        "</td></tr>";
+    }).join("");
+  }
+
+  document.querySelector("[data-roster-rows]").addEventListener("click", function (e) {
+    var lock = e.target.closest("[data-lock-student]");
+    var view = e.target.closest("[data-view-student]");
+    var remove = e.target.closest("[data-remove-student]");
+    if (lock) {
+      var id = lock.getAttribute("data-lock-student");
+      setLock(id, lock.getAttribute("aria-pressed") !== "true");
+    } else if (view) {
+      openFocus(view.getAttribute("data-view-student"));
+    } else if (remove) {
+      removeStudent(remove.getAttribute("data-remove-student"));
+    }
+  });
+
+  /* ---- Per-student controls ---------------------------------------------- */
+  var lockSentAt = {};
+
+  function findStudent(id) {
+    return net.getStudents(room.code).filter(function (x) { return x.id === id; })[0];
+  }
+
+  function setLock(id, locked) {
+    var s = findStudent(id);
+    if (!s) return;
+    net.setStudent(room.code, id, { locked: locked });
+    net.send("lock", { code: room.code, studentId: id, locked: locked });
+    lockSentAt[id] = Date.now();
+    if (focusId === id) showFocusLock(locked);
+    render();
+    window.doodleToast(locked ? s.name + "'s board is paused 🔒" : s.name + " can draw again ✏️", locked ? "warn" : "good");
+  }
+
+  function removedList() {
+    return (net.getRoom(room.code) || {}).removed || {};
+  }
+
+  function removeStudent(id) {
+    var s = findStudent(id);
+    if (!s || !window.confirm("Take " + s.name + " out of this room? They can join again with the code.")) return;
+    var removed = removedList();
+    removed[id] = Date.now();
+    net.updateRoom(room.code, { removed: removed });
+    net.send("remove-student", { code: room.code, studentId: id });
+    net.removeStudent(room.code, id);
+    if (focusId === id) closeFocus();
+    render();
+    window.doodleToast(s.name + " was removed from the room", "warn");
+  }
+
+  /* A paused or removed student whose tab reloaded hasn't heard the news —
+     tell them again when they check in. */
+  function remind(studentId) {
+    if (removedList()[studentId]) {
+      net.send("remove-student", { code: room.code, studentId: studentId });
+      net.removeStudent(room.code, studentId);
+      render();
+      return true;
+    }
+    var s = findStudent(studentId);
+    if (s && s.locked && Date.now() - (lockSentAt[studentId] || 0) > 15000) {
+      lockSentAt[studentId] = Date.now();
+      net.send("lock", { code: room.code, studentId: studentId, locked: true });
+    }
+    return false;
   }
 
   /* A thumbnail arriving shouldn't rebuild the whole grid — swap that one
@@ -164,6 +266,22 @@
     window.doodleToast(frozen ? "Boards frozen — eyes front ❄️" : "Boards released ✏️", frozen ? "warn" : "good");
   });
 
+  /* ---- Lesson pages ----------------------------------------------------- */
+  var templateSelect = document.querySelector("[data-template-select]");
+  templateSelect.innerHTML = '<option value="">Choose a page…</option>' +
+    window.DoodleTemplates.optionsHTML(room.template || "");
+
+  document.querySelector("[data-send-template]").addEventListener("click", function () {
+    var id = templateSelect.value;
+    if (!id) {
+      templateSelect.focus();
+      return window.doodleToast("Pick a lesson page first 📄", "warn");
+    }
+    net.updateRoom(room.code, { template: id });
+    net.send("template", { code: room.code, template: id });
+    window.doodleToast(window.DoodleTemplates.nameOf(id) + " sent to every board 📄");
+  });
+
   document.querySelector("[data-clear-all]").addEventListener("click", function () {
     if (!window.confirm("Wipe every board in this room? This can't be undone.")) return;
     net.getStudents(room.code).forEach(function (s) {
@@ -178,7 +296,18 @@
   var focus = document.querySelector("[data-focus]");
   var focusCanvas = document.getElementById("focus-board");
   var focusBoard = null;
+  var focusUI = null;
   var focusId = null;
+  var focusLockBtn = document.querySelector("[data-focus-lock]");
+
+  function showFocusLock(locked) {
+    focusLockBtn.setAttribute("aria-pressed", String(!!locked));
+    focusLockBtn.textContent = locked ? "▶️ Let them draw" : "🔒 Pause their board";
+  }
+
+  focusLockBtn.addEventListener("click", function () {
+    if (focusId) setLock(focusId, focusLockBtn.getAttribute("aria-pressed") !== "true");
+  });
   var replyTimer = null;
 
   function openFocus(studentId) {
@@ -206,8 +335,16 @@
       }
     });
 
-    window.DoodleBoardUI(focusBoard, focus.querySelector(".focus__panel"));
+    if (focusUI) focusUI.destroy();
+    focusUI = window.DoodleBoardUI(focusBoard, focus.querySelector(".focus__panel"), {
+      filename: s.name + "-board",
+      printTitle: s.name + "'s board — " + room.name
+    });
     focusBoard.setColour("#ff4d9d").setSize(6).setTool("pen");
+    focus.querySelectorAll("[data-tool]").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-tool") === "pen"));
+    });
+    showFocusLock(s.locked);
 
     focus.setAttribute("data-open", "true");
     document.body.style.overflow = "hidden";
@@ -230,6 +367,7 @@
     focusId = null;
     clearTimeout(replyTimer);
     if (focusBoard) { focusBoard.destroy(); focusBoard = null; }
+    if (focusUI) { focusUI.destroy(); focusUI = null; }
   }
 
   grid.addEventListener("click", function (e) {
@@ -255,9 +393,208 @@
     window.doodleToast("Board cleared 🧹", "warn");
   });
 
+  /* ---- Snapshots ---------------------------------------------------------
+     A snapshot keeps every student's board at one moment so a lesson can be
+     looked at, printed or saved as a PDF later. Online students are asked for
+     their full board (drawn sharp); anyone who doesn't answer in time is kept
+     from their latest thumbnail. Stored in this browser's IndexedDB, which has
+     far more room than localStorage. */
+  var SnapStore = (function () {
+    var dbp = null;
+    function db() {
+      if (dbp) return dbp;
+      dbp = new Promise(function (resolve, reject) {
+        if (!window.indexedDB) return reject(new Error("no IndexedDB"));
+        var req = indexedDB.open("doodle-desk", 1);
+        req.onupgradeneeded = function () {
+          var store = req.result.createObjectStore("snapshots", { keyPath: "id" });
+          store.createIndex("code", "code");
+        };
+        req.onsuccess = function () { resolve(req.result); };
+        req.onerror = function () { reject(req.error); };
+      });
+      return dbp;
+    }
+    function tx(mode, fn) {
+      return db().then(function (d) {
+        return new Promise(function (resolve, reject) {
+          var t = d.transaction("snapshots", mode);
+          var result = fn(t.objectStore("snapshots"));
+          t.oncomplete = function () { resolve(result && result.result !== undefined ? result.result : result); };
+          t.onerror = function () { reject(t.error); };
+        });
+      });
+    }
+    return {
+      put: function (snap) { return tx("readwrite", function (s) { s.put(snap); }); },
+      remove: function (id) { return tx("readwrite", function (s) { s.delete(id); }); },
+      list: function (code) {
+        return tx("readonly", function (s) { return s.index("code").getAll(code); })
+          .then(function (all) { return (all || []).sort(function (a, b) { return b.at - a.at; }); });
+      }
+    };
+  })();
+
+  var pendingSnap = null;
+  var snapBtn = document.querySelector("[data-snapshot]");
+
+  function renderFull(items) {
+    var c = document.createElement("canvas");
+    var b = window.DoodleBoard(c, { readOnly: true });
+    b.setItems(items || []);
+    var img = b.toThumb(900, 0.8);
+    b.destroy();
+    return img;
+  }
+
+  function snapshotReply(p) {
+    if (!pendingSnap || !pendingSnap.waiting[p.studentId]) return;
+    delete pendingSnap.waiting[p.studentId];
+    pendingSnap.images[p.studentId] = renderFull(p.items);
+    if (!Object.keys(pendingSnap.waiting).length) finishSnapshot();
+  }
+
+  function finishSnapshot() {
+    if (!pendingSnap) return;
+    var snap = pendingSnap;
+    pendingSnap = null;
+    clearTimeout(snap.timer);
+    snapBtn.disabled = false;
+    snapBtn.textContent = "📸 Save snapshot";
+
+    var students = net.getStudents(room.code).filter(function (s) { return snap.ids.indexOf(s.id) !== -1; });
+    var record = {
+      id: room.code + "-" + snap.at,
+      code: room.code,
+      at: snap.at,
+      roomName: room.name,
+      prompt: (net.getRoom(room.code) || room).prompt || "",
+      students: students.map(function (s) {
+        return { name: s.name, status: statusOf(s), marks: s.marks || 0, img: snap.images[s.id] || s.thumb || "" };
+      })
+    };
+    SnapStore.put(record).then(function () {
+      window.doodleToast("Snapshot saved — " + record.students.length + " boards 📸", "good");
+    }, function () {
+      window.doodleToast("Couldn't save the snapshot in this browser.", "warn");
+    });
+  }
+
+  snapBtn.addEventListener("click", function () {
+    if (pendingSnap) return;
+    var students = net.getStudents(room.code);
+    if (!students.length) return window.doodleToast("Nobody has joined yet — nothing to save.", "warn");
+
+    pendingSnap = { at: Date.now(), ids: students.map(function (s) { return s.id; }), waiting: {}, images: {}, timer: null };
+    snapBtn.disabled = true;
+    snapBtn.textContent = "📸 Saving…";
+
+    var online = students.filter(net.isOnline);
+    /* Ask one student at a time, a moment apart, so a big class doesn't all
+       answer in the same instant. */
+    online.forEach(function (s, i) {
+      pendingSnap.waiting[s.id] = true;
+      setTimeout(function () {
+        if (pendingSnap) net.send("full-request", { code: room.code, studentId: s.id, asker: net.clientId });
+      }, i * 150);
+    });
+    if (!online.length) return finishSnapshot();
+    pendingSnap.timer = setTimeout(finishSnapshot, 4000 + online.length * 150);
+  });
+
+  /* The snapshot browser */
+  var snapDialog = document.querySelector("[data-snapshots]");
+  var snapList = document.querySelector("[data-snap-list]");
+  var snapGallery = document.querySelector("[data-snap-gallery]");
+  var snapPrint = document.querySelector("[data-snap-print]");
+  var snapBack = document.querySelector("[data-snap-back]");
+  var snapTitle = document.querySelector("[data-snap-title]");
+  var openSnap = null;
+  var snapCache = [];
+
+  function when(t) {
+    return new Date(t).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  }
+
+  function showSnapList() {
+    openSnap = null;
+    snapGallery.hidden = true;
+    snapList.hidden = false;
+    snapPrint.hidden = true;
+    snapBack.hidden = true;
+    snapTitle.textContent = "Saved snapshots";
+    snapList.innerHTML = '<p class="small muted">Loading…</p>';
+    SnapStore.list(room.code).then(function (all) {
+      snapCache = all;
+      snapList.innerHTML = all.length ? all.map(function (s) {
+        return '<div class="snap-row">' +
+          '<div><strong>' + escape(when(s.at)) + "</strong>" +
+          '<span class="small muted"> · ' + s.students.length + " boards" + (s.prompt ? " · " + escape(s.prompt) : "") + "</span></div>" +
+          '<div class="snap-row__actions">' +
+            '<button class="btn" type="button" data-snap-view="' + escape(s.id) + '">👀 Open</button>' +
+            '<button class="btn" type="button" data-snap-delete="' + escape(s.id) + '">🗑️ Delete</button>' +
+          "</div></div>";
+      }).join("") : '<div class="empty"><span>📸</span><p><strong>No snapshots yet.</strong><br>Press “Save snapshot” during a lesson to keep every board.</p></div>';
+    }, function () {
+      snapList.innerHTML = '<p class="small muted">Snapshots aren’t available in this browser.</p>';
+    });
+  }
+
+  function showSnap(id) {
+    var s = snapCache.filter(function (x) { return x.id === id; })[0];
+    if (!s) return;
+    openSnap = s;
+    snapList.hidden = true;
+    snapGallery.hidden = false;
+    snapPrint.hidden = false;
+    snapBack.hidden = false;
+    snapTitle.textContent = when(s.at);
+    snapGallery.innerHTML = s.students.map(function (st) {
+      return '<figure class="pupil snap-card">' +
+        (st.img ? '<img class="pupil__shot" src="' + st.img + '" alt="' + escape(st.name) + '’s board">' : '<div class="pupil__empty">blank board</div>') +
+        '<figcaption class="pupil__foot"><span class="dot" data-status="' + st.status + '"></span>' +
+        '<span class="pupil__name">' + escape(st.name) + '</span><span class="pupil__marks">' + st.marks + " marks</span></figcaption></figure>";
+    }).join("");
+  }
+
+  document.querySelector("[data-open-snapshots]").addEventListener("click", function () {
+    snapDialog.setAttribute("data-open", "true");
+    document.body.style.overflow = "hidden";
+    showSnapList();
+  });
+
+  function closeSnaps() {
+    snapDialog.setAttribute("data-open", "false");
+    document.body.style.overflow = "";
+  }
+
+  document.querySelector("[data-snap-close]").addEventListener("click", closeSnaps);
+  snapBack.addEventListener("click", showSnapList);
+  snapDialog.addEventListener("click", function (e) {
+    if (e.target === snapDialog) return closeSnaps();
+    var view = e.target.closest("[data-snap-view]");
+    var del = e.target.closest("[data-snap-delete]");
+    if (view) showSnap(view.getAttribute("data-snap-view"));
+    if (del && window.confirm("Delete this snapshot? This can't be undone.")) {
+      SnapStore.remove(del.getAttribute("data-snap-delete")).then(showSnapList);
+    }
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && snapDialog.getAttribute("data-open") === "true") closeSnaps();
+  });
+
+  snapPrint.addEventListener("click", function () {
+    if (!openSnap) return;
+    window.doodlePrint(openSnap.students.filter(function (s) { return s.img; }).map(function (s) {
+      return { src: s.img, caption: s.name + " — " + openSnap.roomName + " · " + when(openSnap.at) };
+    }), openSnap.roomName + " — " + when(openSnap.at));
+  });
+
   /* ---- Live updates ----------------------------------------------------- */
   net.on("join", function (p) {
     if (p.code !== room.code) return;
+    if (p.student) lockSentAt[p.student.id] = 0;
+    if (p.student && remind(p.student.id)) return;
     render();
     window.doodleToast(p.student.name + " joined 👋");
   });
@@ -280,10 +617,13 @@
   });
 
   net.on("presence", function (p) {
-    if (p.code === room.code) updateOne(p.studentId);
+    if (p.code !== room.code) return;
+    if (remind(p.studentId)) return;
+    updateOne(p.studentId);
   });
 
   net.on("full-reply", function (p) {
+    if (p.code === room.code) snapshotReply(p);
     if (p.code !== room.code || p.studentId !== focusId || !focusBoard) return;
     focusBoard.setItems(p.items || []);
     document.querySelector("[data-focus-note]").textContent =

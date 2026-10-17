@@ -24,6 +24,7 @@
      doodle:<CODE>:up    students -> teacher   (join, leave, presence, board,
                                                 status, full-reply, room-query)
      doodle:<CODE>:down  teacher -> students   (room-info, prompt, freeze,
+                                                template, lock, remove-student,
                                                 clear-board, teacher-mark,
                                                 full-request, room-closed)
 
@@ -164,6 +165,7 @@ window.DoodleNet = (function () {
       name: (details.name || "Untitled room").slice(0, 60),
       subject: details.subject || "✏️ General",
       prompt: (details.prompt || "").slice(0, 160),
+      template: details.template || "",
       teacher: (details.teacher || "Teacher").slice(0, 40),
       frozen: false,
       createdAt: Date.now(),
@@ -210,6 +212,7 @@ window.DoodleNet = (function () {
       subject: room.subject,
       prompt: room.prompt || "",
       frozen: !!room.frozen,
+      template: room.template || "",
       teacher: room.teacher,
       createdAt: room.createdAt
     };

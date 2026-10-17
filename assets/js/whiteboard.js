@@ -9,13 +9,34 @@
   var canvas = document.getElementById("board");
   if (!canvas || !window.DoodleBoard) return;
 
+  /* The practice board remembers itself in this browser, so closing the tab
+     doesn't lose a drawing. Nothing is uploaded. */
+  var SAVE_KEY = "doodle-demo-board";
+  var saveTimer = null;
+
+  function save() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () {
+      try { localStorage.setItem(SAVE_KEY, JSON.stringify(board.getItems())); } catch (e) {}
+    }, 300);
+  }
+
   var ui;
   var board = window.DoodleBoard(canvas, {
     author: "demo",
-    onStrokeEnd: function () { if (ui) ui.refresh(); }
+    onStrokeEnd: function () { if (ui) ui.refresh(); save(); }
   });
 
-  ui = window.DoodleBoardUI(board, document, { filename: "my-doodle-desk-board" });
+  try {
+    var saved = JSON.parse(localStorage.getItem(SAVE_KEY) || "[]");
+    if (saved.length) board.setItems(saved);
+  } catch (e) {}
+
+  ui = window.DoodleBoardUI(board, document, {
+    filename: "my-doodle-desk-board",
+    printTitle: "My Doodle Desk board",
+    onChange: save
+  });
   board.setTool("pen");
 
   /* The little "teacher sees everyone" panel further down the page */

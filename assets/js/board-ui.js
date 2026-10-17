@@ -7,7 +7,8 @@
      DoodleBoardUI(board, rootEl, { onChange: fn });
 
    Markup hooks: [data-tool] [data-colour] [data-size] [data-stamp]
-                 [data-undo] [data-clear] [data-save] [data-item-count]
+                 [data-undo] [data-redo] [data-clear] [data-save] [data-print]
+                 [data-background] (a <select>) [data-item-count]
    ========================================================================== */
 window.DoodleBoardUI = function (board, root, options) {
   "use strict";
@@ -31,10 +32,35 @@ window.DoodleBoardUI = function (board, root, options) {
     });
   }
 
+  function refreshRedo() {
+    all("[data-redo]").forEach(function (el) {
+      el.disabled = !board.canRedo();
+    });
+  }
+
   function changed() {
     refreshCount();
+    refreshRedo();
+    refreshBackground();
     if (opts.onChange) opts.onChange();
   }
+
+  /* Paper / template picker */
+  function refreshBackground() {
+    all("[data-background]").forEach(function (sel) {
+      if (sel.value !== board.getBackground()) sel.value = board.getBackground();
+    });
+  }
+
+  all("[data-background]").forEach(function (sel) {
+    if (!sel.options.length && window.DoodleTemplates) {
+      sel.innerHTML = window.DoodleTemplates.optionsHTML(board.getBackground());
+    }
+    sel.addEventListener("change", function () {
+      board.setBackground(sel.value);
+      changed();
+    });
+  });
 
   all("[data-tool]").forEach(function (btn) {
     btn.addEventListener("click", function () {
@@ -79,10 +105,25 @@ window.DoodleBoardUI = function (board, root, options) {
     });
   });
 
+  all("[data-redo]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      board.redo();
+      changed();
+    });
+  });
+
   all("[data-clear]").forEach(function (btn) {
     btn.addEventListener("click", function () {
+      if (!board.isEmpty() && opts.confirmClear !== false &&
+          !window.confirm("Clear everything you've drawn? You can't undo this.")) return;
       board.clear();
       changed();
+    });
+  });
+
+  all("[data-print]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      if (window.doodlePrint) window.doodlePrint([{ src: board.toPNG(), caption: opts.printTitle || "" }], opts.printTitle);
     });
   });
 
@@ -96,17 +137,29 @@ window.DoodleBoardUI = function (board, root, options) {
   });
 
   /* Muscle memory is universal */
-  document.addEventListener("keydown", function (e) {
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
-      var tag = (document.activeElement || {}).tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA") return;
+  function onKey(e) {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    var key = e.key.toLowerCase();
+    var tag = (document.activeElement || {}).tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    if (key === "y" || (key === "z" && e.shiftKey)) {
+      e.preventDefault();
+      board.redo();
+      changed();
+    } else if (key === "z") {
       e.preventDefault();
       board.undo();
       changed();
     }
-  });
+  }
+  document.addEventListener("keydown", onKey);
 
   refreshCount();
+  refreshRedo();
 
-  return { refresh: changed };
+  return {
+    refresh: function () { refreshCount(); refreshRedo(); refreshBackground(); },
+    changed: changed,
+    destroy: function () { document.removeEventListener("keydown", onKey); }
+  };
 };

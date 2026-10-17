@@ -13,6 +13,7 @@
 
 const jwt = require("./_lib/jwt.js");
 const passwords = require("./_lib/passwords.js");
+const { isPro } = require("./_lib/teacher.js");
 
 const headers = { "Content-Type": "application/json", "Cache-Control": "no-store" };
 const SESSION_TTL = 60 * 60 * 24 * 30; // 30 days
@@ -76,7 +77,7 @@ exports.handler = async function (event) {
     await store.setJSON(email, record);
 
     var token = jwt.sign({ sub: email, email: email, name: name, role: "teacher" }, secret, SESSION_TTL);
-    return respond(200, { token: token, teacher: { email: email, name: name } });
+    return respond(200, { token: token, teacher: { email: email, name: name, pro: isPro(email) } });
   } catch (err) {
     return respond(500, { error: "Could not create that account.", detail: String(err && err.message || err) });
   }

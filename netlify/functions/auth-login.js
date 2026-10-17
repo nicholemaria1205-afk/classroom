@@ -8,6 +8,7 @@
 
 const jwt = require("./_lib/jwt.js");
 const passwords = require("./_lib/passwords.js");
+const { isPro } = require("./_lib/teacher.js");
 
 const headers = { "Content-Type": "application/json", "Cache-Control": "no-store" };
 const SESSION_TTL = 60 * 60 * 24 * 30; // 30 days
@@ -58,7 +59,7 @@ exports.handler = async function (event) {
     }
 
     var token = jwt.sign({ sub: email, email: email, name: record.name, role: "teacher" }, secret, SESSION_TTL);
-    return respond(200, { token: token, teacher: { email: email, name: record.name } });
+    return respond(200, { token: token, teacher: { email: email, name: record.name, pro: isPro(email) } });
   } catch (err) {
     return respond(500, { error: "Could not log you in.", detail: String(err && err.message || err) });
   }

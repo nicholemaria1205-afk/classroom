@@ -9,16 +9,30 @@
   var list = document.querySelector("[data-room-list]");
   if (!net || !list) return;
 
+  /* No account, no rooms — this page needs a signed-in teacher */
+  var who = net.teacher();
+  if (!who) {
+    window.location.href = "login.html";
+    return;
+  }
+
   var form = document.getElementById("new-room-form");
-  var who = net.teacher() || net.setTeacher("Teacher");
 
   var greet = document.querySelector("[data-greet-name]");
-  if (greet && who.name && who.name !== "Teacher") greet.textContent = ", " + who.name;
+  if (greet && who.name) greet.textContent = ", " + who.name;
 
   var badge = document.querySelector("[data-teacher-badge]");
   if (badge) {
     badge.hidden = false;
     badge.textContent = "👩‍🏫 " + who.name;
+  }
+
+  var logOut = document.querySelector("[data-log-out]");
+  if (logOut) {
+    logOut.addEventListener("click", function () {
+      net.logout();
+      window.location.href = "login.html";
+    });
   }
 
   function escape(text) {
@@ -136,6 +150,9 @@
   });
 
   /* ---- Keep counts live ------------------------------------------------- */
+  /* Answer students joining from other devices, even from this page */
+  net.host();
+
   ["join", "leave", "presence", "status"].forEach(function (type) {
     net.on(type, render);
   });

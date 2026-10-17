@@ -290,6 +290,27 @@
       "Draw here to leave a hint — it appears on their board straight away.";
   });
 
+  /* Across devices: start listening for this room's students. In one-browser
+     mode this does nothing. */
+  net.host();
+
+  net.ready.then(function (mode) {
+    if (mode === "local") {
+      window.doodleToast("Live sync is off, so this room only works in this browser.", "warn");
+    }
+  });
+
+  var wasDown = false;
+  net.onConnection(function (state) {
+    if (state === "disconnected" || state === "suspended" || state === "failed") {
+      wasDown = true;
+      window.doodleToast("Connection lost — trying to reconnect…", "warn");
+    } else if (state === "connected" && wasDown) {
+      wasDown = false;
+      window.doodleToast("Back online ✅", "good");
+    }
+  });
+
   /* Online/offline is a clock thing, so re-check on a timer too */
   setInterval(render, 6000);
   render();

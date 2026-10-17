@@ -57,13 +57,21 @@
     ok = setError(nameInput, nameInput.value.trim().length >= 2 ? "" : "Pop your first name in.") && ok;
     if (!ok) return;
 
-    var result = net.joinRoom(codeInput.value.trim(), nameInput.value.trim());
-    if (!result.ok) return setError(codeInput, result.error);
+    var submit = joinForm.querySelector('[type="submit"]');
+    var label = submit.textContent;
+    submit.disabled = true;
+    submit.textContent = "Looking for your room…";
 
-    code = result.room.code;
-    net.setMe(code, result.student);
-    history.replaceState(null, "", "board.html?code=" + code);
-    start(result.room, result.student);
+    net.joinRoom(codeInput.value.trim(), nameInput.value.trim()).then(function (result) {
+      submit.disabled = false;
+      submit.textContent = label;
+      if (!result.ok) return setError(codeInput, result.error);
+
+      code = result.room.code;
+      net.setMe(code, result.student);
+      history.replaceState(null, "", "board.html?code=" + code);
+      start(result.room, result.student);
+    });
   });
 
   /* ---- Board ------------------------------------------------------------ */
@@ -108,24 +116,42 @@
       publish(saved);
     }
 
+    /* Across devices a quiet teacher isn't a closed room — only an explicit
+       "room-closed" ends the session. In one browser we can simply look. */
     heartbeat = setInterval(function () {
-      if (!net.getRoom(code)) return roomClosed();
+      if (net.mode() === "local" && !net.getRoom(code)) return roomClosed();
       net.setStudent(code, me.id, {});
-      net.send("presence", { code: code, studentId: me.id });
+      net.send("presence", { code: code, studentId: me.id, student: summary() });
     }, 6000);
   }
 
   /* Thumbnails go to the teacher; the full board stays in this tab */
   var lastPublish = 0;
+
+  /* The bits of me the teacher's grid needs. Sent with updates so a teacher
+     whose browser was closed and reopened can rebuild the class list. */
+  function summary() {
+    return { id: me.id, name: me.name, status: me.status || "working", marks: me.marks || 0, joinedAt: me.joinedAt };
+  }
+
   function publish(items, throttled) {
     if (!board || !me) return;
-    if (throttled && Date.now() - lastPublish < 400) return;
+    /* A whole class drawing at once shares one channel, so across devices
+       keep mid-stroke updates well apart; the finished stroke always goes. */
+    var gap = net.mode() === "remote" ? 1500 : 400;
+    if (throttled && Date.now() - lastPublish < gap) return;
     lastPublish = Date.now();
 
     var thumb = board.toThumb(300);
+    me.marks = items.length;
     net.setStudent(code, me.id, { thumb: thumb, marks: items.length });
     net.saveMyBoard(code, me.id, items);
-    net.send("board", { code: code, studentId: me.id, marks: items.length });
+
+    var payload = { code: code, studentId: me.id, marks: items.length, student: summary() };
+    /* In one browser the thumbnail is already in shared storage; across
+       devices it has to travel with the message. */
+    if (net.mode() === "remote") payload.thumb = thumb;
+    net.send("board", payload);
   }
 
   function showPrompt(text) {
@@ -156,8 +182,9 @@
       document.querySelectorAll("[data-status]").forEach(function (b) {
         b.setAttribute("aria-pressed", String(b === btn));
       });
+      me.status = status;
       net.setStudent(code, me.id, { status: status });
-      net.send("status", { code: code, studentId: me.id, status: status });
+      net.send("status", { code: code, studentId: me.id, status: status, student: summary() });
       window.doodleToast(
         status === "stuck" ? "Hand up — your teacher can see 🤔"
           : status === "done" ? "Nice work ✅" : "Back to it ✏️"
@@ -211,23 +238,42 @@
   });
 
   /* ---- Boot ------------------------------------------------------------- */
-  (function boot() {
+  function boot() {
     if (!code) return showJoin();
-
-    var existing = net.getRoom(code);
-    if (!existing) return showJoin("We can't find a room with that code.");
 
     /* Already joined in this tab? Pick up where we left off. */
     var mine = net.me(code);
-    if (mine && existing.students[mine.id]) return start(existing, existing.students[mine.id]);
+    if (mine) {
+      return net.joinRoom(code, mine.name, mine).then(function (result) {
+        if (result.ok) return start(result.room, result.student);
+
+        /* The teacher's device didn't answer. If we were in this room a moment
+           ago, keep the board on screen — it reconnects by itself — rather
+           than throwing away a lesson over a wobbly connection. */
+        var cached = net.mode() === "remote" ? net.cachedRoom(code) : null;
+        if (cached) return start(cached, mine);
+        net.forgetMe(code);
+        showJoin(result.error);
+      });
+    }
 
     if (nameFromUrl) {
-      var result = net.joinRoom(code, nameFromUrl);
-      if (result.ok) {
-        net.setMe(code, result.student);
-        return start(result.room, result.student);
-      }
+      return net.joinRoom(code, nameFromUrl).then(function (result) {
+        if (result.ok) {
+          net.setMe(code, result.student);
+          return start(result.room, result.student);
+        }
+        showJoin(result.error);
+      });
     }
-    showJoin();
-  })();
+
+    /* Just a code: check it's real so a typo shows up straight away */
+    net.fetchRoom(code).then(function (room) {
+      showJoin(room ? "" : (net.mode() === "remote"
+        ? "We can't find that room. Is your teacher's room open?"
+        : "We can't find a room with that code."));
+    });
+  }
+
+  net.ready.then(boot);
 })();

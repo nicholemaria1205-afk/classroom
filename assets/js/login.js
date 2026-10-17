@@ -1,8 +1,12 @@
 /* ==========================================================================
    Doodle Desk — log in & join-a-room (login.html)
    Teachers land on their dashboard; students go straight to a board.
-   There is no auth server yet, so the teacher form accepts any valid-looking
-   email and remembers the name locally — see README.md.
+
+   There's one form and no separate "sign up" page: typing an email and
+   password tries to log in, and if there's no account with that email yet,
+   it creates one on the spot (see netlify/functions/auth-login.js and
+   auth-signup.js). A wrong password on an existing account still fails —
+   it only creates an account when none exists.
    ========================================================================== */
 (function () {
   "use strict";
@@ -35,6 +39,19 @@
   /* ---- Teacher login ---------------------------------------------------- */
   var login = document.getElementById("login-form");
   if (login) {
+    var note = document.querySelector("[data-login-note]");
+
+    function showNote(text) {
+      if (!note) return;
+      note.hidden = !text;
+      note.textContent = text || "";
+    }
+
+    function goToDashboard() {
+      showNote("Opening your rooms…");
+      window.location.href = "dashboard.html";
+    }
+
     login.addEventListener("submit", function (e) {
       e.preventDefault();
       var email = login.elements.email;
@@ -45,14 +62,36 @@
       ok = setError(pass, pass.value.length ? "" : "Please enter your password.") && ok;
       if (!ok) return;
 
-      if (net) net.setTeacher(nameFromEmail(email.value.trim()));
+      if (!net) return goToDashboard();
 
-      var note = document.querySelector("[data-login-note]");
-      if (note) {
-        note.hidden = false;
-        note.textContent = "Opening your rooms…";
-      }
-      window.location.href = "dashboard.html";
+      var emailVal = email.value.trim();
+      var passVal = pass.value;
+      var submit = login.querySelector('[type="submit"]');
+      var label = submit.textContent;
+
+      submit.disabled = true;
+      submit.textContent = "Checking…";
+      showNote("");
+
+      net.login(emailVal, passVal).then(function (result) {
+        if (result.ok) return goToDashboard();
+
+        /* No matching account yet — this might be a first visit, so try
+           creating one. A wrong password on an existing account still
+           fails here (the server says the account's taken). */
+        return net.signup(emailVal, passVal, nameFromEmail(emailVal)).then(function (signed) {
+          if (signed.ok) return goToDashboard();
+
+          submit.disabled = false;
+          submit.textContent = label;
+
+          if (/already exists/i.test(signed.error || "")) {
+            setError(pass, "That email or password didn't match. Try again?");
+          } else {
+            setError(pass, signed.error || result.error || "Could not log you in.");
+          }
+        });
+      });
     });
   }
 
@@ -74,12 +113,27 @@
       ok = setError(name, name.value.trim().length >= 2 ? "" : "Pop your first name in.") && ok;
       if (!ok) return;
 
-      if (net && !net.getRoom(code.value.trim())) {
-        return setError(code, "We can't find a room with that code. Check the board?");
-      }
+      var go = function () {
+        window.location.href = "board.html?code=" + encodeURIComponent(code.value.trim()) +
+          "&name=" + encodeURIComponent(name.value.trim());
+      };
+      if (!net) return go();
 
-      window.location.href = "board.html?code=" + encodeURIComponent(code.value.trim()) +
-        "&name=" + encodeURIComponent(name.value.trim());
+      var submit = join.querySelector('[type="submit"]');
+      var label = submit.textContent;
+      submit.disabled = true;
+      submit.textContent = "Looking for your room…";
+
+      net.fetchRoom(code.value.trim()).then(function (room) {
+        submit.disabled = false;
+        submit.textContent = label;
+        if (!room) {
+          return setError(code, net.mode() === "remote"
+            ? "We can't find that room. Is your teacher's room open? Check the code on the board."
+            : "We can't find a room with that code. Check the board?");
+        }
+        go();
+      });
     });
   }
 })();

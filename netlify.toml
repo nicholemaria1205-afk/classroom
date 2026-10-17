@@ -4,6 +4,13 @@
 [build]
   publish = "."
 
+# The one server-side piece: hands browsers a short-lived Ably token so live
+# sync works across devices. Needs ABLY_API_KEY set in the site's environment
+# variables. Without it the site still works — rooms just stay in one browser.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
 [[headers]]
   for = "/*"
   [headers.values]

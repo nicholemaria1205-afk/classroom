@@ -17,6 +17,17 @@ window.DOODLE = {
   /* Your Stripe publishable key (pk_live_… / pk_test_…). Safe to expose. */
   STRIPE_PUBLISHABLE_KEY: "",
 
+  /* Live sync between devices (teacher laptop + students' own devices).
+     TOKEN_URL is the Netlify function that hands each browser a short-lived
+     Ably token; the real Ably key stays on Netlify and never comes here.
+     If the function isn't there (GitHub Pages, a local file, a Netlify site
+     with no ABLY_API_KEY yet) the app quietly falls back to working across
+     tabs of one browser. Set TOKEN_URL to "" to force that mode. */
+  SYNC: {
+    TOKEN_URL: "/.netlify/functions/ably-token",
+    SDK_URL: "https://cdn.ably.com/lib/ably.min-2.js"
+  },
+
   CURRENCY: "$",
   TRIAL_DAYS: 30,
 

@@ -28,11 +28,21 @@ step, no dependencies, no framework. Drop the folder on any host and it works.
 
 ## The app, and how the live sync works
 
-The app genuinely runs — across browser tabs, with no server. Try it:
+The app runs in one of two modes, chosen automatically when a page loads:
+
+- **Live** — teacher and students on *different devices*, connected through
+  [Ably](https://ably.com). Needs the Netlify setup in **Live sync across devices**
+  below.
+- **This browser only** — anywhere else (GitHub Pages, a file on disk, a Netlify
+  site with no Ably key yet). Rooms and messages stay in one browser, so you can
+  try everything across tabs with no server at all. The teacher is shown a notice
+  when a room is running this way.
+
+Try it either way:
 
 1. Open `login.html`, log in with any valid-looking email, and create a room.
-2. Copy the join link and open it in two or three other tabs, giving each a
-   different name.
+2. Copy the join link and open it in two or three other tabs (or, in live mode,
+   on other devices), giving each a different name.
 3. Draw in a student tab and watch the thumbnail appear in the teacher's grid.
 
 From the room view a teacher can set the task, freeze every board, clear them,
@@ -51,10 +61,11 @@ given.
   doesn't get slower with every stroke.
 - `assets/js/board-ui.js` — binds the standard toolbar markup to a board, so the
   tools behave the same in all three places a board appears.
-- `assets/js/realtime.js` (`DoodleNet`) — rooms and messaging. Rooms live in
-  `localStorage`; each tab's student identity lives in `sessionStorage`, which is
-  what lets one browser hold a whole class. Live updates go over a
-  `BroadcastChannel`, falling back to `storage` events on older browsers.
+- `assets/js/realtime.js` (`DoodleNet`) — rooms and messaging. The teacher's
+  browser keeps the room and its students in `localStorage`; each tab's student
+  identity lives in `sessionStorage`, which is what lets one browser hold a whole
+  class. Messages go over Ably in live mode, or a `BroadcastChannel` (falling back
+  to `storage` events on older browsers) in one-browser mode.
 
 Messages on the bus: `join`, `leave`, `presence`, `board` (a new thumbnail),
 `status`, `prompt`, `freeze`, `clear-board`, `teacher-mark`, `full-request` /
@@ -65,11 +76,112 @@ Students publish a small JPEG thumbnail rather than every stroke — cheap to se
 and to store, and it's all the teacher's grid needs. The full board only travels
 when a teacher actually opens it.
 
-**Making it work between real devices** means replacing the transport, not the
-pages: every page talks to `DoodleNet` and nothing else. Swap `send`/`on` for a
-WebSocket connection and the store functions for API calls, and the same messages
-carry the same payloads. Until then it is one browser only — rooms don't leave
-the machine that made them.
+### Live sync across devices
+
+In live mode the **teacher's browser is the host**. It keeps the room, its
+students and their thumbnails in its own `localStorage`, exactly as before, and
+applies what students send it. Each room gets two Ably channels:
+
+| Channel | Direction | Messages |
+| --- | --- | --- |
+| `doodle:<CODE>:up` | students → teacher | `join`, `leave`, `presence`, `board`, `status`, `full-reply`, `room-query` |
+| `doodle:<CODE>:down` | teacher → students | `room-info`, `prompt`, `freeze`, `clear-board`, `teacher-mark`, `full-request`, `room-closed` |
+
+Students only listen to `down`, so they never receive each other's thumbnails.
+That keeps bandwidth, and the number of messages Ably counts, roughly
+proportional to the class size instead of its square.
+
+Joining is a question asked of the teacher's device: the student sends
+`room-query` and the teacher's open page answers `room-info` with the room's name,
+task and freeze state. **No answer means the room isn't open**, and the student is
+told so. That is the main thing to know about how it behaves:
+
+- **The teacher needs the dashboard or the room page open** for students to join.
+  Once they are in, a closed laptop lid pauses updates rather than ending the
+  lesson — students stay on their boards and everything catches up when the
+  teacher's browser returns, because each student's heartbeat carries enough to
+  rebuild the class list.
+- **Only "room closed" ends a student's session.** A quiet teacher never does.
+- **Rooms live in the teacher's browser.** Clearing its site data removes them,
+  and they don't follow the teacher to another computer.
+- A student's **full board** travels only when the teacher opens it, in parts if
+  it is too big for one message; the grid otherwise uses small thumbnails.
+
+Message sizes and rates are kept inside Ably's free plan (64 KiB per message, 50
+messages a second per channel), which is comfortable for a class of about 30 to
+60. Rooms of 100 or more students drawing at once would need a paid Ably plan,
+or a room split across several channels.
+
+### Setting up live sync
+
+1. Make a free account at [ably.com](https://ably.com), create an app, and copy
+   an API key from its **API keys** tab (it looks like `xxxx.yyyy:zzzz`).
+2. In Netlify, open the site's **Project configuration → Environment variables**
+   and add `ABLY_API_KEY` with that key. Redeploy.
+3. Open `https://<your-site>/.netlify/functions/ably-token`. You should see a small
+   piece of JSON containing `keyName` and `mac`. If you see `ABLY_API_KEY is not
+   set`, the variable is missing or the site hasn't been redeployed yet.
+
+`netlify/functions/ably-token.js` is the only server-side code. It signs a token
+that lets a browser publish and subscribe on channels named `doodle:*` for an hour
+— nothing else — so **the real key never reaches a browser**. `package.json`
+exists only so Netlify installs the one library that function uses (`ably`); the
+site itself still has no build step. The browser library loads from Ably's CDN,
+and only when the function answers, so a site without live sync makes no external
+requests beyond its fonts.
+
+If the function isn't there, has no key, or the Ably library can't load (a school
+firewall, say), the site falls back to one-browser mode by itself.
+
+Known limit worth knowing about: anyone who has a room code can join it, as with
+most classroom tools — a room code is not a secret, it's a seat number.
+
+### Teacher accounts
+
+Logging in (`login.html`) is a real account, not a name typed into a box. There's
+one form: typing an email and a password of 8+ characters tries to log in, and if
+no account exists yet with that email it creates one on the spot — no separate
+sign-up page to find. A wrong password on an **existing** account still fails; it
+only creates an account when none is there yet.
+
+```
+netlify/functions/auth-signup.js   creates a teacher account
+netlify/functions/auth-login.js    checks one
+netlify/functions/_lib/jwt.js      signs/verifies the session token (no JWT library)
+netlify/functions/_lib/passwords.js  hashes passwords with Node's built-in scrypt
+```
+
+Accounts are stored with **Netlify Blobs** — a small key/value store Netlify
+gives every site, so there's no database to stand up. Passwords are never stored;
+only a salted scrypt hash is.
+
+**Setup** — in Netlify, open **Project configuration → Environment variables** and
+add `JWT_SECRET`: any long random string (40+ random characters is plenty — a
+password generator or `openssl rand -hex 32` both work). Redeploy. That's the only
+step; `auth-signup.js`/`auth-login.js` need nothing else, and `package.json` now
+also installs `@netlify/blobs` for them.
+
+**If `JWT_SECRET` is never set**, the login form shows a "teacher accounts aren't
+turned on yet" error and nothing else changes — the rest of the site, including
+live sync, keeps working exactly as before. This is deliberate: a site that
+hasn't done this step yet doesn't break.
+
+**Once it's set**, logging in also tightens live sync: `ably-token.js` only hands
+full publish/subscribe access to a browser carrying a valid, unexpired teacher
+session. Every other browser — including a student's, or anyone poking at the
+token endpoint directly — gets a narrower pass: publish-only on "up" and
+subscribe-only on "down", the same as any student legitimately needs. That
+browser can't listen in on "up" (where every student's board updates travel) and
+can't publish on "down" (so it can't send a teacher-only message like "freeze the
+class" or "clear the board"). Without `JWT_SECRET` set, there's no way to tell
+a teacher's browser from a student's, so everyone keeps the old, fully open pass
+instead — which is exactly what let this feature ship without breaking any site
+that hasn't set it up yet.
+
+A session lasts 30 days and lives in the teacher's browser (`localStorage`); the
+🚪 button on the dashboard logs out. There's no "forgot password" flow yet — the
+site doesn't send email anywhere else either, so that would be new infrastructure,
+not just a new function.
 
 ## Running it
 
@@ -105,7 +217,8 @@ workflow. Two settings cause that, both under **Settings → Pages** and
 - **Deployment branches** for the `github-pages` environment allows only the
   default branch. Either merge to `main`, or add the working branch there.
 
-**Netlify** — `netlify.toml` publishes the repo root with no build command.
+**Netlify** — `netlify.toml` publishes the repo root with no build command, and
+points at `netlify/functions/` for the token function (see *Setting up live sync*).
 The quickest setup is to let Netlify pull from GitHub, which needs no CLI and
 redeploys on every push:
 
@@ -208,15 +321,21 @@ card data.
 the mobile menu, the monthly/yearly switch, plan deep links (`subscribe.html?plan=pro&billing=annual`),
 form validation, the live order summary, the whiteboard demo, and the whole app —
 rooms, codes, joining, live thumbnails, status flags, the task banner, freeze, clear,
-and the teacher marking a student's board — across tabs in one browser.
+and the teacher marking a student's board — across tabs in one browser, and across
+devices once `ABLY_API_KEY` is set on Netlify. Teacher log in is a real account
+(password hashed, checked server-side) once `JWT_SECRET` is set — see *Teacher
+accounts* above.
 
 **Placeholder, replace before launch:**
 
 - Payments — demo mode until `CHECKOUT_ENDPOINT` is set (above).
-- Teacher log in (`assets/js/login.js`) — any valid-looking email gets in and the
-  name is remembered locally. There is no auth backend; wire up your provider.
-- Cross-device sync — the app is real but confined to one browser (see above).
-  Rooms, boards and student lists never leave the machine that created them.
+- Cross-device sync is real but **only when Ably is set up** (see above). Without
+  it the app stays confined to one browser. Rooms still live only in the
+  teacher's browser — there's no "my rooms, on any device" yet, even with a
+  real account.
+- There's no "forgot password" flow (see *Teacher accounts* above) and no way
+  for a teacher to change their email or delete their account except by asking
+  whoever manages the Netlify Blobs store directly.
 - Newsletter sign-up — shows a confirmation, posts nowhere.
 - Testimonials on `index.html` — illustrative copy, marked with an HTML comment. Swap
   for real, permissioned quotes.
@@ -224,8 +343,10 @@ and the teacher marking a student's board — across tabs in one browser.
 
 ## Notes on how it's built
 
-- **No dependencies.** Google Fonts (Fredoka + Nunito) are the only external request,
-  and there is a system-font fallback if they're blocked.
+- **No dependencies in the site.** Google Fonts (Fredoka + Nunito) are the only
+  external request, with a system-font fallback if they're blocked, plus the Ably
+  library when live sync is switched on. The npm dependencies (`ably`,
+  `@netlify/blobs`) belong to the Netlify functions, not the pages.
 - **Accessible by default:** skip link, visible focus rings, labelled form fields with
   inline errors, `aria-pressed` on toggles, and full keyboard operation.
 - **Respects `prefers-reduced-motion`** — every animation, including the confetti, is
@@ -238,8 +359,15 @@ and the teacher marking a student's board — across tabs in one browser.
 ### Files
 
 ```
+netlify/functions/ably-token.js      hands browsers a short-lived Ably token (server side)
+netlify/functions/auth-signup.js     creates a teacher account
+netlify/functions/auth-login.js      checks a teacher account
+netlify/functions/_lib/jwt.js        tiny HS256 session tokens, no library
+netlify/functions/_lib/passwords.js  password hashing (Node's built-in scrypt)
+package.json                         installs the two libraries those functions need
+
 assets/css/site.css       design tokens + every component
-assets/js/config.js       plans, prices, checkout endpoint  ← edit this one
+assets/js/config.js       plans, prices, checkout endpoint, sync endpoint  ← edit this one
 assets/js/site.js         theme, mobile nav, scroll reveals, confetti, toasts
 assets/js/pricing.js      renders the plan cards, monthly/yearly switch
 assets/js/checkout.js     plan picker, order summary, validation, submit
@@ -247,7 +375,7 @@ assets/js/login.js        log in + join-a-room forms
 
 assets/js/board-engine.js the drawing core, shared by all three boards
 assets/js/board-ui.js     binds the toolbar markup to a board
-assets/js/realtime.js     rooms, identities and the live message bus
+assets/js/realtime.js     rooms, identities and the message bus (Ably or one-browser)
 assets/js/whiteboard.js   the public demo board
 assets/js/dashboard.js    the teacher's room list
 assets/js/room.js         the live room: grid, controls, focus view

@@ -10,6 +10,7 @@
   --grape: #7c3aed;
   --grape-deep: #5b21b6;
   --bubble: #ff4d9d;
+  --bubble-deep: #db2777; /* deeper pink for white text (4.6:1 contrast) */
   --sunny: #ffc93c;
   --mint: #16c79a;
   --sky: #38bdf8;
@@ -172,7 +173,7 @@ main { flex: 1 0 auto; }
 .btn:hover { transform: translateY(-3px); box-shadow: var(--pop-lg); }
 .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--border-strong); }
 .btn--primary { background: var(--grape); color: #fff; }
-.btn--pink { background: var(--bubble); color: #fff; }
+.btn--pink { background: var(--bubble-deep); color: #fff; }
 .btn--sun { background: var(--sunny); color: var(--ink); }
 .btn--mint { background: var(--mint); color: var(--ink); }
 .btn--ghost { background: transparent; box-shadow: none; border-color: transparent; }
@@ -292,7 +293,7 @@ main { flex: 1 0 auto; }
 }
 .badge--mint { background: var(--mint); }
 .badge--sky { background: var(--sky); }
-.badge--pink { background: var(--bubble); color: #fff; }
+.badge--pink { background: var(--bubble-deep); color: #fff; }
 .badge--grape { background: var(--grape); color: #fff; }
 
 .blob {
@@ -430,7 +431,7 @@ main { flex: 1 0 auto; }
 /* ---------- 9. Marquee --------------------------------------------------- */
 .marquee {
   border-block: 3px solid var(--border-strong);
-  background: var(--bubble);
+  background: var(--bubble-deep);
   overflow: hidden;
   padding: 0.7rem 0;
   rotate: -1.2deg;

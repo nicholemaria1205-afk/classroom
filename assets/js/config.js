@@ -28,6 +28,14 @@ window.DOODLE = {
     SDK_URL: "https://cdn.ably.com/lib/ably.min-2.js"
   },
 
+  /* Where uploaded worksheet pages are served from (asset.js) */
+  ASSET_URL: "/.netlify/functions/asset?id=",
+  /* PDF reader used to turn uploaded PDFs into board pages. Loaded only
+     when a teacher actually uploads a PDF. */
+  PDFJS: {
+    SRC: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
+    WORKER: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"
+  },
   CURRENCY: "$",
   TRIAL_DAYS: 30,
 
@@ -69,6 +77,8 @@ window.DOODLE = {
         "Assignments with instant feedback",
         "Sticker & stamp grading, rubrics",
         "Class progress dashboard",
+        "Upload worksheets & PDFs to every board",
+        "Import from Google Drive",
         "Export boards to PDF & PNG",
         "Priority email support"
       ],

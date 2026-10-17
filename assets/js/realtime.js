@@ -390,7 +390,46 @@ window.DoodleNet = (function () {
      they're signed in. null means "not signed in". */
   function teacher() {
     var s = session();
-    return s ? { name: s.name, email: s.email } : null;
+    return s ? { name: s.name, email: s.email, pro: !!s.pro } : null;
+  }
+
+  /* Ask the server whether this teacher is on Teacher Pro right now — the
+     Pro list can change after they logged in. Resolves to the teacher, with
+     `pro`, or null if they aren't logged in (or the server can't be reached,
+     in which case the last known answer is kept). */
+  function account() {
+    var s = session();
+    if (!s || !s.token) return Promise.resolve(null);
+    return fetch("/.netlify/functions/account", { headers: { "Authorization": "Bearer " + s.token } })
+      .then(function (res) {
+        if (res.status === 401) return null;
+        return res.json().then(function (json) {
+          if (json && json.teacher) {
+            s.pro = !!json.teacher.pro;
+            setSession({ token: s.token, name: s.name, email: s.email, pro: s.pro });
+          }
+          return teacher();
+        });
+      }, function () { return teacher(); });
+  }
+
+  /* Store one worksheet page (a data: URL image) on the server. Teacher Pro.
+     Resolves { ok, id } or { ok:false, error, pro } */
+  function uploadPage(image, name) {
+    var s = session();
+    if (!s || !s.token) return Promise.resolve({ ok: false, error: "Log in as a teacher to upload files." });
+    return fetch("/.netlify/functions/asset-upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + s.token },
+      body: JSON.stringify({ image: image, name: name || "" })
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (json) {
+        if (res.ok && json.id) return { ok: true, id: json.id };
+        return { ok: false, error: json.error || "Upload failed (" + res.status + ").", pro: json.pro };
+      });
+    }, function () {
+      return { ok: false, error: "Could not reach the server. Check your connection and try again." };
+    });
   }
 
   function authCall(path, body) {
@@ -410,7 +449,7 @@ window.DoodleNet = (function () {
       if (!r.ok || !r.body || !r.body.token) {
         return { ok: false, error: (r.body && r.body.error) || "Something went wrong. Try again." };
       }
-      setSession({ token: r.body.token, name: r.body.teacher.name, email: r.body.teacher.email });
+      setSession({ token: r.body.token, name: r.body.teacher.name, email: r.body.teacher.email, pro: !!r.body.teacher.pro });
       return { ok: true, teacher: r.body.teacher };
     }, function () {
       return { ok: false, error: "Could not reach the server. Check your connection and try again." };
@@ -856,6 +895,8 @@ window.DoodleNet = (function () {
     removeStudent: removeStudent,
     getStudents: getStudents,
     teacher: teacher,
+    account: account,
+    uploadPage: uploadPage,
     session: session,
     signup: signup,
     login: login,

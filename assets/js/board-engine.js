@@ -248,33 +248,109 @@ window.DoodleTemplates = (function () {
     }
   };
 
+  /* ---- Uploaded pages ----------------------------------------------------
+     A teacher's uploaded worksheet is a background named "img:<id>". The
+     image itself lives on the server (asset.js); only the name travels. */
+  var IMG = /^img:([a-f0-9]{32})$/;
+  var images = {};   /* id -> { img, state: "loading"|"ready"|"failed", waiters: [] } */
+
+  function assetUrl(id) {
+    var base = (window.DOODLE && window.DOODLE.ASSET_URL) || "/.netlify/functions/asset?id=";
+    return base + id;
+  }
+
+  function loadImage(id, done) {
+    var entry = images[id];
+    if (!entry) {
+      entry = images[id] = { img: new Image(), state: "loading", waiters: [] };
+      entry.img.onload = function () {
+        entry.state = "ready";
+        entry.waiters.splice(0).forEach(function (fn) { fn(entry); });
+      };
+      entry.img.onerror = function () {
+        entry.state = "failed";
+        entry.waiters.splice(0).forEach(function (fn) { fn(entry); });
+      };
+      entry.img.src = assetUrl(id);
+    }
+    if (entry.state === "loading") entry.waiters.push(done);
+    else done(entry);
+    return entry;
+  }
+
+  function paintImage(c, id, W, H) {
+    var entry = images[id];
+    if (!entry || entry.state === "loading") {
+      label(c, "Loading the page…", W / 2, H / 2, 26);
+      return;
+    }
+    if (entry.state === "failed") {
+      label(c, "This page couldn't be loaded.", W / 2, H / 2, 26);
+      return;
+    }
+    /* Fit the whole page on the board, centred, like "contain" */
+    var img = entry.img;
+    var scale = Math.min(W / img.naturalWidth, H / img.naturalHeight);
+    var w = img.naturalWidth * scale, h = img.naturalHeight * scale;
+    c.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+  }
+
+  /* Paints the paper. Returns false if an uploaded page is still loading —
+     call whenReady(id, fn) to be told when it can be painted properly. */
   function paint(c, id, W, H) {
     c.fillStyle = "#ffffff";
     c.fillRect(0, 0, W, H);
     c.save();
-    (draw[id] || draw.lined)(c, W, H);
+    var m = IMG.exec(id || "");
+    if (m) paintImage(c, m[1], W, H);
+    else (draw[id] || draw.lined)(c, W, H);
     c.restore();
+    return !m || (images[m[1]] && images[m[1]].state !== "loading");
   }
 
-  function has(id) { return Boolean(draw[id]); }
+  function whenReady(id, fn) {
+    var m = IMG.exec(id || "");
+    if (!m) return fn();
+    loadImage(m[1], function () { fn(); });
+  }
+
+  function has(id) { return Boolean(draw[id]) || IMG.test(id || ""); }
+  function isUpload(id) { return IMG.test(id || ""); }
 
   function nameOf(id) {
+    if (IMG.test(id || "")) return "the uploaded page";
     var t = list.filter(function (x) { return x.id === id; })[0];
     return t ? t.name : id;
   }
 
-  /* <option>s grouped by kind, for any <select data-background> */
-  function optionsHTML(selected) {
+  function esc(t) {
+    return String(t).replace(/[&<>"]/g, function (ch) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch];
+    });
+  }
+
+  /* <option>s grouped by kind, for any <select data-background>. `uploads`
+     (optional) adds the teacher's uploaded pages: [{ id: "img:…", name }] */
+  function optionsHTML(selected, uploads) {
     var groups = {};
     list.forEach(function (t) { (groups[t.group] = groups[t.group] || []).push(t); });
-    return Object.keys(groups).map(function (g) {
+    var html = "";
+    if (uploads && uploads.length) {
+      html += '<optgroup label="Your uploads">' + uploads.map(function (u) {
+        return '<option value="' + esc(u.id) + '"' + (u.id === selected ? " selected" : "") + ">" + esc(u.name) + "</option>";
+      }).join("") + "</optgroup>";
+    } else if (IMG.test(selected || "")) {
+      html += '<optgroup label="From your teacher"><option value="' + esc(selected) + '" selected>Uploaded page</option></optgroup>';
+    }
+    return html + Object.keys(groups).map(function (g) {
       return '<optgroup label="' + g + '">' + groups[g].map(function (t) {
         return '<option value="' + t.id + '"' + (t.id === selected ? " selected" : "") + ">" + t.name + "</option>";
       }).join("") + "</optgroup>";
     }).join("");
   }
 
-  return { list: list, paint: paint, has: has, nameOf: nameOf, optionsHTML: optionsHTML };
+  return { list: list, paint: paint, has: has, isUpload: isUpload, whenReady: whenReady,
+           nameOf: nameOf, optionsHTML: optionsHTML, assetUrl: assetUrl };
 })();
 
 window.DoodleBoard = function (canvas, options) {
@@ -288,7 +364,8 @@ window.DoodleBoard = function (canvas, options) {
     author: "student",   /* undo only ever removes this author's own marks */
     readOnly: false,
     onStrokeEnd: null,   /* (item, allItems) after each finished mark */
-    onDrawing: null      /* (allItems) throttled, while a stroke is in progress */
+    onDrawing: null,     /* (allItems) throttled, while a stroke is in progress */
+    onPaperLoad: null    /* () when an uploaded page finishes loading */
   }, options || {});
 
   var W = opts.width;
@@ -402,13 +479,58 @@ window.DoodleBoard = function (canvas, options) {
     c.restore();
   }
 
+  /* Text wraps at the right edge of the board (or the box's own width) and
+     keeps any line breaks the writer typed. */
+  function textLines(c, s) {
+    c.font = "700 " + s.size + "px Nunito, 'Segoe UI', sans-serif";
+    var maxW = s.w || Math.max(120, W - s.x - 20);
+    var out = [];
+    String(s.text).split("\n").forEach(function (para) {
+      var words = para.split(" ");
+      var line = "";
+      words.forEach(function (word) {
+        var test = line ? line + " " + word : word;
+        if (line && c.measureText(test).width > maxW) {
+          out.push(line);
+          line = word;
+        } else {
+          line = test;
+        }
+      });
+      out.push(line);
+    });
+    return out;
+  }
+
   function textOn(c, s) {
     c.save();
     c.fillStyle = s.colour;
-    c.font = "700 " + s.size + "px Nunito, 'Segoe UI', sans-serif";
     c.textBaseline = "top";
-    c.fillText(s.text, s.x, s.y);
+    var lines = textLines(c, s);
+    var lh = Math.round(s.size * 1.25);
+    lines.forEach(function (line, i) { c.fillText(line, s.x, s.y + i * lh); });
     c.restore();
+  }
+
+  /* The box a text item covers, for clicking on it again to edit */
+  function textBounds(s) {
+    var m = ctx;
+    m.save();
+    var lines = textLines(m, s);
+    var width = 0;
+    lines.forEach(function (l) { width = Math.max(width, m.measureText(l).width); });
+    m.restore();
+    return { x: s.x, y: s.y, w: Math.max(width, 20), h: lines.length * Math.round(s.size * 1.25) };
+  }
+
+  function textAt(p) {
+    for (var i = items.length - 1; i >= 0; i--) {
+      var it = items[i];
+      if (it.type !== "text" || it.author !== opts.author) continue;
+      var b = textBounds(it);
+      if (p.x >= b.x - 8 && p.x <= b.x + b.w + 8 && p.y >= b.y - 8 && p.y <= b.y + b.h + 8) return i;
+    }
+    return -1;
   }
 
   function drawItem(c, item) {
@@ -420,7 +542,18 @@ window.DoodleBoard = function (canvas, options) {
   }
 
   function paintPaper() {
-    window.DoodleTemplates.paint(pctx, background, W, H);
+    var name = background;
+    var ready = window.DoodleTemplates.paint(pctx, name, W, H);
+    if (!ready) {
+      /* An uploaded page is on its way — repaint once it arrives, and tell
+         the page so a fresh thumbnail can go to the teacher. */
+      window.DoodleTemplates.whenReady(name, function () {
+        if (background !== name) return;
+        window.DoodleTemplates.paint(pctx, name, W, H);
+        paint();
+        if (opts.onPaperLoad) opts.onPaperLoad(name);
+      });
+    }
   }
 
   /* Full rebuild — only needed after undo, clear or a wholesale setItems */
@@ -457,9 +590,11 @@ window.DoodleBoard = function (canvas, options) {
 
   function textSize() { return Math.round(size * 3 + 14); }
 
-  /* Typing goes into a real input laid over the canvas, so phones get their
-     keyboard and spelling help; Enter (or tapping away) puts it on the board. */
-  function openTextBox(e, p) {
+  /* Typing goes into a real text box laid over the canvas, so phones get
+     their keyboard and spelling help. Enter puts it on the board (Shift +
+     Enter starts a new line); tapping away does too; Esc cancels. Clicking
+     your own text again with the Text tool opens it for editing. */
+  function openTextBox(p, editing) {
     closeTextBox(true);
     var wrap = canvas.parentElement;
     if (!wrap) return;
@@ -468,26 +603,52 @@ window.DoodleBoard = function (canvas, options) {
     var r = canvas.getBoundingClientRect();
     var wr = wrap.getBoundingClientRect();
     var scale = r.width / W;
+    var item = editing != null ? items[editing] : null;
+    var x = item ? item.x : p.x;
+    var y = item ? item.y : p.y;
+    var fontPx = item ? item.size : textSize();
+    var col = item ? item.colour : colour;
 
-    var input = document.createElement("input");
-    input.type = "text";
-    input.maxLength = 120;
+    var input = document.createElement("textarea");
+    input.rows = 1;
+    input.maxLength = 500;
     input.className = "board-text-input";
-    input.setAttribute("aria-label", "Type your text, then press Enter");
-    input.style.left = (r.left - wr.left + p.x * scale) + "px";
-    input.style.top = (r.top - wr.top + p.y * scale) + "px";
-    input.style.fontSize = Math.max(14, textSize() * scale) + "px";
-    input.style.color = colour;
+    input.setAttribute("aria-label", "Type your text. Press Enter when you're done, Shift + Enter for a new line.");
+    input.style.left = (r.left - wr.left + x * scale) + "px";
+    input.style.top = (r.top - wr.top + y * scale) + "px";
+    input.style.fontSize = Math.max(14, fontPx * scale) + "px";
+    input.style.maxWidth = Math.max(140, (W - x - 20) * scale) + "px";
+    input.style.color = col;
+    if (item) input.value = item.text;
     wrap.appendChild(input);
 
-    textBox = { input: input, x: p.x, y: p.y, size: textSize(), colour: colour, done: false };
+    function grow() {
+      input.style.height = "auto";
+      input.style.height = input.scrollHeight + "px";
+      input.style.width = "auto";
+      input.style.width = Math.min(input.scrollWidth + 12, parseFloat(input.style.maxWidth)) + "px";
+    }
+
+    /* While editing, hide the old text so it isn't drawn twice */
+    if (item) {
+      items.splice(editing, 1);
+      rebuild();
+      paint();
+    }
+
+    textBox = { input: input, x: x, y: y, size: fontPx, colour: col, done: false, original: item, index: editing };
+    input.addEventListener("input", grow);
     input.addEventListener("keydown", function (ev) {
-      if (ev.key === "Enter") { ev.preventDefault(); closeTextBox(true); }
+      if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); closeTextBox(true); }
       else if (ev.key === "Escape") { ev.preventDefault(); closeTextBox(false); }
     });
     input.addEventListener("blur", function () { closeTextBox(true); });
     /* Wait a tick so the pointerup that opened it doesn't steal focus back */
-    setTimeout(function () { input.focus(); }, 0);
+    setTimeout(function () {
+      grow();
+      input.focus();
+      if (item) input.setSelectionRange(input.value.length, input.value.length);
+    }, 0);
   }
 
   function closeTextBox(keep) {
@@ -495,9 +656,20 @@ window.DoodleBoard = function (canvas, options) {
     var box = textBox;
     box.done = true;
     textBox = null;
-    var text = box.input.value.trim();
+    var text = box.input.value.replace(/\s+$/, "");
     if (box.input.parentNode) box.input.parentNode.removeChild(box.input);
-    if (keep && text) {
+
+    if (box.original) {
+      /* Editing: put it back where it was in the stack, changed or not */
+      var next = keep && text.trim() ? Object.assign({}, box.original, { text: text }) : (keep ? null : box.original);
+      if (next) items.splice(Math.min(box.index, items.length), 0, next);
+      redoStack = [];
+      rebuild();
+      paint();
+      if (opts.onStrokeEnd) opts.onStrokeEnd(next, items);
+      return;
+    }
+    if (keep && text.trim()) {
       commit({ type: "text", text: text, x: box.x, y: box.y, size: box.size, colour: box.colour, author: opts.author });
     }
   }
@@ -508,7 +680,8 @@ window.DoodleBoard = function (canvas, options) {
 
     if (tool === "text") {
       e.preventDefault();
-      openTextBox(e, p);
+      var hit = textAt(p);
+      openTextBox(p, hit === -1 ? null : hit);
       return;
     }
 
@@ -651,6 +824,17 @@ window.DoodleBoard = function (canvas, options) {
     },
 
     getBackground: function () { return background; },
+
+    /* Resolves once the paper (an uploaded page, say) is fully drawn */
+    ready: function () {
+      return new Promise(function (resolve) {
+        window.DoodleTemplates.whenReady(background, function () {
+          paintPaper();
+          paint();
+          resolve(api);
+        });
+      });
+    },
 
     /* Marks arriving from someone else — a teacher's hint, say */
     addItems: function (incoming) {

@@ -47,8 +47,13 @@ window.DoodleBoardUI = function (board, root, options) {
 
   /* Paper / template picker */
   function refreshBackground() {
+    var bg = board.getBackground();
     all("[data-background]").forEach(function (sel) {
-      if (sel.value !== board.getBackground()) sel.value = board.getBackground();
+      if (sel.value === bg) return;
+      /* An uploaded page from the teacher isn't in the list yet — rebuild it */
+      var known = Array.prototype.some.call(sel.options, function (o) { return o.value === bg; });
+      if (!known && window.DoodleTemplates) sel.innerHTML = window.DoodleTemplates.optionsHTML(bg);
+      sel.value = bg;
     });
   }
 

@@ -268,8 +268,36 @@
 
   /* ---- Lesson pages ----------------------------------------------------- */
   var templateSelect = document.querySelector("[data-template-select]");
-  templateSelect.innerHTML = '<option value="">Choose a page…</option>' +
-    window.DoodleTemplates.optionsHTML(room.template || "");
+
+  /* A teacher's uploaded worksheets follow them from room to room in this
+     browser: [{ name, at, pages: [{ id: "img:…", name }] }] */
+  function uploadsKey() {
+    var t = net.teacher();
+    return "doodle-uploads-" + (t && t.email ? t.email.toLowerCase() : "guest");
+  }
+
+  function myUploads() {
+    try { return JSON.parse(localStorage.getItem(uploadsKey()) || "[]"); } catch (e) { return []; }
+  }
+
+  function saveUpload(entry) {
+    var all = myUploads().filter(function (u) { return u.name !== entry.name; });
+    all.unshift(entry);
+    try { localStorage.setItem(uploadsKey(), JSON.stringify(all.slice(0, 30))); } catch (e) {}
+  }
+
+  function uploadedPages() {
+    var pages = [];
+    myUploads().forEach(function (u) { pages = pages.concat(u.pages); });
+    return pages;
+  }
+
+  function fillTemplates(selected) {
+    templateSelect.innerHTML = '<option value="">Choose a page…</option>' +
+      window.DoodleTemplates.optionsHTML(selected || "", uploadedPages());
+    if (selected) templateSelect.value = selected;
+  }
+  fillTemplates(room.template || "");
 
   document.querySelector("[data-send-template]").addEventListener("click", function () {
     var id = templateSelect.value;
@@ -279,7 +307,94 @@
     }
     net.updateRoom(room.code, { template: id });
     net.send("template", { code: room.code, template: id });
-    window.doodleToast(window.DoodleTemplates.nameOf(id) + " sent to every board 📄");
+    var label = templateSelect.options[templateSelect.selectedIndex].textContent;
+    window.doodleToast(label + " sent to every board 📄");
+  });
+
+  /* ---- Uploads & Google Drive (Teacher Pro) ------------------------------ */
+  var uploadNote = document.querySelector("[data-upload-note]");
+  var fileBtn = document.querySelector("[data-upload-file]");
+  var driveBtn = document.querySelector("[data-upload-drive]");
+  var fileInput = document.querySelector("[data-upload-input]");
+  var uploading = false;
+  var isPro = !!(net.teacher() || {}).pro;
+
+  function note(html, kind) {
+    uploadNote.hidden = !html;
+    uploadNote.setAttribute("data-kind", kind || "info");
+    uploadNote.innerHTML = html || "";
+  }
+
+  function proGate() {
+    var t = net.teacher();
+    if (!t) {
+      note('Uploading worksheets needs a teacher account. <a href="login.html">Log in</a> and come back to this room.', "warn");
+      return false;
+    }
+    if (!isPro) {
+      note('📎 Uploading worksheets and importing from Google Drive are part of <strong>Teacher Pro</strong>. ' +
+        '<a href="pricing.html">See Teacher Pro</a>', "pro");
+      return false;
+    }
+    return true;
+  }
+
+  function busy(on, label) {
+    uploading = on;
+    fileBtn.disabled = on;
+    driveBtn.disabled = on;
+    if (on) note("⏳ " + label, "info");
+  }
+
+  function finished(result) {
+    busy(false);
+    saveUpload({ name: result.name, at: Date.now(), pages: result.pages });
+    fillTemplates(result.pages[0].id);
+    var many = result.pages.length > 1;
+    note("✅ <strong>" + escape(result.name) + "</strong> is ready" +
+      (many ? " (" + result.pages.length + " pages — pick one in the Lesson page list)" : "") +
+      (result.truncated ? ". Only the first 20 pages were kept" : "") +
+      '. Press <strong>Send to every board</strong> when you want students to see it.', "good");
+  }
+
+  function failed(err) {
+    busy(false);
+    if (!err || err.message === "cancelled") return note("");
+    if (err.pro === false) {
+      isPro = false;
+      return proGate();
+    }
+    note("⚠️ " + escape(err.message || "That didn't work. Try again."), "warn");
+  }
+
+  fileBtn.addEventListener("click", function () {
+    if (uploading || !proGate()) return;
+    note("");
+    fileInput.value = "";
+    fileInput.click();
+  });
+
+  fileInput.addEventListener("change", function () {
+    var file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+    busy(true, "Getting your file ready…");
+    window.DoodleUploads.fromFile(file, function (msg) { note("⏳ " + escape(msg), "info"); })
+      .then(finished, failed);
+  });
+
+  driveBtn.addEventListener("click", function () {
+    if (uploading || !proGate()) return;
+    busy(true, "Opening Google Drive…");
+    window.DoodleUploads.fromDrive(function (msg) { note("⏳ " + escape(msg), "info"); })
+      .then(finished, failed);
+  });
+
+  /* Check Pro with the server (the Pro list may have changed since login),
+     and get Google's scripts ready so the Drive button opens instantly. */
+  net.account().then(function (t) {
+    isPro = !!(t && t.pro);
+    document.querySelectorAll(".pro-tag").forEach(function (tag) { tag.hidden = isPro; });
+    if (isPro && window.DoodleUploads) window.DoodleUploads.prepareDrive();
   });
 
   document.querySelector("[data-clear-all]").addEventListener("click", function () {
@@ -438,20 +553,30 @@
   var pendingSnap = null;
   var snapBtn = document.querySelector("[data-snapshot]");
 
+  /* Draw a student's full board off-screen — waiting for an uploaded
+     worksheet page to load first, so it isn't missing from the snapshot. */
   function renderFull(items) {
     var c = document.createElement("canvas");
     var b = window.DoodleBoard(c, { readOnly: true });
     b.setItems(items || []);
-    var img = b.toThumb(900, 0.8);
-    b.destroy();
-    return img;
+    var timeout = new Promise(function (resolve) { setTimeout(resolve, 5000); });
+    return Promise.race([b.ready(), timeout]).then(function () {
+      var img = b.toThumb(900, 0.8);
+      b.destroy();
+      return img;
+    });
   }
 
   function snapshotReply(p) {
     if (!pendingSnap || !pendingSnap.waiting[p.studentId]) return;
-    delete pendingSnap.waiting[p.studentId];
-    pendingSnap.images[p.studentId] = renderFull(p.items);
-    if (!Object.keys(pendingSnap.waiting).length) finishSnapshot();
+    var snap = pendingSnap;
+    delete snap.waiting[p.studentId];
+    snap.rendering++;
+    renderFull(p.items).then(function (img) {
+      snap.images[p.studentId] = img;
+      snap.rendering--;
+      if (pendingSnap === snap && !Object.keys(snap.waiting).length && !snap.rendering) finishSnapshot();
+    });
   }
 
   function finishSnapshot() {
@@ -485,7 +610,7 @@
     var students = net.getStudents(room.code);
     if (!students.length) return window.doodleToast("Nobody has joined yet — nothing to save.", "warn");
 
-    pendingSnap = { at: Date.now(), ids: students.map(function (s) { return s.id; }), waiting: {}, images: {}, timer: null };
+    pendingSnap = { at: Date.now(), ids: students.map(function (s) { return s.id; }), waiting: {}, images: {}, timer: null, rendering: 0 };
     snapBtn.disabled = true;
     snapBtn.textContent = "📸 Saving…";
 

@@ -102,7 +102,9 @@
         if (ui) ui.refresh();
         publish();
       },
-      onDrawing: function () { publish(true); }
+      onDrawing: function () { publish(true); },
+      /* A worksheet page finished loading — send the teacher a fresh view */
+      onPaperLoad: function () { publish(); }
     });
 
     ui = window.DoodleBoardUI(board, document, {
@@ -297,7 +299,9 @@
     board.setBackground(p.template, true);
     if (ui) ui.refresh();
     publish();
-    window.doodleToast("New page from your teacher: " + window.DoodleTemplates.nameOf(p.template) + " 📄");
+    window.doodleToast(window.DoodleTemplates.isUpload(p.template)
+      ? "Your teacher sent you a worksheet 📄 — fill it in right on your board"
+      : "New page from your teacher: " + window.DoodleTemplates.nameOf(p.template) + " 📄");
   });
 
   net.on("lock", function (p) {

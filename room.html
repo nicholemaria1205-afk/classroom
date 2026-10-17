@@ -87,6 +87,7 @@
           <button class="btn btn--primary" type="button" data-send-template>📄 Send to every board</button>
         </div>
         <div class="upload-actions">
+          <button class="btn btn--primary" type="button" data-ai-open>✨ Make with AI <span class="badge pro-tag">Pro</span></button>
           <button class="btn" type="button" data-upload-file>📎 Upload a worksheet <span class="badge badge--grape pro-tag">Pro</span></button>
           <button class="btn" type="button" data-upload-drive>🗂️ Google Drive <span class="badge badge--grape pro-tag">Pro</span></button>
           <input type="file" accept="application/pdf,image/png,image/jpeg,image/gif,image/webp,.pdf" data-upload-input hidden>
@@ -189,6 +190,92 @@
   </div>
 </div>
 
+<!-- ============================ AI MAKER ============================ -->
+<div class="focus" data-ai role="dialog" aria-modal="true" aria-labelledby="ai-title">
+  <div class="focus__panel ai-panel">
+    <div class="focus__head">
+      <h3 id="ai-title">✨ Make a worksheet with AI</h3>
+      <button class="btn btn--pink" type="button" data-ai-close style="margin-left:auto">Close ✕</button>
+    </div>
+
+    <!-- Step 1: what to make -->
+    <form data-ai-form class="ai-form" novalidate>
+      <div class="field">
+        <label for="ai-topic">What's it about?</label>
+        <input id="ai-topic" name="topic" type="text" maxlength="200" required
+               placeholder="e.g. Adding fractions with unlike denominators">
+        <span class="err"></span>
+      </div>
+      <div class="ai-row">
+        <div class="field">
+          <label for="ai-kind">Kind of activity</label>
+          <select id="ai-kind" name="kind">
+            <option value="worksheet">Worksheet (mixed questions)</option>
+            <option value="problems">Practice problems</option>
+            <option value="quiz">Multiple-choice quiz</option>
+            <option value="exit">Exit ticket</option>
+            <option value="draw">Draw &amp; label</option>
+            <option value="reading">Reading passage + questions</option>
+            <option value="vocab">Vocabulary</option>
+            <option value="organizer">Thinking organizer</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="ai-grade">Grade</label>
+          <select id="ai-grade" name="grade">
+            <option value="K">Kindergarten</option>
+            <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
+            <option value="4">4th</option><option value="5" selected>5th</option><option value="6">6th</option>
+            <option value="7">7th</option><option value="8">8th</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="ai-count">Questions</label>
+          <select id="ai-count" name="count">
+            <option>3</option><option>4</option><option>5</option><option selected>6</option>
+            <option>8</option><option>10</option><option>12</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="ai-notes">Anything else? <span class="muted small">(optional)</span></label>
+        <textarea id="ai-notes" name="notes" rows="2" maxlength="400"
+                  placeholder="e.g. Align to NC 5.NF.1, include one word problem about pizza"></textarea>
+      </div>
+      <div class="ai-actions">
+        <button class="btn btn--primary" type="submit" data-ai-go>✨ Make it</button>
+        <span class="small muted" data-ai-status role="status"></span>
+      </div>
+      <p class="small muted mb-0">AI can make mistakes — give it a quick read before you send it to students.</p>
+    </form>
+
+    <!-- Step 2: preview, tweak, save -->
+    <div data-ai-preview hidden>
+      <div class="ai-actions">
+        <button class="btn" type="button" data-ai-back>← Change request</button>
+        <button class="btn" type="button" data-ai-again>🔄 Make a new version</button>
+        <button class="btn" type="button" data-ai-print>🖨️ Print with answer key</button>
+        <span class="small muted" data-ai-left></span>
+      </div>
+      <div class="ai-pages" data-ai-pages></div>
+      <details class="card ai-edit">
+        <summary>✏️ Edit the questions</summary>
+        <div data-ai-edit-list></div>
+      </details>
+      <details class="card ai-edit">
+        <summary>🔑 Answer key <span class="small muted">— only you see this</span></summary>
+        <ol class="ai-key" data-ai-key></ol>
+        <p class="small muted mb-0" data-ai-notes></p>
+      </details>
+      <div class="ai-actions">
+        <button class="btn" type="button" data-ai-save>💾 Save to my uploads</button>
+        <button class="btn btn--primary" type="button" data-ai-send>📤 Save &amp; send to every board</button>
+        <span class="small muted" data-ai-save-status role="status"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" data-toast role="status" aria-live="polite"></div>
 
 <script src="assets/js/config.js"></script>
@@ -197,6 +284,7 @@
 <script src="assets/js/board-ui.js"></script>
 <script src="assets/js/realtime.js"></script>
 <script src="assets/js/uploads.js"></script>
+<script src="assets/js/ai-maker.js"></script>
 <script src="assets/js/room.js"></script>
 </body>
 </html>

@@ -150,6 +150,23 @@ When payments arrive, `isPro()` in `_lib/teacher.js` is the one place to change.
 
 Until those are set, the Drive button says import isn't switched on yet.
 
+### AI worksheet maker (Teacher Pro)
+
+**✨ Make with AI** in a room asks for a topic, grade (K–8), kind of activity
+(worksheet, practice problems, quiz, exit ticket, draw & label, reading
+passage, vocabulary, thinking organizer), number of questions and optional
+notes such as an NC standard. `netlify/functions/ai-worksheet.js` asks Claude
+for the content as structured data (forced tool use) and `assets/js/ai-maker.js`
+lays it out as wide pages shaped like the board — two columns, numbered
+questions, answer lines, choice bubbles, drawing boxes. The teacher can edit
+any question, see an answer key only they can view, print the worksheet with
+the key, then save it to their uploads or send it straight to every board.
+
+Setup: add `ANTHROPIC_API_KEY` (from <https://console.anthropic.com>) to
+Netlify's environment variables and redeploy. Optional: `AI_DAILY_LIMIT`
+(worksheets per teacher per day, default 25) and `AI_MODEL` (default
+`claude-haiku-5-5`). Only teachers on the Pro list can use it.
+
 ### Live sync across devices
 
 In live mode the **teacher's browser is the host**. It keeps the room, its

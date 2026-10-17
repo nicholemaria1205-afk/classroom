@@ -76,6 +76,30 @@ Students publish a small JPEG thumbnail rather than every stroke — cheap to se
 and to store, and it's all the teacher's grid needs. The full board only travels
 when a teacher actually opens it.
 
+### Drawing tools, lesson pages and saving
+
+- **Tools** — pen, highlighter, eraser, straight line, arrow, rectangle,
+  circle, text and stamps, with undo and redo (Ctrl/⌘ + Z, Ctrl/⌘ + Y). The
+  eraser only rubs out ink, never the paper underneath.
+- **Paper and lesson pages** — `DoodleTemplates` in `board-engine.js` draws
+  every background with code: blank, lined, graph, dot paper, a 0–20 number
+  line, a first-quadrant coordinate grid, fraction strips, a Venn diagram, a
+  T-chart, a KWL chart and a water cycle to label. Only the page's name is
+  stored or sent, as a `{type:"bg", name}` item at the front of a board. A
+  teacher picks one in the room and presses **Send to every board**
+  (`template` message); students who join later get it too.
+- **Student controls** — the room's **Class list** shows who's connected and
+  when each student was last seen, and lets the teacher pause one student's
+  board (`lock`), open it, or remove them from the room (`remove-student`).
+  A paused or removed student whose tab reloads is told again when it checks in.
+- **Saving** — a student's board is kept on their device under their name, so
+  closing the tab and rejoining the same room with the same name brings it back
+  (for two weeks). The practice board remembers itself too. **Save snapshot**
+  in the room keeps every student's board at that moment (full boards from
+  online students, thumbnails for the rest) in the teacher's browser
+  (IndexedDB); **Saved snapshots** reopens them, and any board or snapshot can
+  be printed or saved as a PDF from the browser's print dialog.
+
 ### Live sync across devices
 
 In live mode the **teacher's browser is the host**. It keeps the room, its

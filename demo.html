@@ -66,6 +66,22 @@
         </div>
 
         <div class="tool-group">
+          <h4>Shapes &amp; text</h4>
+          <div class="sizes">
+            <button class="size-btn tool-glyph" type="button" data-tool="line" aria-pressed="false" title="Straight line" aria-label="Straight line">╱</button>
+            <button class="size-btn tool-glyph" type="button" data-tool="arrow" aria-pressed="false" title="Arrow" aria-label="Arrow">➜</button>
+            <button class="size-btn tool-glyph" type="button" data-tool="rect" aria-pressed="false" title="Rectangle" aria-label="Rectangle">▭</button>
+            <button class="size-btn tool-glyph" type="button" data-tool="ellipse" aria-pressed="false" title="Circle" aria-label="Circle">◯</button>
+            <button class="size-btn tool-glyph" type="button" data-tool="text" aria-pressed="false" title="Text — click the board, type, press Enter" aria-label="Text">T</button>
+          </div>
+        </div>
+
+        <div class="tool-group">
+          <h4><label for="paper-select">Paper</label></h4>
+          <select class="paper-select" id="paper-select" data-background></select>
+        </div>
+
+        <div class="tool-group">
           <h4>Colour</h4>
           <div class="swatches">
             <button class="swatch" type="button" data-colour="#7c3aed" aria-pressed="true" aria-label="Purple" style="background:#7c3aed"></button>
@@ -106,13 +122,15 @@
       <div>
         <div class="wb__canvas-wrap">
           <canvas id="board" width="1200" height="740" role="img" aria-label="Drawing canvas. Use a mouse, finger or stylus to draw."></canvas>
-          <p class="wb__hint mb-0">Draw with a mouse, finger or stylus · Ctrl/⌘ + Z to undo</p>
+          <p class="wb__hint mb-0">Draw with a mouse, finger or stylus · Ctrl/⌘ + Z to undo · saved in this browser</p>
         </div>
 
         <div class="wb__actions">
           <button class="btn btn--sun" type="button" data-undo>↩️ Undo</button>
+          <button class="btn" type="button" data-redo>↪️ Redo</button>
           <button class="btn" type="button" data-clear>🧹 Clear board</button>
           <button class="btn btn--mint" type="button" data-save>⬇️ Save as PNG</button>
+          <button class="btn" type="button" data-print>🖨️ Print / PDF</button>
           <a class="btn btn--primary" href="subscribe.html" data-confetti>Get the real thing 🚀</a>
         </div>
       </div>

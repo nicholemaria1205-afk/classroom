@@ -81,6 +81,18 @@
       </div>
 
       <div class="bar">
+        <div class="template-pick">
+          <label class="small muted" for="template-select">Lesson page</label>
+          <select class="paper-select" id="template-select" data-template-select></select>
+          <button class="btn btn--primary" type="button" data-send-template>📄 Send to every board</button>
+        </div>
+        <div class="snap-actions">
+          <button class="btn" type="button" data-snapshot>📸 Save snapshot</button>
+          <button class="btn" type="button" data-open-snapshots>🗂️ Saved snapshots</button>
+        </div>
+      </div>
+
+      <div class="bar">
         <div class="chips" role="group" aria-label="Filter students">
           <button class="chip" type="button" data-filter="all" aria-pressed="true">Everyone <b data-count-all>0</b></button>
           <button class="chip" type="button" data-filter="working" aria-pressed="false">✏️ Working <b data-count-working>0</b></button>
@@ -90,6 +102,18 @@
         </div>
         <span class="small muted" style="margin-left:auto" data-online-count></span>
       </div>
+
+      <!-- ---------------------------- CLASS LIST ---------------------------- -->
+      <details class="card roster" data-roster>
+        <summary><span>👥 Class list</span> <span class="small muted" data-roster-summary></span></summary>
+        <div class="roster__body">
+          <p class="small muted" data-roster-empty>Nobody has joined yet.</p>
+          <table class="roster__table" data-roster-table hidden>
+            <thead><tr><th scope="col">Student</th><th scope="col">Status</th><th scope="col">Last seen</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+            <tbody data-roster-rows></tbody>
+          </table>
+        </div>
+      </details>
 
       <!-- ---------------------------- GRID ---------------------------- -->
       <div class="class-grid" data-class-grid></div>
@@ -111,7 +135,8 @@
       <span class="dot" data-focus-dot></span>
       <h3 id="focus-title" data-focus-name>Student</h3>
       <span class="badge badge--sky" data-focus-status>working</span>
-      <button class="btn" type="button" data-focus-clear style="margin-left:auto">🧹 Clear their board</button>
+      <button class="btn" type="button" data-focus-lock style="margin-left:auto" aria-pressed="false">🔒 Pause their board</button>
+      <button class="btn" type="button" data-focus-clear>🧹 Clear their board</button>
       <button class="btn btn--pink" type="button" data-focus-close>Close ✕</button>
     </div>
 
@@ -123,6 +148,10 @@
 
     <div class="focus__tools">
       <span class="small muted" style="margin-right:.3rem">Mark up:</span>
+      <button class="size-btn tool-glyph" type="button" data-tool="pen" aria-pressed="true" aria-label="Pen" title="Pen" style="width:38px;height:38px">✏️</button>
+      <button class="size-btn tool-glyph" type="button" data-tool="arrow" aria-pressed="false" aria-label="Arrow" title="Arrow" style="width:38px;height:38px">➜</button>
+      <button class="size-btn tool-glyph" type="button" data-tool="ellipse" aria-pressed="false" aria-label="Circle" title="Circle" style="width:38px;height:38px">◯</button>
+      <button class="size-btn tool-glyph" type="button" data-tool="text" aria-pressed="false" aria-label="Text" title="Text — click, type, press Enter" style="width:38px;height:38px">T</button>
       <button class="swatch" type="button" data-colour="#ff4d9d" aria-pressed="true" aria-label="Pink" style="background:#ff4d9d;width:34px;height:34px"></button>
       <button class="swatch" type="button" data-colour="#16c79a" aria-pressed="false" aria-label="Green" style="background:#16c79a;width:34px;height:34px"></button>
       <button class="swatch" type="button" data-colour="#38bdf8" aria-pressed="false" aria-label="Blue" style="background:#38bdf8;width:34px;height:34px"></button>
@@ -132,7 +161,24 @@
       <button class="stamp" type="button" data-stamp="✅" aria-pressed="false" aria-label="Tick stamp" style="width:38px;height:38px;font-size:1.1rem">✅</button>
       <button class="stamp" type="button" data-stamp="💡" aria-pressed="false" aria-label="Idea stamp" style="width:38px;height:38px;font-size:1.1rem">💡</button>
       <button class="btn btn--sun" type="button" data-undo>↩️ Undo my mark</button>
+      <button class="btn" type="button" data-save>⬇️ Save</button>
+      <button class="btn" type="button" data-print>🖨️ Print</button>
     </div>
+  </div>
+</div>
+
+<!-- ============================ SNAPSHOTS ============================ -->
+<div class="focus" data-snapshots role="dialog" aria-modal="true" aria-labelledby="snap-title">
+  <div class="focus__panel">
+    <div class="focus__head">
+      <h3 id="snap-title" data-snap-title>Saved snapshots</h3>
+      <button class="btn" type="button" data-snap-back hidden>← All snapshots</button>
+      <button class="btn btn--sun" type="button" data-snap-print hidden style="margin-left:auto">🖨️ Print / PDF</button>
+      <button class="btn btn--pink" type="button" data-snap-close>Close ✕</button>
+    </div>
+    <p class="small muted" data-snap-note style="margin-top:-.4rem">A snapshot keeps every student's board from that moment, in this browser.</p>
+    <div data-snap-list class="snap-list"></div>
+    <div data-snap-gallery class="class-grid" hidden></div>
   </div>
 </div>
 

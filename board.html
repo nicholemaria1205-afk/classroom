@@ -96,6 +96,22 @@
           </div>
 
           <div class="tool-group">
+            <h4>Shapes &amp; text</h4>
+            <div class="sizes">
+              <button class="size-btn tool-glyph" type="button" data-tool="line" aria-pressed="false" title="Straight line" aria-label="Straight line">╱</button>
+              <button class="size-btn tool-glyph" type="button" data-tool="arrow" aria-pressed="false" title="Arrow" aria-label="Arrow">➜</button>
+              <button class="size-btn tool-glyph" type="button" data-tool="rect" aria-pressed="false" title="Rectangle" aria-label="Rectangle">▭</button>
+              <button class="size-btn tool-glyph" type="button" data-tool="ellipse" aria-pressed="false" title="Circle" aria-label="Circle">◯</button>
+              <button class="size-btn tool-glyph" type="button" data-tool="text" aria-pressed="false" title="Text — click the board, type, press Enter" aria-label="Text">T</button>
+            </div>
+          </div>
+
+          <div class="tool-group">
+            <h4><label for="paper-select">Paper</label></h4>
+            <select class="paper-select" id="paper-select" data-background></select>
+          </div>
+
+          <div class="tool-group">
             <h4>Colour</h4>
             <div class="swatches">
               <button class="swatch" type="button" data-colour="#7c3aed" aria-pressed="true" aria-label="Purple" style="background:#7c3aed"></button>
@@ -143,13 +159,22 @@
                 <p class="mb-0" style="color:#f0e9ff">Your teacher has frozen the boards for a moment.</p>
               </div>
             </div>
-            <p class="wb__hint mb-0">Draw with a mouse, finger or stylus · Ctrl/⌘ + Z to undo</p>
+            <div class="frozen-veil" data-locked>
+              <div>
+                <span aria-hidden="true">🔒</span>
+                <strong>Your board is paused</strong>
+                <p class="mb-0" style="color:#f0e9ff">Your teacher has paused your board for a moment. You can still see it.</p>
+              </div>
+            </div>
+            <p class="wb__hint mb-0">Draw with a mouse, finger or stylus · Ctrl/⌘ + Z to undo · your board saves itself</p>
           </div>
 
           <div class="wb__actions">
             <button class="btn btn--sun" type="button" data-undo>↩️ Undo</button>
+            <button class="btn" type="button" data-redo>↪️ Redo</button>
             <button class="btn" type="button" data-clear>🧹 Clear my board</button>
             <button class="btn btn--mint" type="button" data-save>⬇️ Save as PNG</button>
+            <button class="btn" type="button" data-print>🖨️ Print / PDF</button>
             <button class="btn" type="button" data-leave>🚪 Leave room</button>
           </div>
         </div>
@@ -159,7 +184,7 @@
     <!-- ---------------------------- CLOSED ---------------------------- -->
     <div class="empty" data-room-gone hidden>
       <span>🚪</span>
-      <p><strong>This room has closed.</strong><br>Your teacher has finished the lesson.</p>
+      <p data-gone-text><strong>This room has closed.</strong><br>Your teacher has finished the lesson.</p>
       <a class="btn btn--primary" href="login.html">Join another room</a>
     </div>
 

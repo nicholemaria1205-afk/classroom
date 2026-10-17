@@ -1128,6 +1128,29 @@ details.qa .qa__body p:last-child { margin-bottom: 0; }
 .upload-note[data-kind="warn"] { border-color: var(--coral); }
 .upload-note[data-kind="pro"] { border-color: var(--grape); }
 .upload-note a { color: var(--grape); font-weight: 700; }
+/* ---- AI worksheet maker -------------------------------------------------- */
+.ai-panel { width: min(100%, 1100px); }
+.ai-form { display: grid; gap: 0.2rem; }
+.ai-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; }
+.ai-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin: 0.6rem 0 1rem; }
+.ai-pages { display: grid; gap: 1rem; margin-bottom: 1rem; }
+.ai-pages img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #fff;
+  border: 3px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--pop);
+}
+.ai-edit { margin-bottom: 1rem; padding: 0.9rem 1.1rem; color: var(--text); }
+.ai-edit summary { cursor: pointer; font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; }
+.ai-edit .field { margin-top: 0.8rem; }
+.ai-q input { margin-top: 0.4rem; }
+.ai-key { margin: 0.8rem 0; padding-left: 1.6rem; color: var(--text); }
+.ai-key li { margin-bottom: 0.3rem; }
+@media (max-width: 640px) { .ai-row { grid-template-columns: 1fr; } }
+
 [data-theme="dark"] .upload-note a { color: #c4b5fd; }
 
 .roster { margin-bottom: 1.4rem; padding: 1rem 1.2rem; }

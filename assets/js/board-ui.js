@@ -46,14 +46,19 @@ window.DoodleBoardUI = function (board, root, options) {
   }
 
   /* Paper / template picker */
+  var teacherPage = null;
   function refreshBackground() {
     var bg = board.getBackground();
+    var T = window.DoodleTemplates;
+    /* Remember a worksheet page from the teacher, so a student who tries
+       another paper can always switch back to it */
+    if (T && T.isUpload(bg)) teacherPage = bg;
     all("[data-background]").forEach(function (sel) {
-      if (sel.value === bg) return;
-      /* An uploaded page from the teacher isn't in the list yet — rebuild it */
-      var known = Array.prototype.some.call(sel.options, function (o) { return o.value === bg; });
-      if (!known && window.DoodleTemplates) sel.innerHTML = window.DoodleTemplates.optionsHTML(bg);
-      sel.value = bg;
+      var known = function (v) { return Array.prototype.some.call(sel.options, function (o) { return o.value === v; }); };
+      if (T && (!known(bg) || (teacherPage && !known(teacherPage)))) {
+        sel.innerHTML = T.optionsHTML(bg, teacherPage ? [{ id: teacherPage, name: "Page from your teacher" }] : null);
+      }
+      if (sel.value !== bg) sel.value = bg;
     });
   }
 

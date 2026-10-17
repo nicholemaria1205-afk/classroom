@@ -332,7 +332,7 @@
       return false;
     }
     if (!isPro) {
-      note('📎 Uploading worksheets and importing from Google Drive are part of <strong>Teacher Pro</strong>. ' +
+      note('✨ The AI worksheet maker, uploading worksheets and Google Drive import are part of <strong>Teacher Pro</strong>. ' +
         '<a href="pricing.html">See Teacher Pro</a>', "pro");
       return false;
     }
@@ -395,6 +395,218 @@
     isPro = !!(t && t.pro);
     document.querySelectorAll(".pro-tag").forEach(function (tag) { tag.hidden = isPro; });
     if (isPro && window.DoodleUploads) window.DoodleUploads.prepareDrive();
+  });
+
+  /* ---- AI worksheet maker (Teacher Pro) --------------------------------- */
+  var aiDialog = document.querySelector("[data-ai]");
+  var aiForm = document.querySelector("[data-ai-form]");
+  var aiPreview = document.querySelector("[data-ai-preview]");
+  var aiStatus = document.querySelector("[data-ai-status]");
+  var aiGo = document.querySelector("[data-ai-go]");
+  var aiPagesBox = document.querySelector("[data-ai-pages]");
+  var aiEditList = document.querySelector("[data-ai-edit-list]");
+  var aiSaveStatus = document.querySelector("[data-ai-save-status]");
+  var aiWorksheet = null;
+  var aiPages = [];
+  var aiLastAsk = null;
+  var aiBusy = false;
+
+  function openAI() {
+    if (!proGate()) return;
+    note("");
+    aiDialog.setAttribute("data-open", "true");
+    document.body.style.overflow = "hidden";
+    if (!aiWorksheet) showAIForm();
+    setTimeout(function () { (aiWorksheet ? aiPreview : aiForm).querySelector("button, input").focus(); }, 50);
+  }
+
+  function closeAI() {
+    aiDialog.setAttribute("data-open", "false");
+    document.body.style.overflow = "";
+  }
+
+  function showAIForm() {
+    aiForm.hidden = false;
+    aiPreview.hidden = true;
+  }
+
+  function setAIBusy(on, label) {
+    aiBusy = on;
+    aiGo.disabled = on;
+    aiDialog.querySelectorAll("[data-ai-again], [data-ai-save], [data-ai-send]").forEach(function (b) { b.disabled = on; });
+    aiStatus.textContent = label || "";
+  }
+
+  function readAsk() {
+    var f = aiForm.elements;
+    return {
+      topic: f.topic.value.trim(),
+      kind: f.kind.value,
+      grade: f.grade.value,
+      count: f.count.value,
+      notes: f.notes.value.trim()
+    };
+  }
+
+  function runAI(ask) {
+    if (aiBusy) return;
+    aiLastAsk = ask;
+    setAIBusy(true, "✨ Writing your worksheet… this takes a few seconds.");
+    showAIForm();
+    window.DoodleAI.generate(ask).then(function (r) {
+      if (!r.ok) {
+        setAIBusy(false, "");
+        if (r.pro === false) { isPro = false; closeAI(); return proGate(); }
+        aiStatus.textContent = "⚠️ " + r.error;
+        return;
+      }
+      aiWorksheet = r.worksheet;
+      document.querySelector("[data-ai-left]").textContent =
+        typeof r.left === "number" ? r.left + " AI worksheets left today" : "";
+      return renderAI().then(function () {
+        setAIBusy(false, "");
+        aiForm.hidden = true;
+        aiPreview.hidden = false;
+        aiSaveStatus.textContent = "";
+        fillAIEditors();
+      });
+    }).catch(function () {
+      setAIBusy(false, "⚠️ Something went wrong drawing the pages. Try again.");
+    });
+  }
+
+  function renderAI() {
+    return window.DoodleAI.render(aiWorksheet).then(function (pages) {
+      aiPages = pages;
+      aiPagesBox.innerHTML = pages.map(function (src, i) {
+        return '<img src="' + src + '" alt="Worksheet page ' + (i + 1) + ' preview">';
+      }).join("");
+      var key = document.querySelector("[data-ai-key]");
+      key.innerHTML = aiWorksheet.items.filter(function (it) { return it.type !== "passage"; }).map(function (it) {
+        return "<li>" + escape(it.answer || "—") + "</li>";
+      }).join("");
+      document.querySelector("[data-ai-notes]").textContent =
+        aiWorksheet.teacher_notes ? "Tip: " + aiWorksheet.teacher_notes : "";
+    });
+  }
+
+  /* Small edits without asking the AI again — the pages redraw as you type */
+  var rerender = null;
+  function fillAIEditors() {
+    var html = '<div class="field"><label>Title</label><input type="text" data-ai-field="title" maxlength="70" value="' +
+      escape(aiWorksheet.title) + '"></div>' +
+      '<div class="field"><label>Instructions</label><input type="text" data-ai-field="instructions" maxlength="240" value="' +
+      escape(aiWorksheet.instructions || "") + '"></div>';
+    var n = 0;
+    aiWorksheet.items.forEach(function (it, i) {
+      var label = it.type === "passage" ? "Reading passage" : "Question " + (++n);
+      html += '<div class="field ai-q"><label>' + label + "</label>" +
+        '<textarea rows="' + (it.type === "passage" ? 5 : 2) + '" data-ai-item="' + i + '" data-ai-part="prompt">' + escape(it.prompt) + "</textarea>";
+      if (it.type === "multiple_choice") {
+        html += '<input type="text" data-ai-item="' + i + '" data-ai-part="choices" value="' +
+          escape((it.choices || []).join(" | ")) + '" aria-label="Choices for ' + label + ', separated by |">' +
+          '<small>Choices, separated by |</small>';
+      }
+      if (it.type !== "passage") {
+        html += '<input type="text" data-ai-item="' + i + '" data-ai-part="answer" value="' + escape(it.answer || "") +
+          '" aria-label="Answer for ' + label + '" placeholder="Answer (only you see this)">';
+      }
+      html += "</div>";
+    });
+    aiEditList.innerHTML = html;
+  }
+
+  aiEditList.addEventListener("input", function (e) {
+    var el = e.target;
+    if (el.hasAttribute("data-ai-field")) {
+      aiWorksheet[el.getAttribute("data-ai-field")] = el.value;
+    } else if (el.hasAttribute("data-ai-item")) {
+      var it = aiWorksheet.items[+el.getAttribute("data-ai-item")];
+      var part = el.getAttribute("data-ai-part");
+      if (part === "choices") it.choices = el.value.split("|").map(function (c) { return c.trim(); }).filter(Boolean);
+      else it[part] = el.value;
+    }
+    aiSaveStatus.textContent = "";
+    clearTimeout(rerender);
+    rerender = setTimeout(renderAI, 450);
+  });
+
+  function saveAI(send) {
+    if (!aiWorksheet || aiBusy) return;
+    clearTimeout(rerender);
+    setAIBusy(true);
+    aiSaveStatus.textContent = "Saving…";
+    renderAI().then(function () {
+      var name = (aiWorksheet.title || "AI worksheet").slice(0, 60);
+      var ids = [];
+      var chain = Promise.resolve();
+      aiPages.forEach(function (src, i) {
+        chain = chain.then(function () {
+          aiSaveStatus.textContent = "Saving page " + (i + 1) + " of " + aiPages.length + "…";
+          return net.uploadPage(src, name + (aiPages.length > 1 ? " p" + (i + 1) : "")).then(function (r) {
+            if (!r.ok) throw new Error(r.error);
+            ids.push(r.id);
+          });
+        });
+      });
+      return chain.then(function () {
+        var pages = ids.map(function (id, i) {
+          return { id: "img:" + id, name: "✨ " + name + (ids.length > 1 ? " — page " + (i + 1) : "") };
+        });
+        saveUpload({ name: "✨ " + name, at: Date.now(), pages: pages, ai: true,
+                     answers: aiWorksheet.items.map(function (it) { return it.answer || ""; }) });
+        fillTemplates(pages[0].id);
+        setAIBusy(false);
+        if (send) {
+          net.updateRoom(room.code, { template: pages[0].id });
+          net.send("template", { code: room.code, template: pages[0].id });
+          window.doodleToast("“" + name + "” sent to every board 📤", "good");
+          closeAI();
+        } else {
+          aiSaveStatus.textContent = "✅ Saved — it's in the Lesson page list.";
+        }
+        if (ids.length > 1) {
+          note("✅ <strong>" + escape(name) + "</strong> has " + ids.length +
+            " pages — choose the next page in the Lesson page list when the class is ready.", "good");
+        }
+      });
+    }).catch(function (err) {
+      setAIBusy(false);
+      aiSaveStatus.textContent = "⚠️ " + (err && err.message ? err.message : "Couldn't save. Try again.");
+    });
+  }
+
+  document.querySelector("[data-ai-open]").addEventListener("click", openAI);
+  document.querySelector("[data-ai-close]").addEventListener("click", closeAI);
+  aiDialog.addEventListener("click", function (e) { if (e.target === aiDialog) closeAI(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && aiDialog.getAttribute("data-open") === "true") closeAI();
+  });
+
+  aiForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var ask = readAsk();
+    var field = aiForm.elements.topic.closest(".field");
+    var bad = ask.topic.length < 3;
+    field.classList.toggle("field--error", bad);
+    field.querySelector(".err").textContent = bad ? "Tell the AI what the worksheet is about." : "";
+    if (bad) return aiForm.elements.topic.focus();
+    runAI(ask);
+  });
+
+  document.querySelector("[data-ai-back]").addEventListener("click", showAIForm);
+  document.querySelector("[data-ai-again]").addEventListener("click", function () {
+    if (aiLastAsk) runAI(aiLastAsk);
+  });
+  document.querySelector("[data-ai-save]").addEventListener("click", function () { saveAI(false); });
+  document.querySelector("[data-ai-send]").addEventListener("click", function () { saveAI(true); });
+  document.querySelector("[data-ai-print]").addEventListener("click", function () {
+    if (!aiWorksheet) return;
+    window.DoodleAI.answerKeyImage(aiWorksheet).then(function (key) {
+      var pages = aiPages.map(function (src) { return { src: src }; });
+      pages.push({ src: key });
+      window.doodlePrint(pages, aiWorksheet.title);
+    });
   });
 
   document.querySelector("[data-clear-all]").addEventListener("click", function () {

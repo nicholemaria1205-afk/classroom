@@ -77,6 +77,7 @@ window.DOODLE = {
         "Assignments with instant feedback",
         "Sticker & stamp grading, rubrics",
         "Class progress dashboard",
+        "✨ AI worksheet & activity maker",
         "Upload worksheets & PDFs to every board",
         "Import from Google Drive",
         "Export boards to PDF & PNG",

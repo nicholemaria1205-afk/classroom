@@ -79,7 +79,8 @@ when a teacher actually opens it.
 ### Drawing tools, lesson pages and saving
 
 - **Tools** — pen, highlighter, eraser, straight line, arrow, rectangle,
-  circle, text and stamps, with undo and redo (Ctrl/⌘ + Z, Ctrl/⌘ + Y). The
+  circle, text and stamps (text wraps, Shift + Enter for a new line, and
+  clicking your own text again with the Text tool edits it), with undo and redo (Ctrl/⌘ + Z, Ctrl/⌘ + Y). The
   eraser only rubs out ink, never the paper underneath.
 - **Paper and lesson pages** — `DoodleTemplates` in `board-engine.js` draws
   every background with code: blank, lined, graph, dot paper, a 0–20 number
@@ -99,6 +100,55 @@ when a teacher actually opens it.
   online students, thumbnails for the rest) in the teacher's browser
   (IndexedDB); **Saved snapshots** reopens them, and any board or snapshot can
   be printed or saved as a PDF from the browser's print dialog.
+
+### Worksheets on every board (Teacher Pro)
+
+In a room, **Upload a worksheet** takes a PDF or an image (a worksheet made
+in any app — or with an AI tool — exported as PDF or image works the same).
+**Google Drive** opens Google's file picker for PDFs, images, Docs, Slides
+and Drawings (Google files are exported as PDF). The teacher's browser turns
+each page into an image sized to the board (PDF.js, loaded only when needed;
+up to 20 pages), uploads them to `asset-upload.js`, and they appear under
+**Your uploads** in the Lesson page list. **Send to every board** puts the
+page under each student's ink so they can write, draw and type their answers
+on it. Students load pages from `asset.js`; only the page's id travels in
+messages.
+
+```
+netlify/functions/asset-upload.js   stores one page (teacher + Pro only)
+netlify/functions/asset.js          serves a page by its id (public)
+netlify/functions/account.js        tells a signed-in page if the teacher is Pro
+netlify/functions/public-config.js  hands the browser the Google Drive keys
+netlify/functions/_lib/teacher.js   session check + the Pro list
+assets/js/uploads.js                PDF/image -> pages, Google Drive picker
+```
+
+**Who gets Pro** — until real payments are connected, Pro is a list you
+control: in Netlify, **Project configuration → Environment variables**, add
+`PRO_EMAILS` with the teacher emails, separated by commas, then redeploy.
+Teachers not on it see a "part of Teacher Pro" note with a link to pricing.
+When payments arrive, `isPro()` in `_lib/teacher.js` is the one place to change.
+
+**Turning on Google Drive** (free, about 15 minutes, once):
+
+1. Go to <https://console.cloud.google.com>, create a project (e.g.
+   "Doodle Desk"), and note its **project number** on the dashboard.
+2. **APIs & Services → Library**: enable **Google Drive API** and
+   **Google Picker API**.
+3. **APIs & Services → OAuth consent screen** (Google Auth Platform): app
+   name "Doodle Desk", your email as support contact, audience **External**.
+   Add the scope `.../auth/drive.file`. Then **Publish app** so any teacher can
+   sign in (drive.file is a non-sensitive scope, so no review is needed).
+4. **Credentials → Create credentials → OAuth client ID** → Web application.
+   Under **Authorized JavaScript origins** add `https://doodle-desk.netlify.app`.
+   Copy the **Client ID**.
+5. **Credentials → Create credentials → API key**. Restrict it: application
+   restriction **Websites** → `https://doodle-desk.netlify.app/*`; API
+   restriction → Google Picker API. Copy the key.
+6. In Netlify add environment variables `GOOGLE_CLIENT_ID`, `GOOGLE_API_KEY`
+   and `GOOGLE_APP_ID` (the project number), then redeploy.
+
+Until those are set, the Drive button says import isn't switched on yet.
 
 ### Live sync across devices
 

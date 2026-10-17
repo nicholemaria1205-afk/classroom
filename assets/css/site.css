@@ -163,7 +163,7 @@ main { flex: 1 0 auto; }
   border-radius: var(--radius-pill);
   border: 3px solid var(--border-strong);
   background: var(--surface);
-  color: var(--ink);
+  color: var(--text); /* was var(--ink): dark-on-dark in dark mode */
   cursor: pointer;
   text-decoration: none;
   box-shadow: var(--pop);

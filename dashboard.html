@@ -27,6 +27,7 @@
     <a class="logo" href="dashboard.html"><span class="logo__mark">✏️</span> Doodle Desk</a>
     <div class="nav__links" id="nav-links" data-open="false">
       <a href="dashboard.html" aria-current="page">My rooms</a>
+      <a href="drawer.html">🗄️ Doodle Drawer</a>
       <a href="demo.html">Practice board</a>
       <a href="index.html">Website</a>
       <a href="pricing.html">Plan</a>
@@ -78,6 +79,17 @@
       <div class="field">
         <label for="room-prompt">Today's task <span class="muted">(optional — students see this at the top of their board)</span></label>
         <input id="room-prompt" name="prompt" type="text" placeholder="Show me 3/4 as a picture" maxlength="160">
+      </div>
+      <div class="field" style="max-width:420px">
+        <label for="room-keep">Keep this room for</label>
+        <select id="room-keep" name="keep">
+          <option value="day">1 day</option>
+          <option value="week">1 week</option>
+          <option value="month" selected>1 month</option>
+          <option value="schoolyear">Until the end of the school year</option>
+          <option value="forever">Until I close it</option>
+        </select>
+        <small>Afterwards the room closes by itself and its boards, snapshots and grades are tidied away. Anything you save to your Doodle Drawer stays.</small>
       </div>
       <div style="display:flex;gap:.7rem;flex-wrap:wrap">
         <button class="btn btn--primary" type="submit">Open the room 🚪</button>

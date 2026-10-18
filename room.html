@@ -27,6 +27,7 @@
     <a class="logo" href="dashboard.html"><span class="logo__mark">✏️</span> Doodle Desk</a>
     <div class="nav__links" id="nav-links" data-open="false">
       <a href="dashboard.html">My rooms</a>
+      <a href="drawer.html">🗄️ Doodle Drawer</a>
       <a href="demo.html">Practice board</a>
       <a href="index.html">Website</a>
     </div>
@@ -89,7 +90,12 @@
             <input class="cp__input" id="prompt-input" type="text" placeholder="e.g. Show two ways to make 3/4" maxlength="160">
             <button class="btn btn--primary" type="button" data-send-prompt>Send to class</button>
           </div>
-          <div class="cp__row cp__row--end">
+          <div class="cp__row cp__row--split">
+            <div class="cp__keep">
+              <label for="room-keep">🗓️ Keep this room</label>
+              <select class="paper-select" id="room-keep" data-room-keep></select>
+              <span class="small muted" data-room-keep-label></span>
+            </div>
             <button class="btn btn--ghost cp__danger" type="button" data-clear-all>🧹 Clear all boards</button>
           </div>
         </div>
@@ -118,6 +124,10 @@
               <span class="cp__tile-text"><strong>From Google Drive</strong><small>Docs, Slides, PDFs and pictures</small></span>
               <span class="badge pro-tag">Pro</span>
             </button>
+            <a class="cp__tile" href="drawer.html">
+              <span class="cp__tile-icon" aria-hidden="true">🗄️</span>
+              <span class="cp__tile-text"><strong>Your Doodle Drawer</strong><small>Everything you've saved, ready to reuse</small></span>
+            </a>
           </div>
           <input type="file" accept="application/pdf,image/png,image/jpeg,image/gif,image/webp,.pdf" data-upload-input hidden>
         </div>
@@ -225,7 +235,11 @@
     <div class="focus__head">
       <h3 id="snap-title" data-snap-title>Saved snapshots</h3>
       <button class="btn" type="button" data-snap-back hidden>← All snapshots</button>
-      <button class="btn btn--sun" type="button" data-snap-print hidden style="margin-left:auto">🖨️ Print / PDF</button>
+      <span class="drawer-save" data-snap-drawer-wrap hidden style="margin-left:auto">
+        <select class="paper-select" data-snap-keep aria-label="Keep in your Doodle Drawer for"></select>
+        <button class="btn" type="button" data-snap-drawer>🗄️ Save to Doodle Drawer</button>
+      </span>
+      <button class="btn btn--sun" type="button" data-snap-print hidden>🖨️ Print / PDF</button>
       <button class="btn btn--pink" type="button" data-snap-close>Close ✕</button>
     </div>
     <p class="small muted" data-snap-note style="margin-top:-.4rem">A snapshot keeps every student's board from that moment, in this browser.</p>
@@ -359,6 +373,10 @@
         <button class="btn btn--mint" type="button" data-grade-csv>⬇️ Download spreadsheet</button>
         <button class="btn" type="button" data-grade-print>🖨️ Print</button>
         <button class="btn" type="button" data-grade-again>🔁 Grade again</button>
+        <span class="drawer-save">
+          <select class="paper-select" data-grade-keep aria-label="Keep in your Doodle Drawer for"></select>
+          <button class="btn" type="button" data-grade-drawer>🗄️ Save to Doodle Drawer</button>
+        </span>
       </div>
       <p class="small muted">Click a student to see each answer and change any mark. 🔎 = the AI wasn't sure — worth a look.</p>
       <div class="grade-table-wrap">
@@ -378,6 +396,7 @@
 <script src="assets/js/board-engine.js"></script>
 <script src="assets/js/board-ui.js"></script>
 <script src="assets/js/realtime.js"></script>
+<script src="assets/js/drawer.js"></script>
 <script src="assets/js/uploads.js"></script>
 <script src="assets/js/ai-maker.js"></script>
 <script src="assets/js/room.js"></script>

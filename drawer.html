@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doodle Drawer — Doodle Desk</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗄️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/site.css">
+<script>
+  document.documentElement.classList.add("js");
+  try {
+    var t = localStorage.getItem("doodle-theme") ||
+      (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", t);
+  } catch (e) {}
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav class="nav">
+  <div class="wrap nav__inner">
+    <a class="logo" href="dashboard.html"><span class="logo__mark">✏️</span> Doodle Desk</a>
+    <div class="nav__links" id="nav-links" data-open="false">
+      <a href="dashboard.html">My rooms</a>
+      <a href="drawer.html" aria-current="page">🗄️ Doodle Drawer</a>
+      <a href="demo.html">Practice board</a>
+      <a href="pricing.html">Plan</a>
+    </div>
+    <div class="nav__actions">
+      <span class="badge badge--mint" data-teacher-badge hidden></span>
+      <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch colour mode">🌙</button>
+      <button class="icon-btn nav__burger" data-burger type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<section class="section" style="padding-top:2.5rem">
+  <div class="wrap">
+
+    <div class="drawer-head">
+      <div>
+        <h1 style="margin-bottom:.3rem">🗄️ Your Doodle Drawer</h1>
+        <p class="muted mb-0">Every Doodle Pad you've saved — worksheets, snapshots and grade lists — ready to use again. It follows you to any computer.</p>
+      </div>
+      <a class="btn btn--primary" href="dashboard.html">← My rooms</a>
+    </div>
+
+    <div class="card drawer-tools">
+      <div class="chips" role="group" aria-label="Show">
+        <button class="chip" type="button" data-kind="all" aria-pressed="true">Everything <b data-count="all">0</b></button>
+        <button class="chip" type="button" data-kind="worksheet" aria-pressed="false">📄 Worksheets <b data-count="worksheet">0</b></button>
+        <button class="chip" type="button" data-kind="snapshot" aria-pressed="false">📸 Snapshots <b data-count="snapshot">0</b></button>
+        <button class="chip" type="button" data-kind="grades" aria-pressed="false">📝 Grade lists <b data-count="grades">0</b></button>
+      </div>
+      <label class="visually-hidden" for="drawer-search">Search your Doodle Drawer</label>
+      <input class="cp__input drawer-search" id="drawer-search" type="search" placeholder="🔎 Search your Doodle Pads" data-search>
+    </div>
+
+    <p class="upload-note" data-drawer-note role="status" hidden></p>
+    <div class="drawer-grid" data-pads aria-live="polite"></div>
+  </div>
+</section>
+</main>
+
+<!-- One Doodle Pad, opened -->
+<div class="focus" data-pad-view role="dialog" aria-modal="true" aria-labelledby="pad-title">
+  <div class="focus__panel ai-panel">
+    <div class="focus__head">
+      <h3 id="pad-title" data-pad-title>Doodle Pad</h3>
+      <span class="badge badge--sky" data-pad-kind></span>
+      <button class="btn btn--sun" type="button" data-pad-print style="margin-left:auto">🖨️ Print / PDF</button>
+      <button class="btn btn--mint" type="button" data-pad-csv hidden>⬇️ Spreadsheet</button>
+      <button class="btn btn--pink" type="button" data-pad-close>Close ✕</button>
+    </div>
+    <p class="small muted" data-pad-meta style="margin-top:-.4rem"></p>
+    <div data-pad-body></div>
+  </div>
+</div>
+
+<!-- Choose a room to use a worksheet in -->
+<div class="focus" data-use role="dialog" aria-modal="true" aria-labelledby="use-title">
+  <div class="focus__panel" style="width:min(100%,560px)">
+    <div class="focus__head">
+      <h3 id="use-title">📤 Use in a room</h3>
+      <button class="btn btn--pink" type="button" data-use-close style="margin-left:auto">Close ✕</button>
+    </div>
+    <p class="muted" data-use-what></p>
+    <div data-use-rooms class="use-rooms"></div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__bottom" style="margin-top:0;border-top:none;padding-top:0">
+      <span>© <span data-year>2026</span> Doodle Desk</span>
+      <span><a href="dashboard.html">My rooms</a> · <a href="demo.html">Practice board</a></span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" data-toast role="status" aria-live="polite"></div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/site.js"></script>
+<script src="assets/js/board-engine.js"></script>
+<script src="assets/js/realtime.js"></script>
+<script src="assets/js/drawer.js"></script>
+<script src="assets/js/drawer-page.js"></script>
+</body>
+</html>

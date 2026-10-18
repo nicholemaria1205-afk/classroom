@@ -185,6 +185,26 @@ Blank boards are marked without calling the AI. Uses the same
 `ANTHROPIC_API_KEY`; `AI_GRADE_DAILY_LIMIT` caps boards per teacher per day
 (default 300). Roughly half a cent per board.
 
+### The Doodle Drawer and keep-for dates
+
+**Doodle Drawer** (`drawer.html`) is each teacher's library of **Doodle
+Pads**, stored in their account (`netlify/functions/drawer.js`, Netlify Blobs)
+so it follows them to any computer. A pad is a worksheet (pages + answer key —
+saved automatically whenever a worksheet is made with AI, uploaded or imported
+from Drive), a snapshot (every board at one moment, saved from Saved snapshots)
+or a grade list (saved from Grade with AI — still teacher-only). Teachers can
+search, filter, open, print, rename, delete, download grade lists, and send a
+worksheet straight to any room (**Use in a room** opens the room with that page
+ready). Worksheets in the Drawer appear in every room's Lesson page list, and
+their answer keys fill in Grade with AI.
+
+**Keep-for dates** — every room and every Doodle Pad has one: 1 day, 1 week,
+1 month, 3 months, until the end of the school year (June 30), 1 year, or until
+deleted. Rooms choose theirs when opened (default 1 month) and can change it in
+the room's Class tab; past the date a room closes itself and its snapshots and
+grades in that browser are tidied away, and students' saved boards expire with
+it. Pads past their date are removed from the Drawer the next time it's opened.
+
 ### Live sync across devices
 
 In live mode the **teacher's browser is the host**. It keeps the room, its

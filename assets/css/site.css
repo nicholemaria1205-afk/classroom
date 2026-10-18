@@ -956,7 +956,11 @@ details.qa .qa__body p:last-child { margin-bottom: 0; }
 }
 .pupil__name { font-family: var(--font-display); font-weight: 600; font-size: 1rem; }
 .pupil__marks { margin-left: auto; font-size: 0.82rem; color: var(--muted); }
+.pupil__note { font-size: 0.95rem; line-height: 1; animation: note-bob 2.4s ease-in-out infinite; }
+@keyframes note-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@media (prefers-reduced-motion: reduce) { .pupil__note { animation: none; } }
 .pupil[data-offline="true"] { opacity: 0.5; }
+.pupil[data-offline="true"]:has(.pupil__note) { opacity: 0.8; } /* a note is waiting — keep it easy to spot */
 .pupil[data-status="stuck"] { box-shadow: 0 0 0 4px var(--coral), var(--pop); }
 .pupil[data-status="done"] { box-shadow: 0 0 0 4px var(--mint), var(--pop); }
 

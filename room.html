@@ -107,6 +107,12 @@
               <button class="btn btn--ghost cp__danger" type="button" data-clear-all>🧹 Clear all desks</button>
             </div>
           </div>
+          <div class="cp__keep att-room" style="margin-top:.8rem" data-att-row>
+            <label for="room-att">📋 Attendance</label>
+            <select class="paper-select" id="room-att" data-room-att></select>
+            <span class="small muted" data-room-att-today></span>
+            <a class="small" href="attendance.html" data-room-att-open>Open attendance →</a>
+          </div>
         </div>
 
         <!-- Pages & worksheets -->
@@ -424,6 +430,7 @@
 <script src="assets/js/realtime.js"></script>
 <script src="assets/js/sidebar.js"></script>
 <script src="assets/js/drawer.js"></script>
+<script src="assets/js/attendance-core.js"></script>
 <script src="assets/js/uploads.js"></script>
 <script src="assets/js/ai-maker.js"></script>
 <script src="assets/js/room.js"></script>

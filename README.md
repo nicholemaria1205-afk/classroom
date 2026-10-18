@@ -16,13 +16,30 @@ step, no dependencies, no framework. Drop the folder on any host and it works.
 | `subscribe.html` | Sign-up + checkout: plan picker, seat count, live order summary, validation |
 | `demo.html` | A real, working whiteboard — pens, highlighter, eraser, stamps, undo, PNG export |
 | `login.html` | Teacher log in, plus the student "join with a room code" form |
-| `FinalAtt.html` | The existing attendance tracker, linked from the site as a bundled tool |
+| `FinalAtt.html` | The old attendance tracker's address — now forwards to `attendance.html` |
 
 **The app**
 
 | File | What it is |
 | --- | --- |
 | `dashboard.html` | The teacher's rooms: open one, copy its join link, see who's in it, close it |
+| `attendance.html` | Attendance: Present / Late / Absent per day, a dated history, spreadsheet + print |
+
+**Attendance.** Each teacher has classes (names in seating order) and a mark for
+every student on every day: present, late or absent. Students take their own
+attendance: while a room page or the teaching desk is open, anyone who joins is
+marked present in the room's class. That's the class picked under 📋 Attendance
+on the room's Class tab, or by default the class with the room's name, made the
+first time someone joins. Matching is by name: the same name, or a first name
+only one student has ("Ava" matches "Ava Brown"). Anyone new is added and
+flagged **New** so the teacher can check the name. The teacher's own marks
+always win: someone marked absent stays absent if they join later. The History
+view shows any date range, with totals and attendance %, as a spreadsheet (CSV)
+or printed / PDF. Students taken off a class keep their past days in the history.
+Everything is saved in the browser at once and in the teacher's account
+(`netlify/functions/attendance.js`, Netlify Blobs), merged per mark so two
+computers can take attendance at the same time. The first time it opens, class
+and student names from the old tracker are brought over.
 | `room.html` | The live room — every student's board as a thumbnail, class controls, focus view |
 | `board.html` | A student's own board: joins by code, draws, gets the task and the teacher's marks |
 

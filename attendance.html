@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance — Doodle Desk</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/site.css">
+<script>
+  document.documentElement.classList.add("js");
+  try {
+    var t = localStorage.getItem("doodle-theme") ||
+      (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", t);
+  } catch (e) {}
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav class="nav">
+  <div class="wrap nav__inner">
+    <a class="logo" href="dashboard.html"><span class="logo__mark">✏️</span> Doodle Desk</a>
+    <div class="nav__links" id="nav-links" data-open="false">
+      <a href="dashboard.html">My rooms</a>
+      <a href="attendance.html" aria-current="page">📋 Attendance</a>
+      <a href="drawer.html">Doodle Drawer</a>
+      <a href="pricing.html">Plan</a>
+    </div>
+    <div class="nav__actions">
+      <span class="badge badge--mint" data-teacher-badge hidden></span>
+      <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch color mode">🌙</button>
+      <button class="icon-btn nav__burger" data-burger type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<section class="section" style="padding-top:2.5rem">
+  <div class="wrap">
+
+    <div class="drawer-head">
+      <div>
+        <h1 style="margin-bottom:.3rem">📋 Attendance</h1>
+        <p class="muted mb-0">Tap Present, Late or Absent for each student. Students who join one of your rooms are marked present for you.</p>
+      </div>
+      <span class="att-sync" data-sync role="status"></span>
+    </div>
+
+    <!-- Classes -->
+    <div class="card drawer-tools att-classes">
+      <div class="chips" role="group" aria-label="Your classes" data-class-chips></div>
+      <button class="btn btn--primary" type="button" data-new-class>＋ New class</button>
+    </div>
+
+    <!-- No classes yet -->
+    <div class="card att-empty" data-empty hidden>
+      <div class="att-empty__art" aria-hidden="true">📋</div>
+      <h2>No classes yet</h2>
+      <p class="muted">Make a class and type (or paste) your students' names — or just open one of your rooms. When students join, they're added to a class with the room's name and marked present.</p>
+      <button class="btn btn--primary btn--lg" type="button" data-new-class>＋ Make a class</button>
+    </div>
+
+    <!-- One class -->
+    <div class="card att-panel" data-panel hidden>
+      <div class="att-panel__head">
+        <div>
+          <h2 class="att-panel__title" data-class-name></h2>
+          <p class="small muted mb-0" data-class-rooms></p>
+        </div>
+        <div class="chips" role="tablist" aria-label="Show">
+          <button class="chip" type="button" role="tab" data-view="take" aria-pressed="true">✅ Take attendance</button>
+          <button class="chip" type="button" role="tab" data-view="history" aria-pressed="false">📅 History</button>
+          <button class="chip" type="button" role="tab" data-view="edit" aria-pressed="false">✏️ Edit class</button>
+        </div>
+      </div>
+
+      <!-- Take attendance -->
+      <div data-pane="take">
+        <div class="att-day">
+          <div class="att-date">
+            <button class="icon-btn" type="button" data-day="-1" aria-label="Day before">‹</button>
+            <label class="visually-hidden" for="att-date">Date</label>
+            <input class="cp__input att-date__input" type="date" id="att-date" data-date>
+            <button class="icon-btn" type="button" data-day="1" aria-label="Day after">›</button>
+            <button class="btn btn--ghost" type="button" data-today>Today</button>
+          </div>
+          <div class="att-totals" data-totals aria-live="polite"></div>
+        </div>
+        <div class="att-bulk">
+          <button class="btn btn--mint" type="button" data-rest="p">✅ Everyone else present</button>
+          <button class="btn" type="button" data-rest="a">❌ Everyone else absent</button>
+          <button class="btn btn--ghost" type="button" data-clear-day>Clear this day</button>
+        </div>
+        <div class="att-grid" data-grid></div>
+        <p class="small muted att-hint" data-hint></p>
+      </div>
+
+      <!-- History -->
+      <div data-pane="history" hidden>
+        <div class="att-range">
+          <div class="chips" role="group" aria-label="Dates">
+            <button class="chip" type="button" data-range="week" aria-pressed="false">This week</button>
+            <button class="chip" type="button" data-range="month" aria-pressed="true">This month</button>
+            <button class="chip" type="button" data-range="last" aria-pressed="false">Last month</button>
+            <button class="chip" type="button" data-range="all" aria-pressed="false">Everything</button>
+          </div>
+          <div class="att-range__dates">
+            <label for="att-from" class="small muted">From</label>
+            <input class="cp__input" type="date" id="att-from" data-from>
+            <label for="att-to" class="small muted">to</label>
+            <input class="cp__input" type="date" id="att-to" data-to>
+          </div>
+          <div class="att-range__out">
+            <button class="btn btn--mint" type="button" data-csv>⬇️ Spreadsheet</button>
+            <button class="btn btn--sun" type="button" data-print>🖨️ Print / PDF</button>
+          </div>
+        </div>
+        <div class="grade-table-wrap" data-history></div>
+        <p class="small muted mb-0 att-key">P present · L late · A absent · blank not marked. Attendance % counts late as attended.</p>
+      </div>
+
+      <!-- Edit class -->
+      <div data-pane="edit" hidden>
+        <div class="att-edit">
+          <label class="cp__label" for="att-class-name">Class name</label>
+          <div class="cp__row">
+            <input class="cp__input" id="att-class-name" type="text" maxlength="60" data-rename>
+          </div>
+
+          <div class="cp__keep att-link">
+            <label for="att-room">🔗 Fill in from the room</label>
+            <select class="paper-select" id="att-room" data-room-link></select>
+            <span class="small muted">Students who join that room are marked present here.</span>
+          </div>
+
+          <p class="cp__label" style="margin-top:1.2rem">Students <span class="muted">— drag to put them in seating order</span></p>
+          <ol class="att-list" data-list></ol>
+
+          <label class="cp__label" for="att-add">Add students <span class="muted">— one name per line, or paste a list</span></label>
+          <textarea class="cp__input att-add" id="att-add" rows="3" placeholder="Ava Brown&#10;Leo Martinez&#10;Maya Chen" data-add-text></textarea>
+          <div class="cp__row cp__row--split">
+            <button class="btn btn--primary" type="button" data-add>＋ Add to class</button>
+            <button class="btn btn--ghost cp__danger" type="button" data-delete-class>🗑️ Delete this class</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__bottom" style="margin-top:0;border-top:none;padding-top:0">
+      <span>© <span data-year>2026</span> Doodle Desk</span>
+      <span><a href="dashboard.html">My rooms</a> · <a href="drawer.html">Doodle Drawer</a></span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" data-toast role="status" aria-live="polite"></div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/site.js"></script>
+<script src="assets/js/board-engine.js"></script>
+<script src="assets/js/realtime.js"></script>
+<script src="assets/js/sidebar.js"></script>
+<script src="assets/js/attendance-core.js"></script>
+<script src="assets/js/attendance.js"></script>
+</body>
+</html>

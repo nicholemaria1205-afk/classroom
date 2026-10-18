@@ -59,7 +59,7 @@ window.DoodleAI = (function () {
     }).then(function (res) {
       return res.json().catch(function () { return {}; }).then(function (json) {
         if (res.ok && json.results) return { ok: true, results: json.results, note: json.note || "" };
-        return { ok: false, error: json.error || (res.status >= 500 ? "The AI took too long on this board." : "Couldn't grade this board (" + res.status + ")."), pro: json.pro };
+        return { ok: false, error: json.error || (res.status >= 500 ? "The AI took too long on this desk." : "Couldn't grade this desk (" + res.status + ")."), pro: json.pro };
       });
     }, function () {
       return { ok: false, error: "Could not reach the server." };

@@ -85,12 +85,12 @@
     gonePanel.hidden = true;
     boardPanel.hidden = false;
 
-    document.querySelector("[data-hello]").textContent = me.name + "'s board";
+    document.querySelector("[data-hello]").textContent = me.name + "'s desk";
     var roomBadge = document.querySelector("[data-room-badge]");
     roomBadge.hidden = false;
     roomBadge.textContent = room.code;
     document.querySelector("[data-room-name-badge]").textContent = room.subject + " · " + room.name;
-    document.title = me.name + "'s board — " + room.name;
+    document.title = me.name + "'s desk — " + room.name;
 
     showPrompt(room.prompt);
     setFrozen(room.frozen);
@@ -109,7 +109,7 @@
 
     ui = window.DoodleBoardUI(board, document, {
       filename: me.name + "-board",
-      printTitle: me.name + "'s board — " + room.name,
+      printTitle: me.name + "'s desk — " + room.name,
       onChange: function () { publish(); }
     });
     board.setTool("pen");
@@ -121,7 +121,7 @@
     if (!saved.length) saved = loadKept();
     if (saved.length) {
       board.setItems(saved);
-      if (saved.length > 1 || saved[0].type !== "bg") window.doodleToast("Welcome back — your board is just as you left it ✏️");
+      if (saved.length > 1 || saved[0].type !== "bg") window.doodleToast("Welcome back — your desk is just as you left it ✏️");
     }
     /* The teacher's lesson template, unless this board already has its own paper */
     var hasPaper = saved.some(function (i) { return i && i.type === "bg"; });
@@ -252,7 +252,7 @@
   });
 
   document.querySelector("[data-leave]").addEventListener("click", function () {
-    if (!me || !window.confirm("Leave this room? Your board goes with you.")) return;
+    if (!me || !window.confirm("Leave this room? Your desk goes with you.")) return;
     net.removeStudent(code, me.id);
     net.forgetMe(code);
     window.location.href = "login.html";
@@ -275,7 +275,7 @@
     board.clear(true);
     if (ui) ui.refresh();
     publish();
-    window.doodleToast("Your teacher cleared the board 🧹", "warn");
+    window.doodleToast("Your teacher cleared the desk 🧹", "warn");
   });
 
   net.on("teacher-mark", function (p) {
@@ -303,7 +303,7 @@
     if (ui) ui.refresh();
     publish();
     window.doodleToast(window.DoodleTemplates.isUpload(p.template)
-      ? "Your teacher sent you a worksheet 📄 — fill it in right on your board"
+      ? "Your teacher sent you a worksheet 📄 — fill it in right on your desk"
       : "New page from your teacher: " + window.DoodleTemplates.nameOf(p.template) + " 📄");
   });
 
@@ -311,7 +311,7 @@
     if (p.code !== code || !me || p.studentId !== me.id) return;
     if (Boolean(p.locked) === locked) return;
     setLocked(p.locked);
-    window.doodleToast(p.locked ? "Your teacher paused your board 🔒" : "Your board is back on ✏️", p.locked ? "warn" : "good");
+    window.doodleToast(p.locked ? "Your teacher paused your desk 🔒" : "Your desk is back on ✏️", p.locked ? "warn" : "good");
   });
 
   net.on("remove-student", function (p) {

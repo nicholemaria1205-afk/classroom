@@ -143,7 +143,7 @@
     var close = e.target.closest("[data-close-room]");
     if (close) {
       var code = close.getAttribute("data-close-room");
-      if (window.confirm("Close room " + code + "? Everyone in it is sent back, and the boards go with it.")) {
+      if (window.confirm("Close room " + code + "? Everyone in it is sent back, and the desks go with it.")) {
         net.deleteRoom(code);
         render();
         window.doodleToast("Room " + code + " closed", "warn");

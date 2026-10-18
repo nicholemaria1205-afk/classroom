@@ -46,7 +46,7 @@ window.DOODLE = {
       name: "Starter",
       emoji: "🎒",
       colour: "var(--sky)",
-      blurb: "Everything you need to run live boards with one class.",
+      blurb: "Everything you need to run live desks with one class.",
       monthly: 0,
       annual: 0,
       cta: "Start for free",
@@ -79,9 +79,9 @@ window.DOODLE = {
         "Class progress dashboard",
         "✨ AI worksheet & activity maker",
         "📝 AI grading with a grade list for you",
-        "Upload worksheets & PDFs to every board",
+        "Upload worksheets & PDFs to every desk",
         "Import from Google Drive",
-        "Export boards to PDF & PNG",
+        "Export desks to PDF & PNG",
         "Priority email support"
       ],
       missing: []

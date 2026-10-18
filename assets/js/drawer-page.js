@@ -224,7 +224,7 @@
         body.innerHTML = (d.prompt ? '<p class="small"><strong>Task:</strong> ' + escape(d.prompt) + "</p>" : "") +
           '<div class="class-grid">' + (d.students || []).map(function (st) {
             return '<figure class="pupil snap-card">' +
-              (st.img ? '<img class="pupil__shot" src="' + st.img + '" alt="' + escape(st.name) + '’s board">' : '<div class="pupil__empty">blank board</div>') +
+              (st.img ? '<img class="pupil__shot" src="' + st.img + '" alt="' + escape(st.name) + '’s desk">' : '<div class="pupil__empty">blank desk</div>') +
               '<figcaption class="pupil__foot"><span class="pupil__name">' + escape(st.name) + '</span><span class="pupil__marks">' + (st.marks || 0) + " marks</span></figcaption></figure>";
           }).join("") + "</div>";
       } else {

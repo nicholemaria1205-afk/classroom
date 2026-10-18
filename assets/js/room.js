@@ -37,6 +37,8 @@
   freezeBtn.setAttribute("aria-pressed", String(!!room.frozen));
   if (room.frozen) freezeBtn.textContent = "❄️ Frozen — click to release";
 
+  document.querySelector("[data-teach-link]").href = "teach.html?code=" + room.code;
+
   /* ---- How long this room is kept ---------------------------------------- */
   net.updateRoom(room.code, { openedAt: Date.now() });
   var keepSel = document.querySelector("[data-room-keep]");
@@ -87,6 +89,11 @@
     var savedTab = localStorage.getItem("doodle-room-tab");
     if (savedTab && document.querySelector('[data-cp-panel="' + savedTab + '"]')) showTab(savedTab);
   } catch (e) {}
+
+  /* The side menu (and links like room.html#pages) can open a tab */
+  window.doodleRoomTab = showTab;
+  var hashTab = location.hash.replace("#", "");
+  if (hashTab && document.querySelector('[data-cp-panel="' + hashTab + '"]')) showTab(hashTab);
 
   document.querySelector("[data-copy-link]").addEventListener("click", function () {
     var url = net.joinUrl(room.code);
@@ -148,15 +155,15 @@
     grid.innerHTML = shown.map(function (s) {
       var status = statusOf(s);
       var shot = s.thumb
-        ? '<img class="pupil__shot" src="' + s.thumb + '" alt="' + escape(s.name) + '’s board">'
-        : '<div class="pupil__empty">blank board</div>';
+        ? '<img class="pupil__shot" src="' + s.thumb + '" alt="' + escape(s.name) + '’s desk">'
+        : '<div class="pupil__empty">blank desk</div>';
 
       return '<button class="pupil" type="button" data-student="' + s.id + '"' +
         ' data-status="' + status + '" data-offline="' + String(!net.isOnline(s)) + '">' +
         shot +
         '<span class="pupil__foot">' +
           '<span class="dot" data-status="' + status + '"></span>' +
-          '<span class="pupil__name">' + (s.locked ? '<span title="Board paused" aria-label="Board paused">🔒 </span>' : "") + escape(s.name) + "</span>" +
+          '<span class="pupil__name">' + (s.locked ? '<span title="Desk paused" aria-label="Desk paused">🔒 </span>' : "") + escape(s.name) + "</span>" +
           '<span class="pupil__marks">' + (s.marks || 0) + " marks</span>" +
         "</span>" +
         "</button>";
@@ -228,7 +235,7 @@
     lockSentAt[id] = Date.now();
     if (focusId === id) showFocusLock(locked);
     render();
-    window.doodleToast(locked ? s.name + "'s board is paused 🔒" : s.name + " can draw again ✏️", locked ? "warn" : "good");
+    window.doodleToast(locked ? s.name + "'s desk is paused 🔒" : s.name + " can draw again ✏️", locked ? "warn" : "good");
   }
 
   function removedList() {
@@ -316,7 +323,7 @@
     freezeBtn.textContent = frozen ? "❄️ Frozen — click to release" : "❄️ Freeze";
     net.updateRoom(room.code, { frozen: frozen });
     net.send("freeze", { code: room.code, frozen: frozen });
-    window.doodleToast(frozen ? "Boards frozen — eyes front ❄️" : "Boards released ✏️", frozen ? "warn" : "good");
+    window.doodleToast(frozen ? "Desks frozen — eyes front ❄️" : "Desks released ✏️", frozen ? "warn" : "good");
   });
 
   /* ---- Lesson pages ----------------------------------------------------- */
@@ -388,7 +395,7 @@
       if (pageFromDrawer && templateSelect.value === pageFromDrawer) {
         showTab("pages");
         note("📄 <strong>" + escape(templateSelect.options[templateSelect.selectedIndex].textContent) +
-          "</strong> from your Doodle Drawer is ready. Press <strong>Send to every board</strong> when the class is ready.", "good");
+          "</strong> from your Doodle Drawer is ready. Press <strong>Send to every desk</strong> when the class is ready.", "good");
         history.replaceState(null, "", "room.html?code=" + room.code);
       }
     });
@@ -403,7 +410,7 @@
     net.updateRoom(room.code, { template: id });
     net.send("template", { code: room.code, template: id });
     var label = templateSelect.options[templateSelect.selectedIndex].textContent;
-    window.doodleToast(label + " sent to every board 📄");
+    window.doodleToast(label + " sent to every desk 📄");
   });
 
   /* ---- Uploads & Google Drive (Teacher Pro) ------------------------------ */
@@ -449,7 +456,7 @@
     note("✅ <strong>" + escape(result.name) + "</strong> is ready" +
       (many ? " (" + result.pages.length + " pages — pick one in the Lesson page list)" : "") +
       (result.truncated ? ". Only the first 20 pages were kept" : "") +
-      '. Press <strong>Send to every board</strong> when you want students to see it.', "good");
+      '. Press <strong>Send to every desk</strong> when you want students to see it.', "good");
   }
 
   function failed(err) {
@@ -658,7 +665,7 @@
         if (send) {
           net.updateRoom(room.code, { template: pages[0].id });
           net.send("template", { code: room.code, template: pages[0].id });
-          window.doodleToast("“" + name + "” sent to every board 📤", "good");
+          window.doodleToast("“" + name + "” sent to every desk 📤", "good");
           closeAI();
         } else {
           aiSaveStatus.textContent = "✅ Saved — it's in the Lesson page list.";
@@ -708,13 +715,13 @@
   });
 
   document.querySelector("[data-clear-all]").addEventListener("click", function () {
-    if (!window.confirm("Wipe every board in this room? This can't be undone.")) return;
+    if (!window.confirm("Wipe every desk in this room? This can't be undone.")) return;
     net.getStudents(room.code).forEach(function (s) {
       net.setStudent(room.code, s.id, { thumb: "", marks: 0 });
     });
     net.send("clear-board", { code: room.code, studentId: "all" });
     render();
-    window.doodleToast("All boards cleared 🧹", "warn");
+    window.doodleToast("All desks cleared 🧹", "warn");
   });
 
   /* ---- Focus view ------------------------------------------------------- */
@@ -727,7 +734,7 @@
 
   function showFocusLock(locked) {
     focusLockBtn.setAttribute("aria-pressed", String(!!locked));
-    focusLockBtn.textContent = locked ? "▶️ Let them draw" : "🔒 Pause their board";
+    focusLockBtn.textContent = locked ? "▶️ Let them draw" : "🔒 Pause their desk";
   }
 
   focusLockBtn.addEventListener("click", function () {
@@ -746,7 +753,7 @@
     document.querySelector("[data-focus-status]").textContent = statusOf(s);
     document.querySelector("[data-focus-dot]").setAttribute("data-status", statusOf(s));
     document.querySelector("[data-focus-note]").textContent = online
-      ? "Fetching their board…"
+      ? "Fetching their desk…"
       : "They're offline right now, so you can look but not mark up.";
 
     if (focusBoard) focusBoard.destroy();
@@ -763,7 +770,7 @@
     if (focusUI) focusUI.destroy();
     focusUI = window.DoodleBoardUI(focusBoard, focus.querySelector(".focus__panel"), {
       filename: s.name + "-board",
-      printTitle: s.name + "'s board — " + room.name
+      printTitle: s.name + "'s desk — " + room.name
     });
     focusBoard.setColour("#ff4d9d").setSize(6).setTool("pen");
     focus.querySelectorAll("[data-tool]").forEach(function (b) {
@@ -810,12 +817,12 @@
 
   document.querySelector("[data-focus-clear]").addEventListener("click", function () {
     if (!focusId) return;
-    if (!window.confirm("Clear this student's board?")) return;
+    if (!window.confirm("Clear this student's desk?")) return;
     net.send("clear-board", { code: room.code, studentId: focusId });
     net.setStudent(room.code, focusId, { thumb: "", marks: 0 });
     if (focusBoard) focusBoard.clear(true);
     render();
-    window.doodleToast("Board cleared 🧹", "warn");
+    window.doodleToast("Desk cleared 🧹", "warn");
   });
 
   /* ---- Snapshots ---------------------------------------------------------
@@ -909,7 +916,7 @@
       })
     };
     SnapStore.put(record).then(function () {
-      window.doodleToast("Snapshot saved — " + record.students.length + " boards 📸", "good");
+      window.doodleToast("Snapshot saved — " + record.students.length + " desks 📸", "good");
     }, function () {
       window.doodleToast("Couldn't save the snapshot in this browser.", "warn");
     });
@@ -999,12 +1006,12 @@
       snapList.innerHTML = all.length ? all.map(function (s) {
         return '<div class="snap-row">' +
           '<div><strong>' + escape(when(s.at)) + "</strong>" +
-          '<span class="small muted"> · ' + s.students.length + " boards" + (s.prompt ? " · " + escape(s.prompt) : "") + "</span></div>" +
+          '<span class="small muted"> · ' + s.students.length + " desks" + (s.prompt ? " · " + escape(s.prompt) : "") + "</span></div>" +
           '<div class="snap-row__actions">' +
             '<button class="btn" type="button" data-snap-view="' + escape(s.id) + '">👀 Open</button>' +
             '<button class="btn" type="button" data-snap-delete="' + escape(s.id) + '">🗑️ Delete</button>' +
           "</div></div>";
-      }).join("") : '<div class="empty"><span>📸</span><p><strong>No snapshots yet.</strong><br>Press “Save snapshot” during a lesson to keep every board.</p></div>';
+      }).join("") : '<div class="empty"><span>📸</span><p><strong>No snapshots yet.</strong><br>Press “Save snapshot” during a lesson to keep every desk.</p></div>';
     }, function () {
       snapList.innerHTML = '<p class="small muted">Snapshots aren’t available in this browser.</p>';
     });
@@ -1024,7 +1031,7 @@
     snapTitle.textContent = when(s.at);
     snapGallery.innerHTML = s.students.map(function (st) {
       return '<figure class="pupil snap-card">' +
-        (st.img ? '<img class="pupil__shot" src="' + st.img + '" alt="' + escape(st.name) + '’s board">' : '<div class="pupil__empty">blank board</div>') +
+        (st.img ? '<img class="pupil__shot" src="' + st.img + '" alt="' + escape(st.name) + '’s desk">' : '<div class="pupil__empty">blank desk</div>') +
         '<figcaption class="pupil__foot"><span class="dot" data-status="' + st.status + '"></span>' +
         '<span class="pupil__name">' + escape(st.name) + '</span><span class="pupil__marks">' + st.marks + " marks</span></figcaption></figure>";
     }).join("");
@@ -1167,7 +1174,7 @@
   function currentPage() { return (net.getRoom(room.code) || room).template || ""; }
 
   function pageLabel(page) {
-    if (!page) return "the boards as they are now";
+    if (!page) return "the desks as they are now";
     var hit = uploadedPages().filter(function (p) { return p.id === page; })[0];
     return hit ? hit.name : window.DoodleTemplates.nameOf(page);
   }
@@ -1228,7 +1235,7 @@
     var online = students.filter(net.isOnline).length;
     document.querySelector("[data-grade-who]").textContent = students.length
       ? students.length + " student" + (students.length === 1 ? "" : "s") + " · " + online + " online" +
-        (online < students.length ? " (boards of students who have left are graded from a small preview — those get flagged)" : "")
+        (online < students.length ? " (desks of students who have left are graded from a small preview — those get flagged)" : "")
       : "Nobody has joined this room yet.";
 
     gradeAIKey = aiKeyFor(page);
@@ -1285,10 +1292,10 @@
 
     gradeSetup.hidden = true;
     gradeWorking.hidden = false;
-    progress("Collecting boards…", 0.02);
+    progress("Collecting desks…", 0.02);
 
     collectBoards(students, 1600, function (got, total) {
-      progress("Collecting boards… " + got + " of " + total, 0.25 * got / Math.max(total, 1));
+      progress("Collecting desks… " + got + " of " + total, 0.25 * got / Math.max(total, 1));
     }).then(function (boards) {
       var run = { at: Date.now(), page: page, title: title, keyCount: key.length, rows: [] };
       gradeImages = {};
@@ -1310,7 +1317,7 @@
         if (row.blankBoard || !gradeImages[i]) {
           /* Nothing on the board — no need to ask the AI */
           row.results = key.map(function (k, n) { return { n: n + 1, status: "blank", read: "", note: "Nothing written", confident: true }; });
-          if (!key.length) row.note = "Blank board";
+          if (!key.length) row.note = "Blank desk";
           job = Promise.resolve();
         } else {
           job = window.DoodleAI.grade({ image: gradeImages[i], key: key, title: title, count: key.length || 10 }).then(function (r) {
@@ -1384,7 +1391,7 @@
   function detailHTML(row, i) {
     var html = '<div class="grade-detail__wrap">';
     if (gradeImages[i]) {
-      html += '<img class="grade-detail__img" src="' + gradeImages[i] + '" alt="' + escape(row.name) + '’s board">';
+      html += '<img class="grade-detail__img" src="' + gradeImages[i] + '" alt="' + escape(row.name) + '’s desk">';
     }
     html += "<div>";
     if (row.lowres) html += '<p class="small muted">Graded from a small preview (the student had left), so marks may be off.</p>';
@@ -1604,7 +1611,7 @@
     if (p.code !== room.code || p.studentId !== focusId || !focusBoard) return;
     focusBoard.setItems(p.items || []);
     document.querySelector("[data-focus-note]").textContent =
-      "Draw here to leave a hint — it appears on their board straight away.";
+      "Draw here to leave a hint — it appears on their desk straight away.";
   });
 
   /* Across devices: start listening for this room's students. In one-browser

@@ -34,7 +34,7 @@
 
   ui = window.DoodleBoardUI(board, document, {
     filename: "my-doodle-desk-board",
-    printTitle: "My Doodle Desk board",
+    printTitle: "My practice desk",
     onChange: save
   });
   board.setTool("pen");

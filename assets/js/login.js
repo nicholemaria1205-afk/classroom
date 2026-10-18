@@ -129,8 +129,8 @@
         submit.textContent = label;
         if (!room) {
           return setError(code, net.mode() === "remote"
-            ? "We can't find that room. Is your teacher's room open? Check the code on the board."
-            : "We can't find a room with that code. Check the board?");
+            ? "We can't find that room. Is your teacher's room open? Check the code your teacher shared."
+            : "We can't find a room with that code. Check the code your teacher shared?");
         }
         go();
       });

@@ -95,6 +95,7 @@
         <div class="snap-actions">
           <button class="btn" type="button" data-snapshot>📸 Save snapshot</button>
           <button class="btn" type="button" data-open-snapshots>🗂️ Saved snapshots</button>
+          <button class="btn" type="button" data-grade-open>📝 Grade with AI <span class="badge badge--grape pro-tag">Pro</span></button>
         </div>
       </div>
 
@@ -271,6 +272,57 @@
         <button class="btn" type="button" data-ai-save>💾 Save to my uploads</button>
         <button class="btn btn--primary" type="button" data-ai-send>📤 Save &amp; send to every board</button>
         <span class="small muted" data-ai-save-status role="status"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ AI GRADING (teacher only) ============================ -->
+<div class="focus" data-grade role="dialog" aria-modal="true" aria-labelledby="grade-title">
+  <div class="focus__panel ai-panel">
+    <div class="focus__head">
+      <h3 id="grade-title">📝 Grade with AI</h3>
+      <span class="badge badge--sky">Only you see grades</span>
+      <select class="paper-select grade-runs" data-grade-runs aria-label="Earlier gradings" hidden></select>
+      <button class="btn btn--pink" type="button" data-grade-close style="margin-left:auto">Close ✕</button>
+    </div>
+
+    <!-- Step 1: answer key -->
+    <div data-grade-setup>
+      <p class="mb-0"><strong>Grading:</strong> <span data-grade-page>the boards as they are now</span></p>
+      <p class="small muted" data-grade-who></p>
+      <div class="field">
+        <label for="grade-key">Answer key <span class="muted small">— one answer per line, in question order</span></label>
+        <textarea id="grade-key" rows="7" data-grade-key placeholder="1. 3/4&#10;2. B&#10;3. 6&#10;4. True"></textarea>
+        <small data-grade-key-hint>Leave it empty and the AI will work out the answers itself — every mark is then flagged for you to check.</small>
+      </div>
+      <div class="ai-actions">
+        <button class="btn btn--primary" type="button" data-grade-go>📝 Grade the boards</button>
+        <span class="small muted" data-grade-status role="status"></span>
+      </div>
+      <p class="small muted mb-0">Students never see these grades. Only a picture of each board and your key are sent to the AI — no names.</p>
+    </div>
+
+    <!-- Step 2: working -->
+    <div data-grade-working hidden>
+      <p><strong data-grade-progress-text>Collecting boards…</strong></p>
+      <div class="grade-bar"><span data-grade-bar></span></div>
+    </div>
+
+    <!-- Step 3: the grade list -->
+    <div data-grade-results hidden>
+      <div class="grade-summary" data-grade-summary></div>
+      <div class="ai-actions">
+        <button class="btn btn--mint" type="button" data-grade-csv>⬇️ Download spreadsheet</button>
+        <button class="btn" type="button" data-grade-print>🖨️ Print</button>
+        <button class="btn" type="button" data-grade-again>🔁 Grade again</button>
+      </div>
+      <p class="small muted">Click a student to see each answer and change any mark. 🔎 = the AI wasn't sure — worth a look.</p>
+      <div class="grade-table-wrap">
+        <table class="grade-table">
+          <thead><tr><th scope="col">Student</th><th scope="col">Score</th><th scope="col">%</th><th scope="col">Questions</th><th scope="col"><span class="visually-hidden">Check</span></th></tr></thead>
+          <tbody data-grade-rows></tbody>
+        </table>
       </div>
     </div>
   </div>

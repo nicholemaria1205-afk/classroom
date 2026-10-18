@@ -167,6 +167,24 @@ Netlify's environment variables and redeploy. Optional: `AI_DAILY_LIMIT`
 (worksheets per teacher per day, default 25) and `AI_MODEL` (default
 `claude-haiku-5-5`). Only teachers on the Pro list can use it.
 
+### Grade with AI (Teacher Pro, teacher only)
+
+**📝 Grade with AI** in a room collects every student's full board (like a
+snapshot), sends each picture — never a name — with the answer key to
+`netlify/functions/ai-grade.js`, and shows the teacher a grade list: score,
+percentage and a ✓ / ½ / ✗ / – for each question. Marks the AI wasn't sure
+about are flagged 🔎. Clicking a student shows their board, what the AI read
+for each answer, and lets the teacher change any mark. The list downloads as
+a spreadsheet (CSV for Excel / Google Sheets) or prints, and is saved in the
+teacher's browser per room. **Nothing is ever sent to students.**
+
+The answer key fills itself in for worksheets made with ✨ Make with AI. For
+other pages the teacher types one answer per line (remembered per page), or
+leaves it empty and the AI works out the answers, with every mark flagged.
+Blank boards are marked without calling the AI. Uses the same
+`ANTHROPIC_API_KEY`; `AI_GRADE_DAILY_LIMIT` caps boards per teacher per day
+(default 300). Roughly half a cent per board.
+
 ### Live sync across devices
 
 In live mode the **teacher's browser is the host**. It keeps the room, its

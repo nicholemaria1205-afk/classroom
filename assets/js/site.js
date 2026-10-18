@@ -130,10 +130,18 @@
 
   /* ---- Toast ------------------------------------------------------------ */
   var toastTimer;
-  window.doodleToast = function (message, tone) {
+  /* opts.sticky puts a little sticky-note picture in front of the message */
+  window.doodleToast = function (message, tone, opts) {
     var el = document.querySelector("[data-toast]");
     if (!el) return;
     el.textContent = message;
+    if (opts && opts.sticky) {
+      var note = document.createElement("span");
+      note.className = "sticky";
+      note.setAttribute("aria-hidden", "true");
+      el.insertBefore(document.createTextNode(" "), el.firstChild);
+      el.insertBefore(note, el.firstChild);
+    }
     el.style.background = tone === "warn" ? "var(--sunny)" : tone === "bad" ? "var(--coral)" : "var(--mint)";
     el.setAttribute("data-show", "true");
     clearTimeout(toastTimer);

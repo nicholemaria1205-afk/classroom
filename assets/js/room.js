@@ -145,10 +145,10 @@
       online + " of " + students.length + " online";
   }
 
-  /* 💌 on a card: a note is waiting for that student to come back */
+  /* A little sticky note on a card: a note is waiting for that student */
   function noteBadge(s) {
     return net.getNotes(room.code, s.id).length
-      ? '<span class="pupil__note" title="A note is waiting for ' + escape(s.name) + '" aria-label="Note waiting">💌</span>'
+      ? '<span class="pupil__note sticky" title="A note is waiting for ' + escape(s.name) + '" role="img" aria-label="Note waiting"></span>'
       : "";
   }
 
@@ -764,9 +764,10 @@
     document.querySelector("[data-focus-name]").textContent = s.name;
     document.querySelector("[data-focus-status]").textContent = statusOf(s);
     document.querySelector("[data-focus-dot]").setAttribute("data-status", statusOf(s));
-    document.querySelector("[data-focus-note]").textContent = online
+    document.querySelector("[data-focus-note]").innerHTML = online
       ? "Fetching their desk…"
-      : "💌 " + s.name + " is offline — write a note on their desk and it'll be waiting for them when they come back.";
+      : '<span class="sticky" aria-hidden="true"></span> ' + escape(s.name) +
+        " is offline — write a note on their desk and it'll be waiting for them when they come back.";
 
     /* Every mark is kept until their desk says it arrived, so nothing is lost
        if they drop off mid-lesson. Offline, you write over their last picture

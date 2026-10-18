@@ -355,9 +355,8 @@
     board.addItems(fresh);
     if (ui) ui.refresh();
     publish();
-    window.doodleToast(p.later
-      ? "💌 Your teacher left you a note while you were away"
-      : "Your teacher left you a hint 💡");
+    if (p.later) window.doodleToast("Your teacher left you a note while you were away", "", { sticky: true });
+    else window.doodleToast("Your teacher left you a hint 💡");
   });
 
   /* The teacher opened your board — send them everything you've drawn */

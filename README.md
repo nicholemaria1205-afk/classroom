@@ -214,6 +214,7 @@ it. Pads past their date are removed from the Drawer the next time it's opened.
 - **Teaching desk** (`teach.html`, `assets/js/teach.js`) — the teacher's own
   big desk, per room (`teach.html?code=…`) or standalone, with every tool and
   any lesson page or Doodle Drawer worksheet as paper. Saved in this browser.
+  While it's open it also hosts the room, so students can join or rejoin.
 - **Present mode** — fills the screen with just the desk (full screen where
   the browser allows). Menus, names and buttons disappear; a small toolbar
   fades in only while the mouse moves and fades out after 2.5 s. Esc or ✕ Exit

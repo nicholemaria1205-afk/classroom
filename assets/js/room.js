@@ -145,6 +145,13 @@
       online + " of " + students.length + " online";
   }
 
+  /* 💌 on a card: a note is waiting for that student to come back */
+  function noteBadge(s) {
+    return net.getNotes(room.code, s.id).length
+      ? '<span class="pupil__note" title="A note is waiting for ' + escape(s.name) + '" aria-label="Note waiting">💌</span>'
+      : "";
+  }
+
   function render() {
     var students = net.getStudents(room.code);
     var shown = students.filter(matchesFilter);
@@ -164,6 +171,7 @@
         '<span class="pupil__foot">' +
           '<span class="dot" data-status="' + status + '"></span>' +
           '<span class="pupil__name">' + (s.locked ? '<span title="Desk paused" aria-label="Desk paused">🔒 </span>' : "") + escape(s.name) + "</span>" +
+          noteBadge(s) +
           '<span class="pupil__marks">' + (s.marks || 0) + " marks</span>" +
         "</span>" +
         "</button>";
@@ -286,6 +294,7 @@
 
     var card = grid.querySelector('[data-student="' + studentId + '"]');
     if (!card || !matchesFilter(s)) return render();
+    if (!!card.querySelector(".pupil__note") !== !!noteBadge(s)) return render();
 
     var status = statusOf(s);
     card.setAttribute("data-status", status);
@@ -757,18 +766,28 @@
     document.querySelector("[data-focus-dot]").setAttribute("data-status", statusOf(s));
     document.querySelector("[data-focus-note]").textContent = online
       ? "Fetching their desk…"
-      : "They're offline right now, so you can look but not mark up.";
+      : "💌 " + s.name + " is offline — write a note on their desk and it'll be waiting for them when they come back.";
 
+    /* Every mark is kept until their desk says it arrived, so nothing is lost
+       if they drop off mid-lesson. Offline, you write over their last picture
+       and can change your note (undo, clear) until they're back. */
     if (focusBoard) focusBoard.destroy();
     focusBoard = window.DoodleBoard(focusCanvas, {
       author: "teacher",
-      readOnly: !online,
+      underlay: online ? null : (s.thumb || null),
+      background: room.template || "lined",
       onStrokeEnd: function (item) {
+        if (!focusId) return;
+        if (!online) {
+          net.setNotes(room.code, focusId, focusBoard.getItems());
+          updateOne(focusId);
+          return;
+        }
         /* Send only the new mark — the student already has everything else */
-        if (!item) return;
-        net.send("teacher-mark", { code: room.code, studentId: focusId, items: [item] });
+        if (item) net.leaveNote(room.code, focusId, [item]);
       }
     });
+    if (!online) focusBoard.setItems(net.getNotes(room.code, studentId));
 
     if (focusUI) focusUI.destroy();
     focusUI = window.DoodleBoardUI(focusBoard, focus.querySelector(".focus__panel"), {
@@ -822,6 +841,7 @@
     if (!focusId) return;
     if (!window.confirm("Clear this student's desk?")) return;
     net.send("clear-board", { code: room.code, studentId: focusId });
+    net.setNotes(room.code, focusId, []);
     net.setStudent(room.code, focusId, { thumb: "", marks: 0 });
     if (focusBoard) focusBoard.clear(true);
     render();

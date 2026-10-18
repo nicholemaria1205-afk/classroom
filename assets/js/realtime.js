@@ -323,6 +323,7 @@ window.DoodleNet = (function () {
     var room = state.rooms[code];
     if (room) {
       delete room.students[id];
+      if (room.notes) delete room.notes[id];
       writeStore(state);
     }
     send("leave", { code: code, studentId: id });
@@ -611,7 +612,97 @@ window.DoodleNet = (function () {
       applyToStore(msg);
       answerQuery(msg);
     }
+    if (hosting) handleNotes(msg);
     dispatch(msg);
+  }
+
+  /* ---- Notes on a student's desk -----------------------------------------
+     Every mark a teacher leaves on a student's desk is kept here until that
+     desk says it got it. So a student who was offline — or closed the tab
+     and comes back another day under the same name — finds the note waiting.
+     Whichever teacher page is hosting the room (the room page or the
+     teaching desk) hands them over. */
+  var hosting = false;
+  var noteSentAt = {};
+
+  function noteId() {
+    return "n" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  function getNotes(code, studentId) {
+    var room = getRoom(code);
+    var n = room && room.notes && room.notes[studentId];
+    return (n && n.items) || [];
+  }
+
+  /* Replace what's waiting for one student (an empty list clears it) */
+  function setNotes(code, studentId, items, name) {
+    var state = readStore();
+    var room = state.rooms[code];
+    if (!room) return [];
+    room.notes = room.notes || {};
+    var old = room.notes[studentId] || {};
+    var s = room.students[studentId];
+    items = (items || []).filter(function (i) { return i && i.type !== "bg"; });
+    items.forEach(function (i) { if (!i.nid) i.nid = noteId(); });
+    if (items.length) {
+      room.notes[studentId] = { name: name || (s && s.name) || old.name || "", items: items, at: Date.now() };
+    } else {
+      delete room.notes[studentId];
+    }
+    writeStore(state);
+    return items;
+  }
+
+  /* Add marks for a student and try to hand them over straight away */
+  function leaveNote(code, studentId, items) {
+    setNotes(code, studentId, getNotes(code, studentId).concat(items || []));
+    sendNotes(code, studentId, true);
+  }
+
+  function sendNotes(code, studentId, live) {
+    var items = getNotes(code, studentId);
+    if (!items.length) return;
+    var key = code + ":" + studentId;
+    if (!live && Date.now() - (noteSentAt[key] || 0) < 4000) return;
+    noteSentAt[key] = Date.now();
+    send("teacher-mark", { code: code, studentId: studentId, items: items, later: !live });
+  }
+
+  function sameName(a, b) {
+    return String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
+  }
+
+  function handleNotes(msg) {
+    var p = msg.payload || {};
+    var room = p.code && getRoom(p.code);
+    if (!room) return;
+
+    if (msg.type === "teacher-mark-got") {
+      var got = {};
+      (p.nids || []).forEach(function (n) { got[n] = true; });
+      var left = getNotes(room.code, p.studentId).filter(function (i) { return !got[i.nid]; });
+      setNotes(room.code, p.studentId, left);
+      return;
+    }
+
+    if (["join", "presence", "board", "status"].indexOf(msg.type) < 0) return;
+    var id = p.studentId || (p.student && p.student.id);
+    if (!id || (room.removed && room.removed[id])) return;
+
+    /* Back in a new tab (or on another day) with a new id but the same name:
+       the notes left for their old, now-offline desk follow them. */
+    var notes = room.notes || {};
+    if (!notes[id] && p.student && p.student.name) {
+      Object.keys(notes).forEach(function (oldId) {
+        if (oldId === id || !sameName(notes[oldId].name, p.student.name)) return;
+        var old = room.students[oldId];
+        if (old && isOnline(old)) return;
+        setNotes(room.code, id, getNotes(room.code, id).concat(notes[oldId].items), p.student.name);
+        setNotes(room.code, oldId, []);
+      });
+    }
+    sendNotes(room.code, id, false);
   }
 
   function send(type, payload) {
@@ -644,7 +735,7 @@ window.DoodleNet = (function () {
 
   /* ---- Live transport (Ably) -------------------------------------------- */
   var UP_TYPES = { "join": 1, "leave": 1, "presence": 1, "board": 1, "status": 1,
-                   "full-reply": 1, "room-query": 1,
+                   "full-reply": 1, "room-query": 1, "teacher-mark-got": 1,
                    "present-request": 1, "present-item": 1, "present-live": 1 };
 
   var subscribed = {};
@@ -737,6 +828,7 @@ window.DoodleNet = (function () {
      to `down`. Resolves once attached (or straight away in local mode). */
   function watch(code, role) {
     code = cleanCode(code);
+    if (role === "teacher") hosting = true;
     return ready.then(function () {
       if (mode !== "remote" || !code) return;
 
@@ -757,6 +849,7 @@ window.DoodleNet = (function () {
   /* Teacher pages call this: listen for students joining any room this
      browser has open. Rooms older than a few days are left alone. */
   function host() {
+    hosting = true;
     return ready.then(function () {
       if (mode !== "remote") return;
       var cutoff = Date.now() - HOST_WINDOW_MS;
@@ -1003,6 +1096,9 @@ window.DoodleNet = (function () {
     send: send,
     on: on,
     joinUrl: joinUrl,
-    isOnline: isOnline
+    isOnline: isOnline,
+    getNotes: getNotes,
+    setNotes: setNotes,
+    leaveNote: leaveNote
   };
 })();

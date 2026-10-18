@@ -542,7 +542,22 @@ window.DoodleBoard = function (canvas, options) {
     else if (item.type === "stroke" || !item.type) strokeOn(c, item);
   }
 
+  /* A picture of someone's desk to write over (an offline student's last
+     thumbnail, say) — painted in place of the paper */
+  var underlay = null;
+  if (opts.underlay) {
+    underlay = new Image();
+    underlay.onload = function () { paintPaper(); paint(); };
+    underlay.src = opts.underlay;
+  }
+
   function paintPaper() {
+    if (underlay) {
+      pctx.fillStyle = "#ffffff";
+      pctx.fillRect(0, 0, W, H);
+      if (underlay.complete && underlay.naturalWidth) pctx.drawImage(underlay, 0, 0, W, H);
+      return;
+    }
     var name = background;
     var ready = window.DoodleTemplates.paint(pctx, name, W, H);
     if (!ready) {

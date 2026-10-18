@@ -343,10 +343,21 @@
 
   net.on("teacher-mark", function (p) {
     if (p.code !== code || !me || !board || p.studentId !== me.id) return;
-    board.addItems(p.items || []);
+    /* Notes can arrive more than once (they're re-sent until we say we have
+       them), so only add the ones this desk doesn't have yet */
+    var have = {};
+    board.getItems().forEach(function (i) { if (i && i.nid) have[i.nid] = true; });
+    var items = p.items || [];
+    var fresh = items.filter(function (i) { return !i.nid || !have[i.nid]; });
+    var nids = items.map(function (i) { return i.nid; }).filter(Boolean);
+    if (nids.length) net.send("teacher-mark-got", { code: code, studentId: me.id, nids: nids });
+    if (!fresh.length) return;
+    board.addItems(fresh);
     if (ui) ui.refresh();
     publish();
-    window.doodleToast("Your teacher left you a hint 💡");
+    window.doodleToast(p.later
+      ? "💌 Your teacher left you a note while you were away"
+      : "Your teacher left you a hint 💡");
   });
 
   /* The teacher opened your board — send them everything you've drawn */

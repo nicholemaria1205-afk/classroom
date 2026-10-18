@@ -332,7 +332,7 @@
       return false;
     }
     if (!isPro) {
-      note('✨ The AI worksheet maker, uploading worksheets and Google Drive import are part of <strong>Teacher Pro</strong>. ' +
+      note('✨ The AI worksheet maker, AI grading, uploading worksheets and Google Drive import are part of <strong>Teacher Pro</strong>. ' +
         '<a href="pricing.html">See Teacher Pro</a>', "pro");
       return false;
     }
@@ -554,7 +554,10 @@
           return { id: "img:" + id, name: "✨ " + name + (ids.length > 1 ? " — page " + (i + 1) : "") };
         });
         saveUpload({ name: "✨ " + name, at: Date.now(), pages: pages, ai: true,
-                     answers: aiWorksheet.items.map(function (it) { return it.answer || ""; }) });
+                     /* The answer key, kept for "Grade with AI" — teacher only */
+                     key: aiWorksheet.items.filter(function (it) { return it.type !== "passage"; }).map(function (it) {
+                       return { question: it.prompt, answer: it.answer || "" };
+                     }) });
         fillTemplates(pages[0].id);
         setAIBusy(false);
         if (send) {
@@ -767,13 +770,13 @@
 
   /* Draw a student's full board off-screen — waiting for an uploaded
      worksheet page to load first, so it isn't missing from the snapshot. */
-  function renderFull(items) {
+  function renderFull(items, width, quality) {
     var c = document.createElement("canvas");
     var b = window.DoodleBoard(c, { readOnly: true });
     b.setItems(items || []);
     var timeout = new Promise(function (resolve) { setTimeout(resolve, 5000); });
     return Promise.race([b.ready(), timeout]).then(function () {
-      var img = b.toThumb(900, 0.8);
+      var img = b.toThumb(width || 900, quality || 0.8);
       b.destroy();
       return img;
     });
@@ -927,6 +930,452 @@
     }), openSnap.roomName + " — " + when(openSnap.at));
   });
 
+  /* ---- Grade with AI (Teacher Pro, teacher only) --------------------------
+     Collects every student's full board, sends each picture (no names) with
+     the answer key to ai-grade.js, and shows the teacher a grade list they
+     can check, change, download or print. Nothing here is ever sent to a
+     student. Gradings are kept in this browser, per room. */
+  var fullCollectors = [];
+
+  /* Ask online students for their full boards; offline ones fall back to
+     their last thumbnail (marked lowres). Resolves { id: { img, lowres } } */
+  function collectBoards(students, width, onProgress) {
+    return new Promise(function (resolve) {
+      var out = {}, waiting = {}, rendering = 0, done = false, timer = null;
+      var online = students.filter(net.isOnline);
+      var total = online.length, got = 0;
+
+      function finish() {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        fullCollectors = fullCollectors.filter(function (f) { return f !== handler; });
+        students.forEach(function (s) {
+          if (!out[s.id]) out[s.id] = s.thumb ? { img: s.thumb, lowres: true } : null;
+        });
+        resolve(out);
+      }
+
+      function handler(p) {
+        if (!waiting[p.studentId]) return;
+        delete waiting[p.studentId];
+        rendering++;
+        renderFull(p.items, width, 0.85).then(function (img) {
+          out[p.studentId] = { img: img, lowres: false };
+          rendering--;
+          got++;
+          if (onProgress) onProgress(got, total);
+          if (!Object.keys(waiting).length && !rendering) finish();
+        });
+      }
+
+      fullCollectors.push(handler);
+      online.forEach(function (s, i) {
+        waiting[s.id] = true;
+        setTimeout(function () {
+          if (!done) net.send("full-request", { code: room.code, studentId: s.id, asker: net.clientId });
+        }, i * 150);
+      });
+      if (!online.length) return finish();
+      timer = setTimeout(finish, 5000 + online.length * 150);
+    });
+  }
+
+  var gradeDialog = document.querySelector("[data-grade]");
+  var gradeSetup = document.querySelector("[data-grade-setup]");
+  var gradeWorking = document.querySelector("[data-grade-working]");
+  var gradeResults = document.querySelector("[data-grade-results]");
+  var gradeKeyBox = document.querySelector("[data-grade-key]");
+  var gradeStatus = document.querySelector("[data-grade-status]");
+  var gradeRows = document.querySelector("[data-grade-rows]");
+  var gradeRunsSel = document.querySelector("[data-grade-runs]");
+  var gradeRun = null;          /* the grading on screen */
+  var gradeImages = {};         /* row index -> board picture (this visit only) */
+  var gradeKeyPrefill = "";
+  var gradeAIKey = null;
+  var openRow = -1;
+
+  var POINTS = { correct: 1, partial: 0.5, incorrect: 0, blank: 0 };
+  var MARK = { correct: "✓", partial: "½", incorrect: "✗", blank: "–", not_on_page: "" };
+  var MARK_LABEL = { correct: "Correct", partial: "Partly right", incorrect: "Not right", blank: "Left blank", not_on_page: "Not on this page" };
+
+  function runsKey() { return "doodle-grades-" + room.code; }
+  function loadRuns() {
+    try { return JSON.parse(localStorage.getItem(runsKey()) || "[]"); } catch (e) { return []; }
+  }
+  function saveRuns(runs) {
+    for (var keep = runs.length; keep > 0; keep--) {
+      try {
+        localStorage.setItem(runsKey(), JSON.stringify(runs.slice(0, keep)));
+        return;
+      } catch (e) { /* storage full — drop the oldest and try again */ }
+    }
+  }
+  function storeRun(run) {
+    var runs = loadRuns().filter(function (r) { return r.at !== run.at; });
+    runs.unshift(run);
+    saveRuns(runs.slice(0, 15));
+  }
+
+  function keysStoreKey() {
+    var t = net.teacher();
+    return "doodle-keys-" + (t && t.email ? t.email.toLowerCase() : "guest");
+  }
+  function typedKeys() {
+    try { return JSON.parse(localStorage.getItem(keysStoreKey()) || "{}"); } catch (e) { return {}; }
+  }
+  function rememberKey(page, text) {
+    if (!page) return;
+    var all = typedKeys();
+    all[page] = text;
+    try { localStorage.setItem(keysStoreKey(), JSON.stringify(all)); } catch (e) {}
+  }
+
+  function currentPage() { return (net.getRoom(room.code) || room).template || ""; }
+
+  function pageLabel(page) {
+    if (!page) return "the boards as they are now";
+    var hit = uploadedPages().filter(function (p) { return p.id === page; })[0];
+    return hit ? hit.name : window.DoodleTemplates.nameOf(page);
+  }
+
+  /* The AI maker saved its answer key with the worksheet — use it */
+  function aiKeyFor(page) {
+    var entry = myUploads().filter(function (u) {
+      return u.key && u.pages.some(function (p) { return p.id === page; });
+    })[0];
+    return entry ? entry.key : null;
+  }
+
+  function parseKey(text) {
+    return String(text || "").split("\n").map(function (line) {
+      return line.replace(/^\s*\(?\d+[.):-]?\s*/, "").trim();
+    }).filter(Boolean);
+  }
+
+  function scoreOf(row) {
+    var counted = (row.results || []).filter(function (r) { return r.status !== "not_on_page"; });
+    var got = counted.reduce(function (sum, r) { return sum + (POINTS[r.status] || 0); }, 0);
+    return { got: got, of: counted.length, pct: counted.length ? Math.round((got / counted.length) * 100) : null };
+  }
+
+  function needsCheck(row) {
+    if (row.checked) return false;
+    if (row.lowres || row.error) return true;
+    return (row.results || []).some(function (r) { return r.status !== "not_on_page" && !r.confident; });
+  }
+
+  function fmt(n) { return String(Math.round(n * 10) / 10); }
+
+  function openGrading() {
+    if (!proGate()) return;
+    note("");
+    gradeDialog.setAttribute("data-open", "true");
+    document.body.style.overflow = "hidden";
+    fillRunPicker();
+    var runs = loadRuns();
+    if (gradeRun) showResults();
+    else if (runs.length && runs[0].page === currentPage()) { gradeRun = runs[0]; gradeImages = {}; showResults(); }
+    else showSetup();
+  }
+
+  function closeGrading() {
+    gradeDialog.setAttribute("data-open", "false");
+    document.body.style.overflow = "";
+  }
+
+  function showSetup() {
+    gradeSetup.hidden = false;
+    gradeWorking.hidden = true;
+    gradeResults.hidden = true;
+    gradeStatus.textContent = "";
+    var page = currentPage();
+    document.querySelector("[data-grade-page]").textContent = pageLabel(page);
+    var students = net.getStudents(room.code);
+    var online = students.filter(net.isOnline).length;
+    document.querySelector("[data-grade-who]").textContent = students.length
+      ? students.length + " student" + (students.length === 1 ? "" : "s") + " · " + online + " online" +
+        (online < students.length ? " (boards of students who have left are graded from a small preview — those get flagged)" : "")
+      : "Nobody has joined this room yet.";
+
+    gradeAIKey = aiKeyFor(page);
+    var typed = typedKeys()[page];
+    if (typed != null) {
+      gradeKeyBox.value = typed;
+    } else if (gradeAIKey) {
+      gradeKeyBox.value = gradeAIKey.map(function (k, i) { return (i + 1) + ". " + k.answer; }).join("\n");
+    } else {
+      gradeKeyBox.value = "";
+    }
+    gradeKeyPrefill = gradeKeyBox.value;
+    document.querySelector("[data-grade-key-hint]").textContent = gradeAIKey
+      ? "Filled in from the AI worksheet's answer key — change anything that's wrong."
+      : "Leave it empty and the AI will work out the answers itself — every mark is then flagged for you to check.";
+  }
+
+  function progress(text, fraction) {
+    document.querySelector("[data-grade-progress-text]").textContent = text;
+    document.querySelector("[data-grade-bar]").style.width = Math.round(Math.max(0.03, fraction) * 100) + "%";
+  }
+
+  function startGrading() {
+    var students = net.getStudents(room.code);
+    if (!students.length) { gradeStatus.textContent = "Nobody has joined yet — nothing to grade."; return; }
+
+    var page = currentPage();
+    var answers = parseKey(gradeKeyBox.value);
+    rememberKey(page, gradeKeyBox.value);
+    /* Keep the AI worksheet's question text with each answer — it helps the
+       AI find the right spot on the page */
+    var key = answers.map(function (a, i) {
+      return { question: gradeAIKey && gradeAIKey[i] ? gradeAIKey[i].question : "", answer: a };
+    });
+    var title = pageLabel(page);
+
+    gradeSetup.hidden = true;
+    gradeWorking.hidden = false;
+    progress("Collecting boards…", 0.02);
+
+    collectBoards(students, 1600, function (got, total) {
+      progress("Collecting boards… " + got + " of " + total, 0.25 * got / Math.max(total, 1));
+    }).then(function (boards) {
+      var run = { at: Date.now(), page: page, title: title, keyCount: key.length, rows: [] };
+      gradeImages = {};
+      students.forEach(function (s, i) {
+        var b = boards[s.id];
+        run.rows.push({ id: s.id, name: s.name, lowres: !!(b && b.lowres), blankBoard: !s.marks, results: [], note: "" });
+        if (b) gradeImages[i] = b.img;
+      });
+
+      var queue = run.rows.map(function (row, i) { return i; });
+      var finished = 0;
+      var fatal = null;
+
+      function next() {
+        if (fatal || !queue.length) return Promise.resolve();
+        var i = queue.shift();
+        var row = run.rows[i];
+        var job;
+        if (row.blankBoard || !gradeImages[i]) {
+          /* Nothing on the board — no need to ask the AI */
+          row.results = key.map(function (k, n) { return { n: n + 1, status: "blank", read: "", note: "Nothing written", confident: true }; });
+          if (!key.length) row.note = "Blank board";
+          job = Promise.resolve();
+        } else {
+          job = window.DoodleAI.grade({ image: gradeImages[i], key: key, title: title, count: key.length || 10 }).then(function (r) {
+            if (r.ok) {
+              /* One mark per answer-key line, no more */
+              row.results = key.length ? r.results.slice(0, key.length) : r.results;
+              row.note = r.note || "";
+            } else {
+              row.error = r.error;
+              if (r.pro === false || /switched on|limit|graded \d+/i.test(r.error)) fatal = r;
+            }
+          });
+        }
+        return job.then(function () {
+          finished++;
+          progress("Grading " + finished + " of " + run.rows.length + "…", 0.25 + 0.75 * finished / run.rows.length);
+          return next();
+        });
+      }
+
+      return Promise.all([next(), next(), next()]).then(function () {
+        if (fatal && run.rows.every(function (r) { return !r.results.length || r.error; })) {
+          gradeWorking.hidden = true;
+          gradeSetup.hidden = false;
+          if (fatal.pro === false) { isPro = false; closeGrading(); return proGate(); }
+          gradeStatus.textContent = "⚠️ " + fatal.error;
+          return;
+        }
+        gradeRun = run;
+        storeRun(run);
+        fillRunPicker();
+        showResults();
+      });
+    });
+  }
+
+  function chipHTML(r) {
+    if (r.status === "not_on_page") return "";
+    return '<span class="mark" data-mark="' + r.status + '" title="' + (r.n) + ": " + MARK_LABEL[r.status] + '">' +
+      MARK[r.status] + (r.confident ? "" : "<sup>?</sup>") + "</span>";
+  }
+
+  function showResults() {
+    gradeSetup.hidden = true;
+    gradeWorking.hidden = true;
+    gradeResults.hidden = false;
+    var run = gradeRun;
+    var scored = run.rows.map(scoreOf).filter(function (s) { return s.pct != null; });
+    var avg = scored.length ? Math.round(scored.reduce(function (a, s) { return a + s.pct; }, 0) / scored.length) : null;
+    var flagged = run.rows.filter(needsCheck).length;
+    document.querySelector("[data-grade-summary]").innerHTML =
+      "<div><strong>" + escape(run.title) + "</strong><span class=\"small muted\"> · graded " +
+      escape(new Date(run.at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) + "</span></div>" +
+      '<div class="grade-stats"><span>Class average <b>' + (avg == null ? "—" : avg + "%") + "</b></span>" +
+      "<span>" + run.rows.length + " students</span>" +
+      (flagged ? '<span class="grade-flag">🔎 ' + flagged + " to check</span>" : "<span>✅ All checked</span>") + "</div>";
+
+    gradeRows.innerHTML = run.rows.map(function (row, i) {
+      var sc = scoreOf(row);
+      var main = '<tr class="grade-row" data-row="' + i + '" tabindex="0" aria-expanded="' + String(openRow === i) + '">' +
+        "<td><strong>" + escape(row.name) + "</strong>" + (row.error ? ' <span class="small muted">· couldn’t grade</span>' : "") + "</td>" +
+        "<td>" + (sc.of ? fmt(sc.got) + " / " + sc.of : "—") + "</td>" +
+        "<td>" + (sc.pct == null ? "—" : sc.pct + "%") + "</td>" +
+        '<td><div class="marks">' + (row.results || []).map(chipHTML).join("") + (row.note && !row.results.length ? '<span class="small muted">' + escape(row.note) + "</span>" : "") + "</div></td>" +
+        "<td>" + (needsCheck(row) ? '<span class="grade-flag" title="Worth a look">🔎</span>' : "") + "</td></tr>";
+      if (openRow !== i) return main;
+      return main + '<tr class="grade-detail"><td colspan="5">' + detailHTML(row, i) + "</td></tr>";
+    }).join("");
+  }
+
+  function detailHTML(row, i) {
+    var html = '<div class="grade-detail__wrap">';
+    if (gradeImages[i]) {
+      html += '<img class="grade-detail__img" src="' + gradeImages[i] + '" alt="' + escape(row.name) + '’s board">';
+    }
+    html += "<div>";
+    if (row.lowres) html += '<p class="small muted">Graded from a small preview (the student had left), so marks may be off.</p>';
+    if (row.error) html += '<p class="small">⚠️ ' + escape(row.error) + "</p>";
+    if (row.note && row.results.length) html += '<p class="small muted">' + escape(row.note) + "</p>";
+    html += (row.results || []).map(function (r, k) {
+      return '<div class="grade-q"><span class="grade-q__n">' + r.n + ".</span>" +
+        '<select class="paper-select" data-edit-row="' + i + '" data-edit-q="' + k + '" aria-label="Mark for question ' + r.n + '">' +
+        ["correct", "partial", "incorrect", "blank", "not_on_page"].map(function (st) {
+          return '<option value="' + st + '"' + (st === r.status ? " selected" : "") + ">" + (MARK[st] ? MARK[st] + " " : "") + MARK_LABEL[st] + "</option>";
+        }).join("") + "</select>" +
+        '<span class="small">' + (r.read ? "Read: “" + escape(r.read) + "”" : "") +
+        (r.note ? ' <span class="muted">— ' + escape(r.note) + "</span>" : "") +
+        (r.confident ? "" : ' <span class="grade-flag">🔎 unsure</span>') + "</span></div>";
+    }).join("");
+    html += '<div class="ai-actions"><button class="btn" type="button" data-checked-row="' + i + '">' +
+      (row.checked ? "✅ Checked" : "✔ Mark as checked") + "</button></div>";
+    return html + "</div></div>";
+  }
+
+  gradeRows.addEventListener("click", function (e) {
+    var checked = e.target.closest("[data-checked-row]");
+    if (checked) {
+      var row = gradeRun.rows[+checked.getAttribute("data-checked-row")];
+      row.checked = !row.checked;
+      storeRun(gradeRun);
+      return showResults();
+    }
+    var tr = e.target.closest("[data-row]");
+    if (!tr) return;
+    var i = +tr.getAttribute("data-row");
+    openRow = openRow === i ? -1 : i;
+    showResults();
+  });
+  gradeRows.addEventListener("keydown", function (e) {
+    var tr = e.target.closest("[data-row]");
+    if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); tr.click(); }
+  });
+  gradeRows.addEventListener("change", function (e) {
+    var sel = e.target.closest("[data-edit-row]");
+    if (!sel) return;
+    var r = gradeRun.rows[+sel.getAttribute("data-edit-row")].results[+sel.getAttribute("data-edit-q")];
+    r.status = sel.value;
+    r.confident = true;   /* the teacher has decided */
+    r.note = r.note ? r.note : "Changed by teacher";
+    storeRun(gradeRun);
+    showResults();
+  });
+
+  function fillRunPicker() {
+    var runs = loadRuns();
+    gradeRunsSel.hidden = runs.length < 2;
+    gradeRunsSel.innerHTML = runs.map(function (r) {
+      return '<option value="' + r.at + '"' + (gradeRun && gradeRun.at === r.at ? " selected" : "") + ">" +
+        escape(new Date(r.at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " — " + r.title) + "</option>";
+    }).join("");
+  }
+
+  gradeRunsSel.addEventListener("change", function () {
+    var run = loadRuns().filter(function (r) { return String(r.at) === gradeRunsSel.value; })[0];
+    if (!run) return;
+    gradeRun = run;
+    gradeImages = {};
+    openRow = -1;
+    showResults();
+  });
+
+  function csvCell(v) {
+    var s = String(v == null ? "" : v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+
+  function downloadCSV() {
+    var run = gradeRun;
+    var qCount = run.rows.reduce(function (m, r) { return Math.max(m, (r.results || []).length); }, 0);
+    var head = ["Student", "Score", "Out of", "Percent"];
+    for (var q = 1; q <= qCount; q++) head.push("Q" + q);
+    head.push("Needs checking", "Notes");
+    var lines = [head.map(csvCell).join(",")];
+    run.rows.forEach(function (row) {
+      var sc = scoreOf(row);
+      var cells = [row.name, sc.of ? fmt(sc.got) : "", sc.of || "", sc.pct == null ? "" : sc.pct + "%"];
+      for (var k = 0; k < qCount; k++) {
+        var r = (row.results || [])[k];
+        cells.push(!r || r.status === "not_on_page" ? "" : r.status === "correct" ? 1 : r.status === "partial" ? 0.5 : 0);
+      }
+      cells.push(needsCheck(row) ? "yes" : "", row.error || row.note || "");
+      lines.push(cells.map(csvCell).join(","));
+    });
+    var blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = (room.name + " - " + run.title + " - grades")
+      .replace(/[^\w\s.()-]+/g, "").replace(/\s+/g, " ").trim().slice(0, 100) + ".csv";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+
+  function printGrades() {
+    var run = gradeRun;
+    var rows = run.rows.map(function (row) {
+      var sc = scoreOf(row);
+      return "<tr><td>" + escape(row.name) + "</td><td>" + (sc.of ? fmt(sc.got) + " / " + sc.of : "—") + "</td><td>" +
+        (sc.pct == null ? "—" : sc.pct + "%") + "</td><td>" + (row.results || []).map(function (r) {
+          return r.status === "not_on_page" ? "" : MARK[r.status];
+        }).join(" ") + "</td><td>" + (needsCheck(row) ? "check" : "") + "</td></tr>";
+    }).join("");
+    var frame = document.createElement("iframe");
+    frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+    document.body.appendChild(frame);
+    var doc = frame.contentWindow.document;
+    doc.open();
+    doc.write("<!doctype html><html><head><meta charset='utf-8'><title>" + escape(run.title) + " — grades</title><style>" +
+      "body{font-family:Nunito,'Segoe UI',Arial,sans-serif;color:#241a3d;margin:16mm}h1{font-size:18pt;margin:0 0 2mm}" +
+      "p{margin:0 0 6mm;color:#6b5f86}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:2.2mm;border-bottom:1px solid #ccc}" +
+      "th{font-size:10pt;color:#6b5f86}</style></head><body><h1>" + escape(room.name + " — " + run.title) + "</h1><p>Graded " +
+      escape(new Date(run.at).toLocaleString()) + " · for the teacher only</p><table><thead><tr><th>Student</th><th>Score</th><th>%</th><th>Questions</th><th></th></tr></thead><tbody>" +
+      rows + "</tbody></table></body></html>");
+    doc.close();
+    setTimeout(function () {
+      frame.contentWindow.focus();
+      frame.contentWindow.print();
+      setTimeout(function () { frame.remove(); }, 60000);
+    }, 200);
+  }
+
+  document.querySelector("[data-grade-open]").addEventListener("click", openGrading);
+  document.querySelector("[data-grade-close]").addEventListener("click", closeGrading);
+  gradeDialog.addEventListener("click", function (e) { if (e.target === gradeDialog) closeGrading(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && gradeDialog.getAttribute("data-open") === "true") closeGrading();
+  });
+  document.querySelector("[data-grade-go]").addEventListener("click", startGrading);
+  document.querySelector("[data-grade-again]").addEventListener("click", function () {
+    gradeRun = null;
+    openRow = -1;
+    showSetup();
+  });
+  document.querySelector("[data-grade-csv]").addEventListener("click", downloadCSV);
+  document.querySelector("[data-grade-print]").addEventListener("click", printGrades);
+
   /* ---- Live updates ----------------------------------------------------- */
   net.on("join", function (p) {
     if (p.code !== room.code) return;
@@ -960,7 +1409,10 @@
   });
 
   net.on("full-reply", function (p) {
-    if (p.code === room.code) snapshotReply(p);
+    if (p.code === room.code) {
+      snapshotReply(p);
+      fullCollectors.slice().forEach(function (fn) { fn(p); });
+    }
     if (p.code !== room.code || p.studentId !== focusId || !focusBoard) return;
     focusBoard.setItems(p.items || []);
     document.querySelector("[data-focus-note]").textContent =

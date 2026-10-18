@@ -47,6 +47,25 @@ window.DoodleAI = (function () {
     });
   }
 
+  /* Grade one board picture against a key (teacher only — see ai-grade.js).
+     Resolves { ok, results, note } or { ok:false, error, pro } */
+  function grade(params) {
+    var s = net.session && net.session();
+    if (!s || !s.token) return Promise.resolve({ ok: false, error: "Log in as a teacher to grade with AI." });
+    return fetch("/.netlify/functions/ai-grade", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + s.token },
+      body: JSON.stringify(params)
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (json) {
+        if (res.ok && json.results) return { ok: true, results: json.results, note: json.note || "" };
+        return { ok: false, error: json.error || (res.status >= 500 ? "The AI took too long on this board." : "Couldn't grade this board (" + res.status + ")."), pro: json.pro };
+      });
+    }, function () {
+      return { ok: false, error: "Could not reach the server." };
+    });
+  }
+
   /* ---- Layout ----------------------------------------------------------- */
   function wrap(c, text, maxW) {
     var out = [];
@@ -266,5 +285,5 @@ window.DoodleAI = (function () {
     });
   }
 
-  return { generate: generate, render: render, answerKeyImage: answerKeyImage };
+  return { generate: generate, grade: grade, render: render, answerKeyImage: answerKeyImage };
 })();

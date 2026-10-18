@@ -59,6 +59,53 @@
     window.doodleToast("🗓️ " + net.keepLabel(until));
   });
 
+  /* ---- Attendance ---------------------------------------------------------
+     Students who join are marked present in this room's class (see
+     attendance-core.js). Here the teacher picks which class that is. */
+  var Att = window.DoodleAttendance;
+  var attSel = document.querySelector("[data-room-att]");
+  var attToday = document.querySelector("[data-room-att-today]");
+  var attOpen = document.querySelector("[data-room-att-open]");
+
+  function showAttendance() {
+    if (!Att) return;
+    var r = net.getRoom(room.code) || room;
+    var cls = Att.classForRoom(r, false);
+    var list = Att.classes();
+    if (document.activeElement !== attSel) {
+      attSel.innerHTML = list.map(function (c) {
+        return '<option value="' + c.id + '">Mark present in ' + escape(c.name) + "</option>";
+      }).join("") +
+        (cls ? "" : '<option value="">Start a “' + escape(r.name) + '” class when students join</option>') +
+        '<option value="off">Don\'t take attendance here</option>';
+      attSel.value = r.attendance === "off" ? "off" : (cls ? cls.id : "");
+    }
+    if (cls) {
+      var marks = Att.day(cls.id, Att.today());
+      var n = { p: 0, l: 0, a: 0 };
+      Object.keys(marks).forEach(function (sid) { if (n[marks[sid].s] != null) n[marks[sid].s]++; });
+      attToday.textContent = "Today: " + n.p + " present" + (n.l ? " · " + n.l + " late" : "") + (n.a ? " · " + n.a + " absent" : "");
+      attOpen.href = "attendance.html?class=" + cls.id;
+    } else {
+      attToday.textContent = "";
+      attOpen.href = "attendance.html";
+    }
+  }
+
+  if (Att) {
+    attSel.addEventListener("change", function () {
+      Att.linkRoom(room.code, attSel.value);
+      attSel.blur();
+      showAttendance();
+      window.doodleToast(attSel.value === "off" ? "Attendance is off for this room" : "📋 Students who join will be marked present");
+    });
+    Att.onChange(showAttendance);
+    Att.listen();
+    showAttendance();
+  } else {
+    document.querySelector("[data-att-row]").hidden = true;
+  }
+
   /* ---- Tool tabs (Class / Pages & worksheets / Review & grades) ---------- */
   var cpTabs = Array.prototype.slice.call(document.querySelectorAll("[data-cp-tab]"));
 

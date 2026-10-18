@@ -32,6 +32,8 @@
     net.updateRoom(room.code, { openedAt: Date.now() });
     net.host();
     net.watch(room.code, "teacher");
+    /* …and takes attendance as they join */
+    if (window.DoodleAttendance) window.DoodleAttendance.listen();
 
     net.on("present-request", function (p) {
       if (p.code !== room.code || p.cancel) return;

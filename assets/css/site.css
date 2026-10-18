@@ -1151,6 +1151,46 @@ details.qa .qa__body p:last-child { margin-bottom: 0; }
 .ai-key li { margin-bottom: 0.3rem; }
 @media (max-width: 640px) { .ai-row { grid-template-columns: 1fr; } }
 
+/* ---- AI grading (teacher only) ------------------------------------------- */
+.grade-runs { width: auto; max-width: 320px; }
+.grade-bar { height: 16px; border: 3px solid var(--border-strong); border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; }
+.grade-bar span { display: block; height: 100%; width: 3%; background: var(--grape); transition: width 0.3s ease; }
+.grade-summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.6rem; color: var(--text); }
+.grade-stats { display: flex; flex-wrap: wrap; gap: 1rem; }
+.grade-stats b { font-family: var(--font-display); }
+.grade-flag { white-space: nowrap; }
+.grade-table-wrap { overflow-x: auto; }
+.grade-table { width: 100%; min-width: 560px; border-collapse: collapse; color: var(--text); }
+.grade-table th, .grade-table td { padding: 0.55rem 0.5rem; text-align: left; border-bottom: 2px solid var(--border); vertical-align: middle; }
+.grade-table th { font-size: 0.85rem; color: var(--muted); }
+.grade-row { cursor: pointer; }
+.grade-row:hover, .grade-row:focus-visible { background: var(--surface-2); outline: none; }
+.grade-table .marks { display: flex; flex-wrap: wrap; gap: 0.25rem; align-items: center; }
+.mark {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 0.2rem;
+  font-weight: 800;
+  font-size: 0.9rem;
+  border: 2px solid var(--border-strong);
+  border-radius: 8px;
+  color: var(--ink);
+}
+.mark sup { font-size: 0.6rem; margin-left: 1px; }
+.mark[data-mark="correct"] { background: var(--mint); }
+.mark[data-mark="partial"] { background: var(--sunny); }
+.mark[data-mark="incorrect"] { background: var(--coral); }
+.mark[data-mark="blank"] { background: var(--surface-2); color: var(--text); }
+.grade-detail td { background: var(--surface-2); }
+.grade-detail__wrap { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+.grade-detail__img { width: 100%; height: auto; background: #fff; border: 3px solid var(--border-strong); border-radius: var(--radius-sm); }
+.grade-q { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.grade-q__n { font-weight: 800; min-width: 1.6rem; }
+.grade-q .paper-select { width: auto; padding: 0.3rem 0.5rem; font-size: 0.9rem; }
+@media (max-width: 760px) { .grade-detail__wrap { grid-template-columns: 1fr; } }
+
 [data-theme="dark"] .upload-note a { color: #c4b5fd; }
 
 .roster { margin-bottom: 1.4rem; padding: 1rem 1.2rem; }

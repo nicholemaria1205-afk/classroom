@@ -34,6 +34,38 @@
 
   var freezeBtn = document.querySelector("[data-freeze]");
   freezeBtn.setAttribute("aria-pressed", String(!!room.frozen));
+  if (room.frozen) freezeBtn.textContent = "❄️ Frozen — click to release";
+
+  /* ---- Tool tabs (Class / Pages & worksheets / Review & grades) ---------- */
+  var cpTabs = Array.prototype.slice.call(document.querySelectorAll("[data-cp-tab]"));
+
+  function showTab(name, focus) {
+    cpTabs.forEach(function (tab) {
+      var on = tab.getAttribute("data-cp-tab") === name;
+      tab.setAttribute("aria-selected", String(on));
+      tab.tabIndex = on ? 0 : -1;
+      if (on && focus) tab.focus();
+    });
+    document.querySelectorAll("[data-cp-panel]").forEach(function (panel) {
+      panel.hidden = panel.getAttribute("data-cp-panel") !== name;
+    });
+    try { localStorage.setItem("doodle-room-tab", name); } catch (e) {}
+  }
+
+  cpTabs.forEach(function (tab, i) {
+    tab.addEventListener("click", function () { showTab(tab.getAttribute("data-cp-tab")); });
+    tab.addEventListener("keydown", function (e) {
+      var step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+      if (!step) return;
+      e.preventDefault();
+      showTab(cpTabs[(i + step + cpTabs.length) % cpTabs.length].getAttribute("data-cp-tab"), true);
+    });
+  });
+
+  try {
+    var savedTab = localStorage.getItem("doodle-room-tab");
+    if (savedTab && document.querySelector('[data-cp-panel="' + savedTab + '"]')) showTab(savedTab);
+  } catch (e) {}
 
   document.querySelector("[data-copy-link]").addEventListener("click", function () {
     var url = net.joinUrl(room.code);
@@ -800,7 +832,7 @@
     pendingSnap = null;
     clearTimeout(snap.timer);
     snapBtn.disabled = false;
-    snapBtn.textContent = "📸 Save snapshot";
+    snapBtn.querySelector("strong").textContent = "Save snapshot";
 
     var students = net.getStudents(room.code).filter(function (s) { return snap.ids.indexOf(s.id) !== -1; });
     var record = {
@@ -827,7 +859,7 @@
 
     pendingSnap = { at: Date.now(), ids: students.map(function (s) { return s.id; }), waiting: {}, images: {}, timer: null, rendering: 0 };
     snapBtn.disabled = true;
-    snapBtn.textContent = "📸 Saving…";
+    snapBtn.querySelector("strong").textContent = "Saving…";
 
     var online = students.filter(net.isOnline);
     /* Ask one student at a time, a moment apart, so a big class doesn't all

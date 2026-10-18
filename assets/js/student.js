@@ -25,6 +25,10 @@
   var heartbeat = null;
   var frozen = false;
   var locked = false;
+  var allowPresent = false;
+  var askedToPresent = false;
+  var presenting = false;
+  var presentSentCount = 0;
 
   /* ---- Join ------------------------------------------------------------- */
   function showJoin(message) {
@@ -94,15 +98,21 @@
 
     showPrompt(room.prompt);
     setFrozen(room.frozen);
+    allowPresent = !!room.allowPresent;
     setLocked(!!me.locked);
 
     board = window.DoodleBoard(document.getElementById("board"), {
       author: "student",
-      onStrokeEnd: function () {
+      onStrokeEnd: function (item, items) {
         if (ui) ui.refresh();
         publish();
+        streamToTeacher(item, items);
       },
-      onDrawing: function () { publish(true); },
+      onDrawing: function (items, current) {
+        publish(true);
+        if (presenting && current) streamLive(current);
+      },
+      drawingEvery: 120,
       /* A worksheet page finished loading — send the teacher a fresh view */
       onPaperLoad: function () { publish(); }
     });
@@ -113,6 +123,7 @@
       onChange: function () { publish(); }
     });
     board.setTool("pen");
+    showAsk();
 
     /* A refresh in this tab shouldn't lose the lesson — and nor should
        closing it: the board is also kept on this device under the student's
@@ -200,15 +211,67 @@
   /* Frozen is the whole class; locked is just this student. Either one
      stops drawing, and the veil says which. */
   function applyPause() {
-    document.querySelector("[data-frozen]").setAttribute("data-on", String(frozen));
-    document.querySelector("[data-locked]").setAttribute("data-on", String(locked && !frozen));
+    /* Presenting wins: a frozen class can still watch the presenter draw */
+    var paused = (frozen || locked) && !presenting;
+    document.querySelector("[data-frozen]").setAttribute("data-on", String(frozen && !presenting));
+    document.querySelector("[data-locked]").setAttribute("data-on", String(locked && !frozen && !presenting));
     var canvas = document.getElementById("board");
-    canvas.style.pointerEvents = frozen || locked ? "none" : "";
+    canvas.style.pointerEvents = paused ? "none" : "";
     document.querySelectorAll(".wb__tools button, .wb__tools select, [data-undo], [data-redo], [data-clear]").forEach(function (el) {
-      el.disabled = frozen || locked;
+      el.disabled = paused;
     });
-    if (!frozen && !locked && ui) ui.refresh();
+    if (!paused && ui) ui.refresh();
   }
+
+  /* ---- Presenting my desk --------------------------------------------------
+     Only when the teacher allows it. While presenting, every finished mark
+     goes to the teacher's screen straight away, and the mark being drawn is
+     shown live, so the class watches it happen on the teacher's shared screen. */
+  var askBtn = document.querySelector("[data-present-ask]");
+
+  function showAsk() {
+    askBtn.hidden = !allowPresent || presenting || !me;
+    askBtn.textContent = askedToPresent ? "⏳ Waiting for your teacher… (tap to cancel)" : "🙋 Present my desk";
+    askBtn.setAttribute("aria-pressed", String(askedToPresent));
+    document.querySelector("[data-presenting-banner]").hidden = !presenting;
+    document.documentElement.classList.toggle("student-presenting", presenting);
+  }
+
+  function sendFull() {
+    if (!board || !me) return;
+    var items = board.getItems();
+    presentSentCount = board.count();
+    net.send("full-reply", { code: code, studentId: me.id, items: items });
+  }
+
+  function streamToTeacher(item, items) {
+    if (!presenting || !me) return;
+    /* A brand-new mark on the end can travel alone; anything else (undo,
+       clear, an edited text box, new paper) sends the whole desk */
+    if (item && items && items.length === presentSentCount + 1 && items[items.length - 1] === item) {
+      presentSentCount = items.length;
+      net.send("present-item", { code: code, studentId: me.id, items: [item] });
+    } else {
+      sendFull();
+    }
+  }
+
+  function streamLive(stroke) {
+    var s = stroke;
+    /* Keep live updates small: thin out very long strokes */
+    if (s.points && s.points.length > 600) {
+      s = Object.assign({}, s, { points: s.points.filter(function (p, i) { return i % 2 === 0 || i === s.points.length - 1; }) });
+    }
+    net.send("present-live", { code: code, studentId: me.id, stroke: s });
+  }
+
+  askBtn.addEventListener("click", function () {
+    if (!me) return;
+    askedToPresent = !askedToPresent;
+    net.send("present-request", { code: code, studentId: me.id, cancel: !askedToPresent, student: summary() });
+    showAsk();
+    window.doodleToast(askedToPresent ? "Hand up — your teacher will decide 🙋" : "Okay, request cancelled");
+  });
 
   function setFrozen(on) {
     frozen = !!on;
@@ -312,6 +375,39 @@
     if (Boolean(p.locked) === locked) return;
     setLocked(p.locked);
     window.doodleToast(p.locked ? "Your teacher paused your desk 🔒" : "Your desk is back on ✏️", p.locked ? "warn" : "good");
+  });
+
+  net.on("present-permission", function (p) {
+    if (p.code !== code || !me) return;
+    allowPresent = !!p.allow;
+    if (!allowPresent) askedToPresent = false;
+    showAsk();
+  });
+
+  net.on("present-start", function (p) {
+    if (p.code !== code || !me) return;
+    var mine = p.studentId === me.id;
+    if (mine && !presenting) window.doodleToast("📺 You're presenting! Your class can see your desk.", "good");
+    presenting = mine;
+    askedToPresent = false;
+    showAsk();
+    applyPause();
+    if (mine) sendFull();
+  });
+
+  net.on("present-stop", function (p) {
+    if (p.code !== code || !me || p.studentId !== me.id || !presenting) return;
+    presenting = false;
+    showAsk();
+    applyPause();
+    window.doodleToast("Presenting finished — great job! 🌟", "good");
+  });
+
+  net.on("present-decline", function (p) {
+    if (p.code !== code || !me || p.studentId !== me.id) return;
+    askedToPresent = false;
+    showAsk();
+    window.doodleToast("Not right now — maybe next time 💜");
   });
 
   net.on("remove-student", function (p) {

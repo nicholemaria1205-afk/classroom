@@ -201,6 +201,7 @@
           '<button class="chip" type="button" data-lock-student="' + s.id + '" aria-pressed="' + String(!!s.locked) + '">' +
             (s.locked ? "▶️ Let them draw" : "🔒 Pause") + "</button>" +
           '<button class="chip" type="button" data-view-student="' + s.id + '">👀 Open</button>' +
+          '<button class="chip" type="button" data-present-student="' + s.id + '">🖥️ Present</button>' +
           '<button class="chip chip--danger" type="button" data-remove-student="' + s.id + '">✕ Remove</button>' +
         "</td></tr>";
     }).join("");
@@ -210,6 +211,8 @@
     var lock = e.target.closest("[data-lock-student]");
     var view = e.target.closest("[data-view-student]");
     var remove = e.target.closest("[data-remove-student]");
+    var presentIt = e.target.closest("[data-present-student]");
+    if (presentIt) return startPresenting(presentIt.getAttribute("data-present-student"));
     if (lock) {
       var id = lock.getAttribute("data-lock-student");
       setLock(id, lock.getAttribute("aria-pressed") !== "true");
@@ -1571,6 +1574,164 @@
   });
   document.querySelector("[data-grade-print]").addEventListener("click", printGrades);
 
+  /* ---- A student presents their desk -----------------------------------------
+     Only with the teacher's say-so: either the teacher picks a desk to show
+     (focus view or class list), or — when "Let students ask to present" is on
+     — a student asks and the teacher taps Present now. The student's desk
+     then fills the teacher's screen (which the teacher is sharing), live:
+     finished marks arrive as they're made and the mark being drawn is shown
+     as it happens. Menus disappear, like Present mode on the teaching desk. */
+  var allowBox = document.querySelector("[data-allow-present]");
+  var requestsBox = document.querySelector("[data-present-requests]");
+  var presentRoom = document.querySelector("[data-present-room]");
+  var presentStage = document.querySelector("[data-present-stage]");
+  var presentBar = document.querySelector("[data-present-room-bar]");
+  var presentNameEl = document.querySelector("[data-present-name]");
+  var nameToggle = document.querySelector("[data-present-name-toggle]");
+  var presentBoard = null;
+  var presentingId = null;
+  var presentRequests = {};      /* studentId -> { name, at } */
+  var presentIdle = null;
+  var htmlEl = document.documentElement;
+
+  allowBox.checked = !!room.allowPresent;
+  allowBox.addEventListener("change", function () {
+    net.updateRoom(room.code, { allowPresent: allowBox.checked });
+    net.send("present-permission", { code: room.code, allow: allowBox.checked });
+    if (!allowBox.checked) { presentRequests = {}; renderRequests(); }
+    window.doodleToast(allowBox.checked
+      ? "Students can now ask to present their desk 🙋"
+      : "Asking to present is turned off");
+  });
+
+  function renderRequests() {
+    var ids = Object.keys(presentRequests);
+    requestsBox.hidden = !ids.length;
+    requestsBox.innerHTML = ids.map(function (id) {
+      var r = presentRequests[id];
+      return '<div class="present-request"><span class="present-request__who">🙋 <strong>' + escape(r.name) +
+        "</strong> would like to present their desk</span>" +
+        '<span class="present-request__actions">' +
+        '<button class="btn btn--primary" type="button" data-present-yes="' + id + '">🖥️ Present now</button>' +
+        '<button class="btn" type="button" data-present-no="' + id + '">Not now</button></span></div>';
+    }).join("");
+  }
+
+  requestsBox.addEventListener("click", function (e) {
+    var yes = e.target.closest("[data-present-yes]");
+    var no = e.target.closest("[data-present-no]");
+    if (yes) startPresenting(yes.getAttribute("data-present-yes"));
+    if (no) {
+      var id = no.getAttribute("data-present-no");
+      delete presentRequests[id];
+      net.send("present-decline", { code: room.code, studentId: id });
+      renderRequests();
+    }
+  });
+
+  function presentWake() {
+    if (!presentingId) return;
+    htmlEl.classList.add("present-awake");
+    clearTimeout(presentIdle);
+    presentIdle = setTimeout(function () {
+      if (!presentBar.matches(":hover")) htmlEl.classList.remove("present-awake");
+    }, 2500);
+  }
+
+  function showName(on) {
+    presentNameEl.hidden = !on;
+    nameToggle.setAttribute("aria-pressed", String(on));
+    nameToggle.textContent = on ? "🙈 Hide name" : "👀 Show name";
+  }
+
+  function startPresenting(studentId) {
+    var s = findStudent(studentId);
+    if (!s) return;
+    /* Switching presenters: tell the last one they're done, stay on screen */
+    if (presentingId && presentingId !== studentId) net.send("present-stop", { code: room.code, studentId: presentingId });
+    var alreadyOn = Boolean(presentingId);
+    delete presentRequests[studentId];
+    renderRequests();
+    if (focus.getAttribute("data-open") === "true") closeFocus();
+
+    presentingId = studentId;
+    presentNameEl.textContent = s.name + "’s desk";
+    document.querySelector("[data-present-who]").textContent = "📺 " + s.name + " is presenting";
+    showName(true);
+
+    if (presentBoard) presentBoard.destroy();
+    presentBoard = window.DoodleBoard(document.getElementById("present-board"), { readOnly: true });
+    presentRoom.hidden = false;
+    htmlEl.classList.add("presenting");
+    var go = presentStage.requestFullscreen || presentStage.webkitRequestFullscreen;
+    if (go && !alreadyOn) {
+      try {
+        var pr = go.call(presentStage);
+        if (pr && pr.catch) pr.catch(function () {});
+      } catch (e) {}
+    }
+    presentWake();
+
+    /* The thumbnail shows right away; the full desk replaces it in a moment */
+    net.send("present-start", { code: room.code, studentId: studentId });
+    if (!net.isOnline(s)) window.doodleToast(s.name + " looks offline — showing their last saved desk", "warn");
+  }
+
+  function stopPresenting(quiet) {
+    if (!presentingId) return;
+    net.send("present-stop", { code: room.code, studentId: presentingId });
+    presentingId = null;
+    presentRoom.hidden = true;
+    htmlEl.classList.remove("presenting", "present-awake");
+    clearTimeout(presentIdle);
+    if (presentBoard) { presentBoard.destroy(); presentBoard = null; }
+    var fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+    if (fsEl) {
+      var exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exit) try { exit.call(document); } catch (e) {}
+    }
+    if (!quiet) window.doodleToast("Presenting finished 🌟");
+  }
+
+  document.querySelector("[data-present-stop]").addEventListener("click", function () { stopPresenting(); });
+  nameToggle.addEventListener("click", function () { showName(presentNameEl.hidden); });
+  ["mousemove", "pointerdown", "touchstart"].forEach(function (ev) {
+    presentStage.addEventListener(ev, presentWake, { passive: true });
+  });
+  presentBar.addEventListener("mouseleave", presentWake);
+  ["fullscreenchange", "webkitfullscreenchange"].forEach(function (ev) {
+    document.addEventListener(ev, function () {
+      if (presentingId && !(document.fullscreenElement || document.webkitFullscreenElement)) stopPresenting();
+    });
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && presentingId) stopPresenting();
+  });
+
+  document.querySelector("[data-focus-present]").addEventListener("click", function () {
+    if (focusId) startPresenting(focusId);
+  });
+
+  net.on("present-request", function (p) {
+    if (p.code !== room.code) return;
+    if (p.cancel || !allowBox.checked) {
+      delete presentRequests[p.studentId];
+    } else {
+      var s = findStudent(p.studentId) || p.student || {};
+      presentRequests[p.studentId] = { name: s.name || "A student", at: Date.now() };
+      window.doodleToast("🙋 " + (s.name || "A student") + " would like to present");
+    }
+    renderRequests();
+  });
+
+  net.on("present-item", function (p) {
+    if (p.code === room.code && p.studentId === presentingId && presentBoard) presentBoard.addItems(p.items || []);
+  });
+
+  net.on("present-live", function (p) {
+    if (p.code === room.code && p.studentId === presentingId && presentBoard) presentBoard.setGhost(p.stroke);
+  });
+
   /* ---- Live updates ----------------------------------------------------- */
   net.on("join", function (p) {
     if (p.code !== room.code) return;
@@ -1607,6 +1768,7 @@
     if (p.code === room.code) {
       snapshotReply(p);
       fullCollectors.slice().forEach(function (fn) { fn(p); });
+      if (p.studentId === presentingId && presentBoard) presentBoard.setItems(p.items || []);
     }
     if (p.code !== room.code || p.studentId !== focusId || !focusBoard) return;
     focusBoard.setItems(p.items || []);

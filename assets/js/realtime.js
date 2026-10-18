@@ -22,9 +22,12 @@
    Ably channels:
 
      doodle:<CODE>:up    students -> teacher   (join, leave, presence, board,
-                                                status, full-reply, room-query)
+                                                status, full-reply, room-query,
+                                                present-request/item/live)
      doodle:<CODE>:down  teacher -> students   (room-info, prompt, freeze,
                                                 template, lock, remove-student,
+                                                present-start/stop/decline,
+                                                present-permission,
                                                 clear-board, teacher-mark,
                                                 full-request, room-closed)
 
@@ -295,6 +298,7 @@ window.DoodleNet = (function () {
       frozen: !!room.frozen,
       template: room.template || "",
       keepUntil: room.keepUntil || null,
+      allowPresent: !!room.allowPresent,
       teacher: room.teacher,
       createdAt: room.createdAt
     };
@@ -640,7 +644,8 @@ window.DoodleNet = (function () {
 
   /* ---- Live transport (Ably) -------------------------------------------- */
   var UP_TYPES = { "join": 1, "leave": 1, "presence": 1, "board": 1, "status": 1,
-                   "full-reply": 1, "room-query": 1 };
+                   "full-reply": 1, "room-query": 1,
+                   "present-request": 1, "present-item": 1, "present-live": 1 };
 
   var subscribed = {};
   var assembling = {};

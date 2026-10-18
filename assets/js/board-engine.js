@@ -365,7 +365,8 @@ window.DoodleBoard = function (canvas, options) {
     readOnly: false,
     onStrokeEnd: null,   /* (item, allItems) after each finished mark */
     onDrawing: null,     /* (allItems) throttled, while a stroke is in progress */
-    onPaperLoad: null    /* () when an uploaded page finishes loading */
+    onPaperLoad: null,   /* () when an uploaded page finishes loading */
+    drawingEvery: 250    /* ms between onDrawing calls while a mark is in progress */
   }, options || {});
 
   var W = opts.width;
@@ -562,21 +563,26 @@ window.DoodleBoard = function (canvas, options) {
     items.forEach(function (item) { drawItem(ictx, item); });
   }
 
+  /* A mark someone else is drawing right now (a presenting student's pen),
+     shown live until the finished mark arrives */
+  var ghost = null;
+
   function paint() {
     ctx.clearRect(0, 0, W, H);
     ctx.drawImage(paper, 0, 0);
-    if (current && current.mode === "erase") {
+    var live = current || ghost;
+    if (live && live.mode === "erase") {
       /* Show the rub-out live without touching the committed ink */
       if (!scratch) scratch = layer();
       var sc = scratch.getContext("2d");
       sc.clearRect(0, 0, W, H);
       sc.drawImage(ink, 0, 0);
-      drawItem(sc, current);
+      drawItem(sc, live);
       ctx.drawImage(scratch, 0, 0);
       return;
     }
     ctx.drawImage(ink, 0, 0);
-    if (current) drawItem(ctx, current);
+    if (live) drawItem(ctx, live);
   }
 
   /* ---- Pointer input ---------------------------------------------------- */
@@ -721,9 +727,9 @@ window.DoodleBoard = function (canvas, options) {
       current.points.push(p);
     }
     paint();
-    if (opts.onDrawing && Date.now() - lastDrawingPing > 250) {
+    if (opts.onDrawing && Date.now() - lastDrawingPing > opts.drawingEvery) {
       lastDrawingPing = Date.now();
-      opts.onDrawing(items);
+      opts.onDrawing(items, current);
     }
   }
 
@@ -825,6 +831,13 @@ window.DoodleBoard = function (canvas, options) {
 
     getBackground: function () { return background; },
 
+    /* Show (or with null, clear) a mark that's still being drawn elsewhere */
+    setGhost: function (item) {
+      ghost = item && (item.points || item.type === "shape") ? item : null;
+      paint();
+      return api;
+    },
+
     /* Resolves once the paper (an uploaded page, say) is fully drawn */
     ready: function () {
       return new Promise(function (resolve) {
@@ -839,6 +852,7 @@ window.DoodleBoard = function (canvas, options) {
     /* Marks arriving from someone else — a teacher's hint, say */
     addItems: function (incoming) {
       if (!incoming || !incoming.length) return api;
+      ghost = null;
       incoming.forEach(function (item) {
         if (item.type === "bg") {
           background = item.name;
@@ -854,6 +868,7 @@ window.DoodleBoard = function (canvas, options) {
     },
 
     setItems: function (next) {
+      ghost = null;
       var list = (next || []).slice();
       var bg = list.filter(function (i) { return i && i.type === "bg"; })[0];
       items = list.filter(function (i) { return i && i.type !== "bg"; });

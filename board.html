@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My board — Doodle Desk</title>
+<title>My desk — Doodle Desk</title>
 <meta name="robots" content="noindex">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✏️</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,11 +27,11 @@
     <a class="logo" href="index.html"><span class="logo__mark">✏️</span> Doodle Desk</a>
     <div class="nav__links" id="nav-links" data-open="false">
       <a href="login.html">Join another room</a>
-      <a href="demo.html">Practice board</a>
+      <a href="demo.html">Practice desk</a>
     </div>
     <div class="nav__actions">
       <span class="badge badge--sky" data-room-badge hidden></span>
-      <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch colour mode">🌙</button>
+      <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch color mode">🌙</button>
       <button class="icon-btn nav__burger" data-burger type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Menu">☰</button>
     </div>
   </div>
@@ -46,7 +46,7 @@
       <form class="card" id="board-join">
         <span class="badge badge--sky">Join a room</span>
         <h1 style="margin-top:.8rem;font-size:1.9rem">Nearly there!</h1>
-        <p class="muted small">Type the code from the board and the name your teacher will know you by.</p>
+        <p class="muted small">Type the code your teacher shared and the name your teacher will know you by.</p>
 
         <div class="field">
           <label for="join-code">Room code</label>
@@ -69,7 +69,7 @@
     <div data-board-panel hidden>
 
       <div style="display:flex;flex-wrap:wrap;align-items:center;gap:.8rem;margin-bottom:1rem">
-        <h1 style="margin:0;font-size:clamp(1.5rem,3.5vw,2.1rem)" data-hello>My board</h1>
+        <h1 style="margin:0;font-size:clamp(1.5rem,3.5vw,2.1rem)" data-hello>My desk</h1>
         <span class="badge badge--mint" data-room-name-badge></span>
         <div class="status-row" style="margin-left:auto">
           <button class="btn status-btn" type="button" data-status="working" aria-pressed="true">✏️ Working</button>
@@ -102,7 +102,7 @@
               <button class="size-btn tool-glyph" type="button" data-tool="arrow" aria-pressed="false" title="Arrow" aria-label="Arrow">➜</button>
               <button class="size-btn tool-glyph" type="button" data-tool="rect" aria-pressed="false" title="Rectangle" aria-label="Rectangle">▭</button>
               <button class="size-btn tool-glyph" type="button" data-tool="ellipse" aria-pressed="false" title="Circle" aria-label="Circle">◯</button>
-              <button class="size-btn tool-glyph" type="button" data-tool="text" aria-pressed="false" title="Text — click the board, type, press Enter" aria-label="Text">T</button>
+              <button class="size-btn tool-glyph" type="button" data-tool="text" aria-pressed="false" title="Text — click the desk, type, press Enter" aria-label="Text">T</button>
             </div>
           </div>
 
@@ -112,7 +112,7 @@
           </div>
 
           <div class="tool-group">
-            <h4>Colour</h4>
+            <h4>Color</h4>
             <div class="swatches">
               <button class="swatch" type="button" data-colour="#7c3aed" aria-pressed="true" aria-label="Purple" style="background:#7c3aed"></button>
               <button class="swatch" type="button" data-colour="#ff4d9d" aria-pressed="false" aria-label="Pink" style="background:#ff4d9d"></button>
@@ -145,34 +145,34 @@
             </div>
           </div>
 
-          <p class="small muted mb-0">Marks on board: <strong data-item-count>0</strong></p>
+          <p class="small muted mb-0">Marks on desk: <strong data-item-count>0</strong></p>
         </div>
 
         <!-- Canvas -->
         <div>
           <div class="wb__canvas-wrap" style="position:relative">
-            <canvas id="board" width="1200" height="740" aria-label="Your board. Draw with a mouse, finger or stylus."></canvas>
+            <canvas id="board" width="1200" height="740" aria-label="Your desk. Draw with a mouse, finger or stylus."></canvas>
             <div class="frozen-veil" data-frozen>
               <div>
                 <span aria-hidden="true">❄️</span>
                 <strong>Pens down — eyes front</strong>
-                <p class="mb-0" style="color:#f0e9ff">Your teacher has frozen the boards for a moment.</p>
+                <p class="mb-0" style="color:#f0e9ff">Your teacher has frozen the desks for a moment.</p>
               </div>
             </div>
             <div class="frozen-veil" data-locked>
               <div>
                 <span aria-hidden="true">🔒</span>
-                <strong>Your board is paused</strong>
-                <p class="mb-0" style="color:#f0e9ff">Your teacher has paused your board for a moment. You can still see it.</p>
+                <strong>Your desk is paused</strong>
+                <p class="mb-0" style="color:#f0e9ff">Your teacher has paused your desk for a moment. You can still see it.</p>
               </div>
             </div>
-            <p class="wb__hint mb-0">Draw with a mouse, finger or stylus · Ctrl/⌘ + Z to undo · your board saves itself</p>
+            <p class="wb__hint mb-0">Draw with a mouse, finger or stylus · Ctrl/⌘ + Z to undo · your desk saves itself</p>
           </div>
 
           <div class="wb__actions">
             <button class="btn btn--sun" type="button" data-undo>↩️ Undo</button>
             <button class="btn" type="button" data-redo>↪️ Redo</button>
-            <button class="btn" type="button" data-clear>🧹 Clear my board</button>
+            <button class="btn" type="button" data-clear>🧹 Clear my desk</button>
             <button class="btn btn--mint" type="button" data-save>⬇️ Save as PNG</button>
             <button class="btn" type="button" data-print>🖨️ Print / PDF</button>
             <button class="btn" type="button" data-leave>🚪 Leave room</button>

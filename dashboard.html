@@ -28,14 +28,14 @@
     <div class="nav__links" id="nav-links" data-open="false">
       <a href="dashboard.html" aria-current="page">My rooms</a>
       <a href="drawer.html">🗄️ Doodle Drawer</a>
-      <a href="demo.html">Practice board</a>
+      <a href="demo.html">Practice desk</a>
       <a href="index.html">Website</a>
       <a href="pricing.html">Plan</a>
     </div>
     <div class="nav__actions">
       <span class="badge badge--mint" data-teacher-badge hidden></span>
       <button class="icon-btn" data-log-out type="button" title="Log out" aria-label="Log out">🚪</button>
-      <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch colour mode">🌙</button>
+      <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch color mode">🌙</button>
       <button class="icon-btn nav__burger" data-burger type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Menu">☰</button>
     </div>
   </div>
@@ -48,7 +48,7 @@
     <div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:1rem;margin-bottom:2rem">
       <div style="flex:1 1 320px">
         <h1 style="margin-bottom:.3rem">Good to see you<span data-greet-name></span> 👋</h1>
-        <p class="muted mb-0">Open a room, share the code, and the boards fill themselves in.</p>
+        <p class="muted mb-0">Open a room, share the code, and the desks fill themselves in.</p>
       </div>
       <button class="btn btn--primary btn--lg" type="button" data-new-room>＋ New room</button>
     </div>
@@ -59,13 +59,13 @@
       <div class="field-row">
         <div class="field">
           <label for="room-name">Room name</label>
-          <input id="room-name" name="name" type="text" placeholder="Year 5 Maths" maxlength="60">
+          <input id="room-name" name="name" type="text" placeholder="5th Grade Math" maxlength="60">
           <span class="err"></span>
         </div>
         <div class="field">
           <label for="room-subject">Subject</label>
           <select id="room-subject" name="subject">
-            <option>🔢 Maths</option>
+            <option>🔢 Math</option>
             <option>📖 English</option>
             <option>🧪 Science</option>
             <option>🌍 Geography</option>
@@ -77,7 +77,7 @@
         </div>
       </div>
       <div class="field">
-        <label for="room-prompt">Today's task <span class="muted">(optional — students see this at the top of their board)</span></label>
+        <label for="room-prompt">Today's task <span class="muted">(optional — students see this at the top of their desk)</span></label>
         <input id="room-prompt" name="prompt" type="text" placeholder="Show me 3/4 as a picture" maxlength="160">
       </div>
       <div class="field" style="max-width:420px">
@@ -89,7 +89,7 @@
           <option value="schoolyear">Until the end of the school year</option>
           <option value="forever">Until I close it</option>
         </select>
-        <small>Afterwards the room closes by itself and its boards, snapshots and grades are tidied away. Anything you save to your Doodle Drawer stays.</small>
+        <small>Afterwards the room closes by itself and its desks, snapshots and grades are tidied away. Anything you save to your Doodle Drawer stays.</small>
       </div>
       <div style="display:flex;gap:.7rem;flex-wrap:wrap">
         <button class="btn btn--primary" type="submit">Open the room 🚪</button>
@@ -108,7 +108,7 @@
   <div class="wrap">
     <div class="footer__bottom" style="margin-top:0;border-top:none;padding-top:0">
       <span>© <span data-year>2026</span> Doodle Desk</span>
-      <span><a href="index.html">Website</a> · <a href="demo.html">Practice board</a> · <a href="login.html">Switch user</a></span>
+      <span><a href="index.html">Website</a> · <a href="demo.html">Practice desk</a> · <a href="login.html">Switch user</a></span>
     </div>
   </div>
 </footer>
@@ -118,6 +118,7 @@
 <script src="assets/js/config.js"></script>
 <script src="assets/js/site.js"></script>
 <script src="assets/js/realtime.js"></script>
+<script src="assets/js/sidebar.js"></script>
 <script src="assets/js/dashboard.js"></script>
 </body>
 </html>

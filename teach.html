@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teaching desk — Doodle Desk</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✏️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/site.css">
+<script>
+  document.documentElement.classList.add("js");
+  try {
+    var t = localStorage.getItem("doodle-theme") ||
+      (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", t);
+  } catch (e) {}
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav class="nav">
+  <div class="wrap nav__inner">
+    <a class="logo" href="dashboard.html"><span class="logo__mark">✏️</span> Doodle Desk</a>
+    <div class="nav__links" id="nav-links" data-open="false">
+      <a href="dashboard.html">My rooms</a>
+    </div>
+    <div class="nav__actions">
+      <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch color mode">🌙</button>
+      <button class="icon-btn nav__burger" data-burger type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<section class="section teach" style="padding:2rem 0 4rem">
+  <div class="wrap">
+
+    <div class="teach__head">
+      <div>
+        <h1 style="margin:0;font-size:clamp(1.6rem,3.5vw,2.2rem)">🧑‍🏫 My teaching desk</h1>
+        <p class="muted mb-0" data-teach-sub>Your own big desk to teach on. Press <strong>Present</strong> before you share your screen — every menu disappears.</p>
+      </div>
+      <button class="btn btn--primary btn--lg" type="button" data-present>🖥️ Present</button>
+    </div>
+
+    <div class="wb">
+        <div class="wb__tools">
+          <div class="tool-group">
+            <h4>Tool</h4>
+            <div class="sizes">
+              <button class="size-btn" type="button" data-tool="pen" aria-pressed="true" title="Pen" style="font-size:1.2rem">✏️</button>
+              <button class="size-btn" type="button" data-tool="marker" aria-pressed="false" title="Highlighter" style="font-size:1.2rem">🖍️</button>
+              <button class="size-btn" type="button" data-tool="erase" aria-pressed="false" title="Eraser" style="font-size:1.2rem">🧽</button>
+            </div>
+          </div>
+
+          <div class="tool-group">
+            <h4>Shapes &amp; text</h4>
+            <div class="sizes">
+              <button class="size-btn tool-glyph" type="button" data-tool="line" aria-pressed="false" title="Straight line" aria-label="Straight line">╱</button>
+              <button class="size-btn tool-glyph" type="button" data-tool="arrow" aria-pressed="false" title="Arrow" aria-label="Arrow">➜</button>
+              <button class="size-btn tool-glyph" type="button" data-tool="rect" aria-pressed="false" title="Rectangle" aria-label="Rectangle">▭</button>
+              <button class="size-btn tool-glyph" type="button" data-tool="ellipse" aria-pressed="false" title="Circle" aria-label="Circle">◯</button>
+              <button class="size-btn tool-glyph" type="button" data-tool="text" aria-pressed="false" title="Text — click the desk, type, press Enter" aria-label="Text">T</button>
+            </div>
+          </div>
+
+          <div class="tool-group">
+            <h4><label for="paper-select">Paper</label></h4>
+            <select class="paper-select" id="paper-select" data-background></select>
+          </div>
+
+          <div class="tool-group">
+            <h4>Color</h4>
+            <div class="swatches">
+              <button class="swatch" type="button" data-colour="#7c3aed" aria-pressed="true" aria-label="Purple" style="background:#7c3aed"></button>
+              <button class="swatch" type="button" data-colour="#ff4d9d" aria-pressed="false" aria-label="Pink" style="background:#ff4d9d"></button>
+              <button class="swatch" type="button" data-colour="#ffc93c" aria-pressed="false" aria-label="Yellow" style="background:#ffc93c"></button>
+              <button class="swatch" type="button" data-colour="#16c79a" aria-pressed="false" aria-label="Green" style="background:#16c79a"></button>
+              <button class="swatch" type="button" data-colour="#38bdf8" aria-pressed="false" aria-label="Blue" style="background:#38bdf8"></button>
+              <button class="swatch" type="button" data-colour="#ff7a5c" aria-pressed="false" aria-label="Orange" style="background:#ff7a5c"></button>
+              <button class="swatch" type="button" data-colour="#1b1235" aria-pressed="false" aria-label="Black" style="background:#1b1235"></button>
+            </div>
+          </div>
+
+          <div class="tool-group">
+            <h4>Size</h4>
+            <div class="sizes">
+              <button class="size-btn" type="button" data-size="4" aria-pressed="false" aria-label="Thin"><i style="width:8px;height:8px"></i></button>
+              <button class="size-btn" type="button" data-size="8" aria-pressed="true" aria-label="Medium"><i style="width:15px;height:15px"></i></button>
+              <button class="size-btn" type="button" data-size="16" aria-pressed="false" aria-label="Thick"><i style="width:24px;height:24px"></i></button>
+            </div>
+          </div>
+
+          <div class="tool-group">
+            <h4>Stamps</h4>
+            <div class="stamp-row">
+              <button class="stamp" type="button" data-stamp="⭐" aria-pressed="false" aria-label="Star stamp">⭐</button>
+              <button class="stamp" type="button" data-stamp="✅" aria-pressed="false" aria-label="Tick stamp">✅</button>
+              <button class="stamp" type="button" data-stamp="🎉" aria-pressed="false" aria-label="Party stamp">🎉</button>
+              <button class="stamp" type="button" data-stamp="💡" aria-pressed="false" aria-label="Idea stamp">💡</button>
+              <button class="stamp" type="button" data-stamp="🦖" aria-pressed="false" aria-label="Dinosaur stamp">🦖</button>
+              <button class="stamp" type="button" data-stamp="❤️" aria-pressed="false" aria-label="Heart stamp">❤️</button>
+            </div>
+          </div>
+
+          <p class="small muted mb-0">Marks on your desk: <strong data-item-count>0</strong></p>
+        </div>
+
+        <div class="teach__col">
+        <!-- Canvas -->
+        <div class="teach__stage" data-stage>
+          <div class="wb__canvas-wrap teach__canvas">
+            <canvas id="teach-board" width="1200" height="740" aria-label="Your teaching desk. Draw with a mouse, pen or finger."></canvas>
+            <p class="wb__hint mb-0">Ctrl/⌘ + Z to undo · saved on this computer</p>
+          </div>
+
+          <!-- Present mode toolbar: fades away when the mouse is still -->
+          <div class="present-bar" data-present-bar role="toolbar" aria-label="Present mode tools">
+            <button class="size-btn" type="button" data-tool="pen" aria-pressed="true" title="Pen" aria-label="Pen">✏️</button>
+            <button class="size-btn" type="button" data-tool="marker" aria-pressed="false" title="Highlighter" aria-label="Highlighter">🖍️</button>
+            <button class="size-btn tool-glyph" type="button" data-tool="arrow" aria-pressed="false" title="Arrow" aria-label="Arrow">➜</button>
+            <button class="size-btn tool-glyph" type="button" data-tool="text" aria-pressed="false" title="Text" aria-label="Text">T</button>
+            <button class="size-btn" type="button" data-tool="erase" aria-pressed="false" title="Eraser" aria-label="Eraser">🧽</button>
+            <span class="present-bar__sep" aria-hidden="true"></span>
+            <button class="swatch" type="button" data-colour="#7c3aed" aria-pressed="true" aria-label="Purple" style="background:#7c3aed"></button>
+            <button class="swatch" type="button" data-colour="#db2777" aria-pressed="false" aria-label="Pink" style="background:#db2777"></button>
+            <button class="swatch" type="button" data-colour="#16c79a" aria-pressed="false" aria-label="Green" style="background:#16c79a"></button>
+            <button class="swatch" type="button" data-colour="#38bdf8" aria-pressed="false" aria-label="Blue" style="background:#38bdf8"></button>
+            <button class="swatch" type="button" data-colour="#ff7a5c" aria-pressed="false" aria-label="Orange" style="background:#ff7a5c"></button>
+            <button class="swatch" type="button" data-colour="#1b1235" aria-pressed="false" aria-label="Black" style="background:#1b1235"></button>
+            <span class="present-bar__sep" aria-hidden="true"></span>
+            <button class="size-btn" type="button" data-undo title="Undo" aria-label="Undo">↩️</button>
+            <button class="size-btn" type="button" data-redo title="Redo" aria-label="Redo">↪️</button>
+            <button class="size-btn" type="button" data-clear title="Clear" aria-label="Clear the desk">🧹</button>
+            <span class="present-bar__sep" aria-hidden="true"></span>
+            <button class="btn btn--pink present-bar__exit" type="button" data-present-exit>✕ Exit</button>
+          </div>
+        </div>
+
+        <div class="wb__actions teach__actions">
+          <button class="btn btn--sun" type="button" data-undo>↩️ Undo</button>
+          <button class="btn" type="button" data-redo>↪️ Redo</button>
+          <button class="btn" type="button" data-clear>🧹 Clear my desk</button>
+          <button class="btn btn--mint" type="button" data-save>⬇️ Save as PNG</button>
+          <button class="btn" type="button" data-print>🖨️ Print / PDF</button>
+        </div>
+        </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<div class="toast" data-toast role="status" aria-live="polite"></div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/site.js"></script>
+<script src="assets/js/board-engine.js"></script>
+<script src="assets/js/board-ui.js"></script>
+<script src="assets/js/realtime.js"></script>
+<script src="assets/js/sidebar.js"></script>
+<script src="assets/js/drawer.js"></script>
+<script src="assets/js/teach.js"></script>
+</body>
+</html>

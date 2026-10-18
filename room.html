@@ -28,11 +28,11 @@
     <div class="nav__links" id="nav-links" data-open="false">
       <a href="dashboard.html">My rooms</a>
       <a href="drawer.html">🗄️ Doodle Drawer</a>
-      <a href="demo.html">Practice board</a>
+      <a href="demo.html">Practice desk</a>
       <a href="index.html">Website</a>
     </div>
     <div class="nav__actions">
-      <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch colour mode">🌙</button>
+      <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch color mode">🌙</button>
       <a class="btn" href="dashboard.html">← All rooms</a>
       <button class="icon-btn nav__burger" data-burger type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Menu">☰</button>
     </div>
@@ -85,7 +85,7 @@
 
         <!-- Class -->
         <div class="cp__panel" role="tabpanel" id="cp-class" aria-labelledby="cp-tab-class" data-cp-panel="class">
-          <label class="cp__label" for="prompt-input">Today's task <span class="muted">— students see it above their board</span></label>
+          <label class="cp__label" for="prompt-input">Today's task <span class="muted">— students see it above their desk</span></label>
           <div class="cp__row">
             <input class="cp__input" id="prompt-input" type="text" placeholder="e.g. Show two ways to make 3/4" maxlength="160">
             <button class="btn btn--primary" type="button" data-send-prompt>Send to class</button>
@@ -96,16 +96,19 @@
               <select class="paper-select" id="room-keep" data-room-keep></select>
               <span class="small muted" data-room-keep-label></span>
             </div>
-            <button class="btn btn--ghost cp__danger" type="button" data-clear-all>🧹 Clear all boards</button>
+            <div class="cp__row">
+              <a class="btn" href="teach.html" data-teach-link>🧑‍🏫 My teaching desk</a>
+              <button class="btn btn--ghost cp__danger" type="button" data-clear-all>🧹 Clear all desks</button>
+            </div>
           </div>
         </div>
 
         <!-- Pages & worksheets -->
         <div class="cp__panel" role="tabpanel" id="cp-pages" aria-labelledby="cp-tab-pages" data-cp-panel="pages" hidden>
-          <label class="cp__label" for="template-select">Put a page on every board</label>
+          <label class="cp__label" for="template-select">Put a page on every desk</label>
           <div class="cp__row">
             <select class="paper-select cp__select" id="template-select" data-template-select></select>
-            <button class="btn btn--primary" type="button" data-send-template>📄 Send to every board</button>
+            <button class="btn btn--primary" type="button" data-send-template>📄 Send to every desk</button>
           </div>
           <p class="cp__label cp__label--gap">Or add your own</p>
           <div class="cp__tiles">
@@ -137,7 +140,7 @@
           <div class="cp__tiles">
             <button class="cp__tile" type="button" data-snapshot>
               <span class="cp__tile-icon" aria-hidden="true">📸</span>
-              <span class="cp__tile-text"><strong>Save snapshot</strong><small>Keep every board just as it is now</small></span>
+              <span class="cp__tile-text"><strong>Save snapshot</strong><small>Keep every desk just as it is now</small></span>
             </button>
             <button class="cp__tile" type="button" data-open-snapshots>
               <span class="cp__tile-icon" aria-hidden="true">🗂️</span>
@@ -197,15 +200,15 @@
       <span class="dot" data-focus-dot></span>
       <h3 id="focus-title" data-focus-name>Student</h3>
       <span class="badge badge--sky" data-focus-status>working</span>
-      <button class="btn" type="button" data-focus-lock style="margin-left:auto" aria-pressed="false">🔒 Pause their board</button>
-      <button class="btn" type="button" data-focus-clear>🧹 Clear their board</button>
+      <button class="btn" type="button" data-focus-lock style="margin-left:auto" aria-pressed="false">🔒 Pause their desk</button>
+      <button class="btn" type="button" data-focus-clear>🧹 Clear their desk</button>
       <button class="btn btn--pink" type="button" data-focus-close>Close ✕</button>
     </div>
 
     <p class="small muted" data-focus-note style="margin-top:-.4rem"></p>
 
     <div class="wb__canvas-wrap">
-      <canvas id="focus-board" width="1200" height="740" aria-label="This student's board — draw here to leave them a hint"></canvas>
+      <canvas id="focus-board" width="1200" height="740" aria-label="This student's desk — draw here to leave them a hint"></canvas>
     </div>
 
     <div class="focus__tools">
@@ -242,7 +245,7 @@
       <button class="btn btn--sun" type="button" data-snap-print hidden>🖨️ Print / PDF</button>
       <button class="btn btn--pink" type="button" data-snap-close>Close ✕</button>
     </div>
-    <p class="small muted" data-snap-note style="margin-top:-.4rem">A snapshot keeps every student's board from that moment, in this browser.</p>
+    <p class="small muted" data-snap-note style="margin-top:-.4rem">A snapshot keeps every student's desk from that moment, in this browser.</p>
     <div data-snap-list class="snap-list"></div>
     <div data-snap-gallery class="class-grid" hidden></div>
   </div>
@@ -327,7 +330,7 @@
       </details>
       <div class="ai-actions">
         <button class="btn" type="button" data-ai-save>💾 Save to my uploads</button>
-        <button class="btn btn--primary" type="button" data-ai-send>📤 Save &amp; send to every board</button>
+        <button class="btn btn--primary" type="button" data-ai-send>📤 Save &amp; send to every desk</button>
         <span class="small muted" data-ai-save-status role="status"></span>
       </div>
     </div>
@@ -346,7 +349,7 @@
 
     <!-- Step 1: answer key -->
     <div data-grade-setup>
-      <p class="mb-0"><strong>Grading:</strong> <span data-grade-page>the boards as they are now</span></p>
+      <p class="mb-0"><strong>Grading:</strong> <span data-grade-page>the desks as they are now</span></p>
       <p class="small muted" data-grade-who></p>
       <div class="field">
         <label for="grade-key">Answer key <span class="muted small">— one answer per line, in question order</span></label>
@@ -354,15 +357,15 @@
         <small data-grade-key-hint>Leave it empty and the AI will work out the answers itself — every mark is then flagged for you to check.</small>
       </div>
       <div class="ai-actions">
-        <button class="btn btn--primary" type="button" data-grade-go>📝 Grade the boards</button>
+        <button class="btn btn--primary" type="button" data-grade-go>📝 Grade the desks</button>
         <span class="small muted" data-grade-status role="status"></span>
       </div>
-      <p class="small muted mb-0">Students never see these grades. Only a picture of each board and your key are sent to the AI — no names.</p>
+      <p class="small muted mb-0">Students never see these grades. Only a picture of each desk and your key are sent to the AI — no names.</p>
     </div>
 
     <!-- Step 2: working -->
     <div data-grade-working hidden>
-      <p><strong data-grade-progress-text>Collecting boards…</strong></p>
+      <p><strong data-grade-progress-text>Collecting desks…</strong></p>
       <div class="grade-bar"><span data-grade-bar></span></div>
     </div>
 
@@ -396,6 +399,7 @@
 <script src="assets/js/board-engine.js"></script>
 <script src="assets/js/board-ui.js"></script>
 <script src="assets/js/realtime.js"></script>
+<script src="assets/js/sidebar.js"></script>
 <script src="assets/js/drawer.js"></script>
 <script src="assets/js/uploads.js"></script>
 <script src="assets/js/ai-maker.js"></script>

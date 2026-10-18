@@ -1110,6 +1110,103 @@ details.qa .qa__body p:last-child { margin-bottom: 0; }
   outline: none;
 }
 
+/* ---- Room: tool panel (tabs) -------------------------------------------- */
+.cp { margin-bottom: 1.4rem; padding: 0; overflow: hidden; }
+.cp__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.8rem 1rem;
+  background: var(--surface-2);
+  border-bottom: 3px solid var(--border);
+}
+.cp__tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  background: var(--surface);
+  border: 3px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+}
+.cp__tab {
+  font-family: var(--font-display);
+  font-size: 0.98rem;
+  font-weight: 600;
+  padding: 0.5rem 1.1rem;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.cp__tab:hover { background: var(--surface-2); }
+.cp__tab[aria-selected="true"] { background: var(--grape); color: #fff; }
+.cp__tab:focus-visible { outline: 3px solid var(--grape); outline-offset: 2px; }
+.cp__freeze { margin-left: auto; padding: 0.55rem 1.2rem; font-size: 0.98rem; }
+.cp__freeze[aria-pressed="true"] { background: var(--sky); color: var(--ink); }
+.cp__panel { padding: 1.2rem 1.2rem 1.3rem; }
+.cp__label { display: block; margin: 0 0 0.5rem; font-family: var(--font-display); font-weight: 600; font-size: 0.98rem; color: var(--text); }
+.cp__label .muted { font-family: var(--font-body); font-weight: 600; font-size: 0.88rem; }
+.cp__label--gap { margin-top: 1.3rem; }
+.cp__row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem; }
+.cp__row--end { justify-content: flex-end; margin-top: 0.9rem; }
+.cp__input {
+  flex: 1 1 280px;
+  min-width: 0;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.7rem 1rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 3px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+}
+.cp__input:focus { outline: none; border-color: var(--grape); box-shadow: 0 0 0 4px color-mix(in srgb, var(--grape) 25%, transparent); }
+.cp__select { flex: 1 1 260px; width: auto; max-width: 420px; }
+.cp__danger { font-size: 0.95rem; color: var(--text); }
+.cp__danger:hover { background: color-mix(in srgb, var(--coral) 22%, transparent); }
+.cp__tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.8rem; }
+.cp__tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.85rem 1rem;
+  text-align: left;
+  color: var(--text);
+  background: var(--surface);
+  border: 3px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--pop);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.cp__tile:hover { transform: translateY(-3px); box-shadow: var(--pop-lg); }
+.cp__tile:disabled { opacity: 0.55; cursor: wait; transform: none; }
+.cp__tile:focus-visible { outline: 3px solid var(--grape); outline-offset: 3px; }
+.cp__tile-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  font-size: 1.4rem;
+  background: var(--surface-2);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+}
+.cp__tile-text { display: grid; gap: 0.1rem; }
+.cp__tile-text strong { font-family: var(--font-display); font-weight: 600; font-size: 1.02rem; }
+.cp__tile-text small { color: var(--muted); font-size: 0.85rem; line-height: 1.3; }
+.cp__tile .pro-tag { position: absolute; top: 8px; right: 8px; font-size: 0.68rem; padding: 0.1rem 0.45rem; background: var(--grape); color: #fff; border-width: 2px; }
+@media (max-width: 560px) {
+  .cp__freeze { margin-left: 0; width: 100%; }
+  .cp__tab { padding: 0.45rem 0.8rem; font-size: 0.9rem; }
+  .cp__tabs { border-radius: var(--radius); }
+}
+
 /* ---- Room: lesson pages, snapshots, class list -------------------------- */
 .template-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; flex: 1 1 420px; }
 .template-pick .paper-select { width: auto; min-width: 220px; }

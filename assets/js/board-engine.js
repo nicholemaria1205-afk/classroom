@@ -336,7 +336,7 @@ window.DoodleTemplates = (function () {
     list.forEach(function (t) { (groups[t.group] = groups[t.group] || []).push(t); });
     var html = "";
     if (uploads && uploads.length) {
-      html += '<optgroup label="Your uploads">' + uploads.map(function (u) {
+      html += '<optgroup label="From your Doodle Drawer">' + uploads.map(function (u) {
         return '<option value="' + esc(u.id) + '"' + (u.id === selected ? " selected" : "") + ">" + esc(u.name) + "</option>";
       }).join("") + "</optgroup>";
     } else if (IMG.test(selected || "")) {

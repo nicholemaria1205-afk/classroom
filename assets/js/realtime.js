@@ -141,6 +141,49 @@ window.DoodleNet = (function () {
     if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; persist(cacheState); }
   });
 
+  /* ---- How long things are kept ------------------------------------------
+     Shared by rooms and by Doodle Pads in the Doodle Drawer. keepUntil() turns
+     a choice into a date (null = until the teacher deletes it). */
+  var KEEP = {
+    day: { label: "1 day", days: 1 },
+    week: { label: "1 week", days: 7 },
+    month: { label: "1 month", days: 30 },
+    three: { label: "3 months", days: 91 },
+    schoolyear: { label: "Until the end of the school year" },
+    year: { label: "1 year", days: 365 },
+    forever: { label: "Until I delete it" }
+  };
+
+  function keepUntil(choice, from) {
+    var start = from || Date.now();
+    var k = KEEP[choice] || KEEP.month;
+    if (choice === "forever") return null;
+    if (choice === "schoolyear") {
+      /* The next June 30th, end of the day */
+      var d = new Date(start);
+      var end = new Date(d.getFullYear(), 5, 30, 23, 59, 59);
+      if (end.getTime() <= start) end = new Date(d.getFullYear() + 1, 5, 30, 23, 59, 59);
+      return end.getTime();
+    }
+    return start + k.days * 864e5;
+  }
+
+  function keepLabel(until) {
+    if (!until) return "Kept until you delete it";
+    var left = until - Date.now();
+    var date = new Date(until).toLocaleDateString([], { month: "short", day: "numeric", year: new Date(until).getFullYear() !== new Date().getFullYear() ? "numeric" : undefined });
+    if (left <= 0) return "Expired";
+    if (left < 864e5) return "Ends today";
+    if (left < 3 * 864e5) return "Ends in " + Math.ceil(left / 864e5) + " days (" + date + ")";
+    return "Kept until " + date;
+  }
+
+  function keepOptionsHTML(choices, selected) {
+    return choices.map(function (c) {
+      return '<option value="' + c + '"' + (c === selected ? " selected" : "") + ">" + KEEP[c].label + "</option>";
+    }).join("");
+  }
+
   /* ---- Room codes ------------------------------------------------------- */
   /* Short, sayable, and easy to copy off a board from the back of the room */
   var WORDS = ["SUN", "CAT", "DOG", "SKY", "FOX", "OWL", "BEE", "ELK", "JAM",
@@ -166,6 +209,8 @@ window.DoodleNet = (function () {
       subject: details.subject || "✏️ General",
       prompt: (details.prompt || "").slice(0, 160),
       template: details.template || "",
+      keep: KEEP[details.keep] ? details.keep : "month",
+      keepUntil: keepUntil(KEEP[details.keep] ? details.keep : "month"),
       teacher: (details.teacher || "Teacher").slice(0, 40),
       frozen: false,
       createdAt: Date.now(),
@@ -202,6 +247,42 @@ window.DoodleNet = (function () {
     delete state.rooms[code];
     writeStore(state);
     send("room-closed", { code: code });
+    forgetRoomData(code);
+  }
+
+  /* A closed or expired room takes its saved grades and snapshots with it
+     (anything saved to the Doodle Drawer stays, on its own timer). */
+  function forgetRoomData(code) {
+    try { localStorage.removeItem("doodle-grades-" + code); } catch (e) {}
+    try {
+      if (!window.indexedDB) return;
+      var req = indexedDB.open("doodle-desk", 1);
+      req.onupgradeneeded = function () {
+        var store = req.result.createObjectStore("snapshots", { keyPath: "id" });
+        store.createIndex("code", "code");
+      };
+      req.onsuccess = function () {
+        var db = req.result;
+        var t = db.transaction("snapshots", "readwrite");
+        var idx = t.objectStore("snapshots").index("code");
+        idx.openCursor(IDBKeyRange.only(code)).onsuccess = function (e) {
+          var cur = e.target.result;
+          if (cur) { cur.delete(); cur.continue(); }
+        };
+      };
+    } catch (e) {}
+  }
+
+  /* Close rooms whose keep-until date has passed. Returns the ones tidied. */
+  function tidyRooms() {
+    var now = Date.now();
+    return listRooms().filter(function (r) {
+      if (r.keepUntil && r.keepUntil < now) {
+        deleteRoom(r.code);
+        return true;
+      }
+      return false;
+    });
   }
 
   /* What a student is allowed to know about a room */
@@ -213,6 +294,7 @@ window.DoodleNet = (function () {
       prompt: room.prompt || "",
       frozen: !!room.frozen,
       template: room.template || "",
+      keepUntil: room.keepUntil || null,
       teacher: room.teacher,
       createdAt: room.createdAt
     };
@@ -673,7 +755,9 @@ window.DoodleNet = (function () {
     return ready.then(function () {
       if (mode !== "remote") return;
       var cutoff = Date.now() - HOST_WINDOW_MS;
-      var rooms = listRooms().filter(function (r) { return r.createdAt >= cutoff; })
+      /* Rooms opened lately — a room kept for a month still works when its
+         teacher comes back to it */
+      var rooms = listRooms().filter(function (r) { return (r.openedAt || r.createdAt) >= cutoff; })
         .slice(0, HOST_MAX_ROOMS);
       return Promise.all(rooms.map(function (r) { return watch(r.code, "teacher"); }));
     });
@@ -886,6 +970,11 @@ window.DoodleNet = (function () {
     listRooms: listRooms,
     updateRoom: updateRoom,
     deleteRoom: deleteRoom,
+    tidyRooms: tidyRooms,
+    KEEP: KEEP,
+    keepUntil: keepUntil,
+    keepLabel: keepLabel,
+    keepOptionsHTML: keepOptionsHTML,
     host: host,
     watch: watch,
     fetchRoom: fetchRoom,

@@ -75,6 +75,7 @@
         "</div>" +
         (room.prompt ? '<p class="small" style="margin-top:.8rem"><strong>Task:</strong> ' + escape(room.prompt) + "</p>" : "") +
         '<p class="small muted" style="margin-top:.8rem">' +
+          "🗓️ " + escape(net.keepLabel(room.keepUntil)) + " · " +
           "👥 " + online + " online · " + students.length + " joined" +
           (stuck ? ' · <strong style="color:var(--coral)">' + stuck + " stuck</strong>" : "") +
         "</p>" +
@@ -115,6 +116,7 @@
       name: name.value.trim(),
       subject: form.elements.subject.value,
       prompt: form.elements.prompt.value.trim(),
+      keep: form.elements.keep.value,
       teacher: who.name
     });
 
@@ -148,6 +150,14 @@
       }
     }
   });
+
+  /* ---- Tidy rooms past their keep-until date ----------------------------- */
+  var tidied = net.tidyRooms();
+  if (tidied.length) {
+    window.doodleToast(tidied.length === 1
+      ? "“" + tidied[0].name + "” reached its keep-until date and was closed 🗓️"
+      : tidied.length + " rooms reached their keep-until date and were closed 🗓️", "warn");
+  }
 
   /* ---- Keep counts live ------------------------------------------------- */
   /* Answer students joining from other devices, even from this page */

@@ -10,6 +10,7 @@
   if (!net) return;
 
   var code = (new URLSearchParams(location.search).get("code") || "").toUpperCase();
+  net.tidyRooms();
   var room = net.getRoom(code);
 
   var noRoom = document.querySelector("[data-no-room]");
@@ -35,6 +36,26 @@
   var freezeBtn = document.querySelector("[data-freeze]");
   freezeBtn.setAttribute("aria-pressed", String(!!room.frozen));
   if (room.frozen) freezeBtn.textContent = "❄️ Frozen — click to release";
+
+  /* ---- How long this room is kept ---------------------------------------- */
+  net.updateRoom(room.code, { openedAt: Date.now() });
+  var keepSel = document.querySelector("[data-room-keep]");
+  var keepLabelEl = document.querySelector("[data-room-keep-label]");
+  keepSel.innerHTML = net.keepOptionsHTML(["day", "week", "month", "schoolyear", "forever"], room.keep || (room.keepUntil ? "month" : "forever"))
+    .replace("Until I delete it", "Until I close it");
+  function showKeep() {
+    var r = net.getRoom(room.code) || room;
+    keepLabelEl.textContent = r.keepUntil ? net.keepLabel(r.keepUntil) : "";
+  }
+  showKeep();
+  keepSel.addEventListener("change", function () {
+    /* Counted from when the room was opened, so "1 week" means its first week */
+    var until = net.keepUntil(keepSel.value, keepSel.value === "schoolyear" || keepSel.value === "forever" ? Date.now() : room.createdAt);
+    if (until && until < Date.now() + 36e5) until = net.keepUntil(keepSel.value);
+    net.updateRoom(room.code, { keep: keepSel.value, keepUntil: until });
+    showKeep();
+    window.doodleToast("🗓️ " + net.keepLabel(until));
+  });
 
   /* ---- Tool tabs (Class / Pages & worksheets / Review & grades) ---------- */
   var cpTabs = Array.prototype.slice.call(document.querySelectorAll("[data-cp-tab]"));
@@ -316,11 +337,39 @@
     var all = myUploads().filter(function (u) { return u.name !== entry.name; });
     all.unshift(entry);
     try { localStorage.setItem(uploadsKey(), JSON.stringify(all.slice(0, 30))); } catch (e) {}
+
+    /* Every worksheet also goes into the teacher's Doodle Drawer, so it's
+       there next year and on any computer */
+    if (window.DoodleDrawer && entry.pages && entry.pages.length) {
+      window.DoodleDrawer.save({
+        kind: "worksheet",
+        title: String(entry.name || "Worksheet").replace(/^✨\s*/, ""),
+        keep: "forever",
+        keepUntil: null,
+        count: entry.pages.length,
+        data: { pages: entry.pages, key: entry.key || null, source: entry.ai ? "ai" : "upload" }
+      }).then(function (r) {
+        if (r.ok) window.doodleToast("Saved to your Doodle Drawer 🗄️", "good");
+      });
+    }
   }
 
+  /* Pages to offer in the Lesson page list: this browser's recent uploads
+     plus every worksheet in the Doodle Drawer */
   function uploadedPages() {
     var pages = [];
-    myUploads().forEach(function (u) { pages = pages.concat(u.pages); });
+    var seen = {};
+    function add(p) {
+      if (!p || seen[p.id]) return;
+      seen[p.id] = true;
+      pages.push(p);
+    }
+    myUploads().forEach(function (u) { u.pages.forEach(add); });
+    if (window.DoodleDrawer) {
+      window.DoodleDrawer.cached().forEach(function (pad) {
+        if (pad.kind === "worksheet") (pad.pages || []).forEach(add);
+      });
+    }
     return pages;
   }
 
@@ -330,6 +379,20 @@
     if (selected) templateSelect.value = selected;
   }
   fillTemplates(room.template || "");
+
+  /* Coming from the Doodle Drawer with a page to use? Have it ready to send */
+  var pageFromDrawer = new URLSearchParams(location.search).get("page");
+  if (window.DoodleDrawer) {
+    window.DoodleDrawer.list().then(function () {
+      fillTemplates(pageFromDrawer || templateSelect.value || room.template || "");
+      if (pageFromDrawer && templateSelect.value === pageFromDrawer) {
+        showTab("pages");
+        note("📄 <strong>" + escape(templateSelect.options[templateSelect.selectedIndex].textContent) +
+          "</strong> from your Doodle Drawer is ready. Press <strong>Send to every board</strong> when the class is ready.", "good");
+        history.replaceState(null, "", "room.html?code=" + room.code);
+      }
+    });
+  }
 
   document.querySelector("[data-send-template]").addEventListener("click", function () {
     var id = templateSelect.value;
@@ -883,6 +946,40 @@
   var snapTitle = document.querySelector("[data-snap-title]");
   var openSnap = null;
   var snapCache = [];
+  var snapDrawerWrap = document.querySelector("[data-snap-drawer-wrap]");
+  var snapDrawerBtn = document.querySelector("[data-snap-drawer]");
+  var snapKeep = document.querySelector("[data-snap-keep]");
+  if (window.DoodleDrawer) snapKeep.innerHTML = window.DoodleDrawer.keepSelectHTML("schoolyear");
+
+  /* Keep a snapshot for good: smaller pictures so a whole class fits */
+  snapDrawerBtn.addEventListener("click", function () {
+    if (!openSnap) return;
+    var snap = openSnap;
+    snapDrawerBtn.disabled = true;
+    snapDrawerBtn.textContent = "Saving…";
+    Promise.all(snap.students.map(function (st) {
+      return window.DoodleDrawer.shrink(st.img, 760, 0.72).then(function (img) {
+        return { name: st.name, status: st.status, marks: st.marks, img: img };
+      });
+    })).then(function (students) {
+      var cover = students.filter(function (st) { return st.img; })[0];
+      return (cover ? window.DoodleDrawer.shrink(cover.img, 320, 0.7) : Promise.resolve("")).then(function (coverImg) {
+        return window.DoodleDrawer.save({
+          kind: "snapshot",
+          title: snap.roomName + " — " + when(snap.at),
+          keep: snapKeep.value,
+          keepUntil: net.keepUntil(snapKeep.value),
+          count: students.length,
+          cover: coverImg,
+          data: { roomName: snap.roomName, prompt: snap.prompt, at: snap.at, students: students }
+        });
+      });
+    }).then(function (r) {
+      snapDrawerBtn.textContent = r.ok ? "✅ In your Doodle Drawer" : "🗄️ Save to Doodle Drawer";
+      snapDrawerBtn.disabled = !!r.ok;
+      window.doodleToast(r.ok ? "Snapshot saved to your Doodle Drawer 🗄️" : r.error, r.ok ? "good" : "warn");
+    });
+  });
 
   function when(t) {
     return new Date(t).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
@@ -894,6 +991,7 @@
     snapList.hidden = false;
     snapPrint.hidden = true;
     snapBack.hidden = true;
+    snapDrawerWrap.hidden = true;
     snapTitle.textContent = "Saved snapshots";
     snapList.innerHTML = '<p class="small muted">Loading…</p>';
     SnapStore.list(room.code).then(function (all) {
@@ -920,6 +1018,9 @@
     snapGallery.hidden = false;
     snapPrint.hidden = false;
     snapBack.hidden = false;
+    snapDrawerWrap.hidden = !window.DoodleDrawer || !net.teacher();
+    snapDrawerBtn.disabled = false;
+    snapDrawerBtn.textContent = "🗄️ Save to Doodle Drawer";
     snapTitle.textContent = when(s.at);
     snapGallery.innerHTML = s.students.map(function (st) {
       return '<figure class="pupil snap-card">' +
@@ -1143,6 +1244,24 @@
     document.querySelector("[data-grade-key-hint]").textContent = gradeAIKey
       ? "Filled in from the AI worksheet's answer key — change anything that's wrong."
       : "Leave it empty and the AI will work out the answers itself — every mark is then flagged for you to check.";
+
+    /* A worksheet from the Doodle Drawer may carry its answer key */
+    if (!gradeAIKey && typed == null && window.DoodleDrawer) {
+      var pad = window.DoodleDrawer.cached().filter(function (p) {
+        return p.kind === "worksheet" && p.hasKey && (p.pages || []).some(function (pg) { return pg.id === page; });
+      })[0];
+      if (pad) {
+        window.DoodleDrawer.get(pad.id).then(function (r) {
+          var key = r.ok && r.pad && r.pad.data && r.pad.data.key;
+          if (!key || !key.length || gradeKeyBox.value.trim() || currentPage() !== page) return;
+          gradeAIKey = key;
+          gradeKeyBox.value = key.map(function (k, i) { return (i + 1) + ". " + k.answer; }).join("\n");
+          gradeKeyPrefill = gradeKeyBox.value;
+          document.querySelector("[data-grade-key-hint]").textContent =
+            "Filled in from the answer key saved in your Doodle Drawer — change anything that's wrong.";
+        });
+      }
+    }
   }
 
   function progress(text, fraction) {
@@ -1406,6 +1525,43 @@
     showSetup();
   });
   document.querySelector("[data-grade-csv]").addEventListener("click", downloadCSV);
+
+  /* Keep a grade list in the Doodle Drawer (still teacher-only) */
+  var gradeKeep = document.querySelector("[data-grade-keep]");
+  var gradeDrawerBtn = document.querySelector("[data-grade-drawer]");
+  if (window.DoodleDrawer) gradeKeep.innerHTML = window.DoodleDrawer.keepSelectHTML("schoolyear");
+  else gradeDrawerBtn.parentNode.hidden = true;
+  gradeDrawerBtn.addEventListener("click", function () {
+    if (!gradeRun) return;
+    var run = gradeRun;
+    var scored = run.rows.map(scoreOf).filter(function (x) { return x.pct != null; });
+    var avg = scored.length ? Math.round(scored.reduce(function (a, x) { return a + x.pct; }, 0) / scored.length) : null;
+    gradeDrawerBtn.disabled = true;
+    gradeDrawerBtn.textContent = "Saving…";
+    window.DoodleDrawer.save({
+      kind: "grades",
+      title: room.name + " — " + String(run.title).replace(/^✨\s*/, ""),
+      keep: gradeKeep.value,
+      keepUntil: net.keepUntil(gradeKeep.value),
+      count: run.rows.length,
+      data: {
+        roomName: room.name,
+        average: avg,
+        run: {
+          at: run.at, page: run.page, title: run.title, keyCount: run.keyCount,
+          rows: run.rows.map(function (row) {
+            var sc = scoreOf(row);
+            return { name: row.name, results: row.results, note: row.note, error: row.error,
+                     got: sc.got, of: sc.of, pct: sc.pct, check: needsCheck(row) };
+          })
+        }
+      }
+    }).then(function (r) {
+      gradeDrawerBtn.disabled = false;
+      gradeDrawerBtn.textContent = r.ok ? "✅ Saved — save again" : "🗄️ Save to Doodle Drawer";
+      window.doodleToast(r.ok ? "Grade list saved to your Doodle Drawer 🗄️ (only you can see it)" : r.error, r.ok ? "good" : "warn");
+    });
+  });
   document.querySelector("[data-grade-print]").addEventListener("click", printGrades);
 
   /* ---- Live updates ----------------------------------------------------- */
@@ -1454,6 +1610,7 @@
   /* Across devices: start listening for this room's students. In one-browser
      mode this does nothing. */
   net.host();
+  net.watch(room.code, "teacher");
 
   net.ready.then(function (mode) {
     if (mode === "local") {

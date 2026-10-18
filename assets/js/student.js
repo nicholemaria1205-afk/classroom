@@ -154,15 +154,18 @@
   function loadKept() {
     try {
       var kept = JSON.parse(localStorage.getItem(keptKey()) || "null");
-      /* Old boards are let go after a fortnight */
-      if (kept && Date.now() - kept.at < 14 * 864e5) return kept.items || [];
+      /* Kept as long as the teacher keeps the room (two weeks if we don't
+         know, a year at most) */
+      if (kept && Date.now() < (kept.until || kept.at + 14 * 864e5)) return kept.items || [];
+      if (kept) localStorage.removeItem(keptKey());
     } catch (e) {}
     return [];
   }
 
   function keep(items) {
     try {
-      localStorage.setItem(keptKey(), JSON.stringify({ at: Date.now(), items: items }));
+      var until = room && room.keepUntil ? room.keepUntil : Date.now() + 365 * 864e5;
+      localStorage.setItem(keptKey(), JSON.stringify({ at: Date.now(), until: Math.min(until, Date.now() + 365 * 864e5), items: items }));
     } catch (e) {}
   }
 

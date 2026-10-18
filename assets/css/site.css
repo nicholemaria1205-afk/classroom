@@ -956,8 +956,8 @@ details.qa .qa__body p:last-child { margin-bottom: 0; }
 }
 .pupil__name { font-family: var(--font-display); font-weight: 600; font-size: 1rem; }
 .pupil__marks { margin-left: auto; font-size: 0.82rem; color: var(--muted); }
-.pupil__note { font-size: 0.95rem; line-height: 1; animation: note-bob 2.4s ease-in-out infinite; }
-@keyframes note-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+.pupil__note { font-size: 1rem; animation: note-bob 2.4s ease-in-out infinite; }
+@keyframes note-bob { 0%, 100% { transform: rotate(-6deg) translateY(0); } 50% { transform: rotate(-6deg) translateY(-2px); } }
 @media (prefers-reduced-motion: reduce) { .pupil__note { animation: none; } }
 .pupil[data-offline="true"] { opacity: 0.5; }
 .pupil[data-offline="true"]:has(.pupil__note) { opacity: 0.8; } /* a note is waiting — keep it easy to spot */
@@ -1761,3 +1761,8 @@ html.student-presenting .wb__canvas-wrap { box-shadow: 0 0 0 4px var(--sunny), v
 @media (prefers-reduced-motion: reduce) {
   .presenting-banner > span:first-child, .present-request { animation: none; }
 }
+
+/* A little sticky note — a teacher's note waiting on a desk */
+.sticky { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none;
+  background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M3 3h18v13l-5 5H3z' fill='%23ffd84d' stroke='%23d9a400' stroke-width='1.2' stroke-linejoin='round'/><path d='M21 16h-5v5z' fill='%23f0b90b' stroke='%23d9a400' stroke-width='1.2' stroke-linejoin='round'/><path d='M7 9h10M7 13h7' stroke='%23a87a00' stroke-width='1.6' stroke-linecap='round'/></svg>") center / contain no-repeat;
+  transform: rotate(-6deg); filter: drop-shadow(0 1px 1px rgba(60, 40, 0, 0.25)); }

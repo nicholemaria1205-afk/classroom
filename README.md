@@ -52,6 +52,13 @@ stuck or done, and the teacher's marks appear as you work. Undo only ever
 removes your own marks, so a student can't rub out the hint they were just
 given.
 
+Teachers can also write on an **offline** student's desk: you write over their
+last picture, and the note waits (💌 on their card) until they come back, even
+in a new tab or on another day under the same name. Every teacher mark is kept
+until the student's desk confirms it arrived, so nothing is lost if they drop
+off mid-lesson. Whichever teacher page is hosting the room (the room page or
+the teaching desk) hands the notes over.
+
 **How it fits together**
 
 - `assets/js/board-engine.js` — the drawing core. Marks are stored as data

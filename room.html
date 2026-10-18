@@ -69,35 +69,80 @@
         </div>
       </div>
 
-      <!-- ---------------------------- CONTROLS ---------------------------- -->
-      <div class="bar">
-        <div class="grow">
-          <label class="visually-hidden" for="prompt-input">Task for the class</label>
-          <input id="prompt-input" type="text" placeholder="Set today's task — students see it above their board" maxlength="160">
+      <!-- ---------------------------- CONTROL PANEL ----------------------------
+           Three tabs keep the tools tidy: running the class, putting a page on
+           every board, and looking back at the work. Freeze stays in reach. -->
+      <div class="card cp" data-cp>
+        <div class="cp__head">
+          <div class="cp__tabs" role="tablist" aria-label="Room tools">
+            <button class="cp__tab" type="button" role="tab" id="cp-tab-class" aria-controls="cp-class" aria-selected="true" data-cp-tab="class">📣 Class</button>
+            <button class="cp__tab" type="button" role="tab" id="cp-tab-pages" aria-controls="cp-pages" aria-selected="false" data-cp-tab="pages" tabindex="-1">📄 Pages &amp; worksheets</button>
+            <button class="cp__tab" type="button" role="tab" id="cp-tab-review" aria-controls="cp-review" aria-selected="false" data-cp-tab="review" tabindex="-1">📝 Review &amp; grades</button>
+          </div>
+          <button class="btn cp__freeze" type="button" data-freeze aria-pressed="false">❄️ Freeze</button>
         </div>
-        <button class="btn btn--primary" type="button" data-send-prompt>Send to class</button>
-        <button class="btn" type="button" data-freeze aria-pressed="false">❄️ Freeze</button>
-        <button class="btn" type="button" data-clear-all>🧹 Clear all boards</button>
-      </div>
 
-      <div class="bar">
-        <div class="template-pick">
-          <label class="small muted" for="template-select">Lesson page</label>
-          <select class="paper-select" id="template-select" data-template-select></select>
-          <button class="btn btn--primary" type="button" data-send-template>📄 Send to every board</button>
+        <!-- Class -->
+        <div class="cp__panel" role="tabpanel" id="cp-class" aria-labelledby="cp-tab-class" data-cp-panel="class">
+          <label class="cp__label" for="prompt-input">Today's task <span class="muted">— students see it above their board</span></label>
+          <div class="cp__row">
+            <input class="cp__input" id="prompt-input" type="text" placeholder="e.g. Show two ways to make 3/4" maxlength="160">
+            <button class="btn btn--primary" type="button" data-send-prompt>Send to class</button>
+          </div>
+          <div class="cp__row cp__row--end">
+            <button class="btn btn--ghost cp__danger" type="button" data-clear-all>🧹 Clear all boards</button>
+          </div>
         </div>
-        <div class="upload-actions">
-          <button class="btn btn--primary" type="button" data-ai-open>✨ Make with AI <span class="badge pro-tag">Pro</span></button>
-          <button class="btn" type="button" data-upload-file>📎 Upload a worksheet <span class="badge badge--grape pro-tag">Pro</span></button>
-          <button class="btn" type="button" data-upload-drive>🗂️ Google Drive <span class="badge badge--grape pro-tag">Pro</span></button>
+
+        <!-- Pages & worksheets -->
+        <div class="cp__panel" role="tabpanel" id="cp-pages" aria-labelledby="cp-tab-pages" data-cp-panel="pages" hidden>
+          <label class="cp__label" for="template-select">Put a page on every board</label>
+          <div class="cp__row">
+            <select class="paper-select cp__select" id="template-select" data-template-select></select>
+            <button class="btn btn--primary" type="button" data-send-template>📄 Send to every board</button>
+          </div>
+          <p class="cp__label cp__label--gap">Or add your own</p>
+          <div class="cp__tiles">
+            <button class="cp__tile" type="button" data-ai-open>
+              <span class="cp__tile-icon" aria-hidden="true">✨</span>
+              <span class="cp__tile-text"><strong>Make with AI</strong><small>A worksheet or activity in seconds</small></span>
+              <span class="badge pro-tag">Pro</span>
+            </button>
+            <button class="cp__tile" type="button" data-upload-file>
+              <span class="cp__tile-icon" aria-hidden="true">📎</span>
+              <span class="cp__tile-text"><strong>Upload a worksheet</strong><small>PDF or picture from your computer</small></span>
+              <span class="badge pro-tag">Pro</span>
+            </button>
+            <button class="cp__tile" type="button" data-upload-drive>
+              <span class="cp__tile-icon" aria-hidden="true">🗂️</span>
+              <span class="cp__tile-text"><strong>From Google Drive</strong><small>Docs, Slides, PDFs and pictures</small></span>
+              <span class="badge pro-tag">Pro</span>
+            </button>
+          </div>
           <input type="file" accept="application/pdf,image/png,image/jpeg,image/gif,image/webp,.pdf" data-upload-input hidden>
         </div>
-        <div class="snap-actions">
-          <button class="btn" type="button" data-snapshot>📸 Save snapshot</button>
-          <button class="btn" type="button" data-open-snapshots>🗂️ Saved snapshots</button>
-          <button class="btn" type="button" data-grade-open>📝 Grade with AI <span class="badge badge--grape pro-tag">Pro</span></button>
+
+        <!-- Review & grades -->
+        <div class="cp__panel" role="tabpanel" id="cp-review" aria-labelledby="cp-tab-review" data-cp-panel="review" hidden>
+          <div class="cp__tiles">
+            <button class="cp__tile" type="button" data-snapshot>
+              <span class="cp__tile-icon" aria-hidden="true">📸</span>
+              <span class="cp__tile-text"><strong>Save snapshot</strong><small>Keep every board just as it is now</small></span>
+            </button>
+            <button class="cp__tile" type="button" data-open-snapshots>
+              <span class="cp__tile-icon" aria-hidden="true">🗂️</span>
+              <span class="cp__tile-text"><strong>Saved snapshots</strong><small>Look back, print or save a PDF</small></span>
+            </button>
+            <button class="cp__tile" type="button" data-grade-open>
+              <span class="cp__tile-icon" aria-hidden="true">📝</span>
+              <span class="cp__tile-text"><strong>Grade with AI</strong><small>A grade list only you can see</small></span>
+              <span class="badge pro-tag">Pro</span>
+            </button>
+          </div>
         </div>
       </div>
+
+      <p class="upload-note" data-upload-note role="status" hidden></p>
 
       <div class="bar">
         <div class="chips" role="group" aria-label="Filter students">
@@ -109,8 +154,6 @@
         </div>
         <span class="small muted" style="margin-left:auto" data-online-count></span>
       </div>
-
-      <p class="upload-note" data-upload-note role="status" hidden></p>
 
       <!-- ---------------------------- CLASS LIST ---------------------------- -->
       <details class="card roster" data-roster>

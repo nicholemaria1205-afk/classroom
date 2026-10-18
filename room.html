@@ -90,6 +90,12 @@
             <input class="cp__input" id="prompt-input" type="text" placeholder="e.g. Show two ways to make 3/4" maxlength="160">
             <button class="btn btn--primary" type="button" data-send-prompt>Send to class</button>
           </div>
+          <label class="switch-row">
+            <input type="checkbox" class="switch-input" data-allow-present>
+            <span class="switch" aria-hidden="true"></span>
+            <span class="switch-text"><strong>🙋 Let students ask to present their desk</strong>
+              <small>They tap “Present my desk” and you choose who goes. Their desk fills your screen, so share your screen first.</small></span>
+          </label>
           <div class="cp__row cp__row--split">
             <div class="cp__keep">
               <label for="room-keep">🗓️ Keep this room</label>
@@ -156,6 +162,7 @@
       </div>
 
       <p class="upload-note" data-upload-note role="status" hidden></p>
+      <div class="present-requests" data-present-requests aria-live="polite" hidden></div>
 
       <div class="bar">
         <div class="chips" role="group" aria-label="Filter students">
@@ -202,6 +209,7 @@
       <span class="badge badge--sky" data-focus-status>working</span>
       <button class="btn" type="button" data-focus-lock style="margin-left:auto" aria-pressed="false">🔒 Pause their desk</button>
       <button class="btn" type="button" data-focus-clear>🧹 Clear their desk</button>
+      <button class="btn btn--primary" type="button" data-focus-present>🖥️ Present this desk</button>
       <button class="btn btn--pink" type="button" data-focus-close>Close ✕</button>
     </div>
 
@@ -388,6 +396,21 @@
           <tbody data-grade-rows></tbody>
         </table>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ A STUDENT PRESENTS ============================ -->
+<div class="present-room" data-present-room hidden>
+  <div class="present-room__stage" data-present-stage>
+    <span class="present-room__name" data-present-name></span>
+    <div class="wb__canvas-wrap present-room__canvas">
+      <canvas id="present-board" width="1200" height="740" aria-label="The presenting student's desk"></canvas>
+    </div>
+    <div class="present-bar" data-present-room-bar role="toolbar" aria-label="Presenting">
+      <span class="present-bar__who" data-present-who></span>
+      <button class="btn" type="button" data-present-name-toggle aria-pressed="true">🙈 Hide name</button>
+      <button class="btn btn--pink present-bar__exit" type="button" data-present-stop>✕ Stop presenting</button>
     </div>
   </div>
 </div>

@@ -220,6 +220,18 @@ it. Pads past their date are removed from the Drawer the next time it's opened.
   leaves. `teach.html?code=…&present=1` opens with a Start presenting button.
 - Students' boards are called **desks** everywhere on screen.
 
+### Students presenting their desk
+
+Only with the teacher's permission. In a room's Class tab, **🙋 Let students
+ask to present their desk** (off by default) shows students a **Present my
+desk** button; their request appears in the room with **Present now** / **Not
+now**. The teacher can also present any desk directly (focus view or class
+list). The student's desk then fills the teacher's screen — which the teacher
+is sharing — live: each finished mark arrives as `present-item`, the mark being
+drawn streams as `present-live` (drawn as a "ghost"), and undo/clear/new paper
+resend the whole desk. The presenter can draw even while the class is frozen.
+The name label can be hidden; ✕ Stop presenting or Esc ends it.
+
 ### Live sync across devices
 
 In live mode the **teacher's browser is the host**. It keeps the room, its

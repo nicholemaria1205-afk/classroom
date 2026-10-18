@@ -25,6 +25,23 @@
   var room = code ? net.getRoom(code) : null;
   var SAVE_KEY = "doodle-teach-" + (room ? room.code : "mine");
 
+  /* Keep the room open while teaching from here: this browser is the room's
+     host, so it goes on letting students join (or rejoin after a wobble)
+     and keeps the class list up to date, just like the room page does. */
+  if (room) {
+    net.updateRoom(room.code, { openedAt: Date.now() });
+    net.host();
+    net.watch(room.code, "teacher");
+
+    net.on("present-request", function (p) {
+      if (p.code !== room.code || p.cancel) return;
+      var s = (net.getStudents(room.code).filter(function (x) { return x.id === p.studentId; })[0]) || p.student || {};
+      if (!document.documentElement.classList.contains("presenting")) {
+        window.doodleToast("🙋 " + (s.name || "A student") + " would like to present — open the room to choose");
+      }
+    });
+  }
+
   if (room) {
     document.title = "Teaching desk · " + room.name + " — Doodle Desk";
     document.querySelector("[data-teach-sub]").innerHTML =

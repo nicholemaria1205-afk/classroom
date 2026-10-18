@@ -1152,6 +1152,10 @@ details.qa .qa__body p:last-child { margin-bottom: 0; }
 .cp__label--gap { margin-top: 1.3rem; }
 .cp__row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem; }
 .cp__row--end { justify-content: flex-end; margin-top: 0.9rem; }
+.cp__row--split { justify-content: space-between; margin-top: 1rem; }
+.cp__keep { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; color: var(--text); }
+.cp__keep label { font-family: var(--font-display); font-weight: 600; font-size: 0.95rem; }
+.cp__keep .paper-select { width: auto; padding: 0.35rem 0.6rem; font-size: 0.92rem; }
 .cp__input {
   flex: 1 1 280px;
   min-width: 0;
@@ -1206,6 +1210,52 @@ details.qa .qa__body p:last-child { margin-bottom: 0; }
   .cp__tab { padding: 0.45rem 0.8rem; font-size: 0.9rem; }
   .cp__tabs { border-radius: var(--radius); }
 }
+
+/* ---- Doodle Drawer -------------------------------------------------------- */
+.drawer-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1rem; margin-bottom: 1.6rem; }
+.drawer-head > div { flex: 1 1 320px; }
+.drawer-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem; margin-bottom: 1.4rem; padding: 0.9rem 1rem; }
+.drawer-search { flex: 1 1 240px; max-width: 360px; margin-left: auto; }
+.drawer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.2rem; }
+.drawer-empty { grid-column: 1 / -1; }
+.pad {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--text);
+  background: var(--surface);
+  border: 3px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--pop);
+}
+.pad__cover {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1200 / 740;
+  background: #fff;
+  border-bottom: 3px solid var(--border-strong);
+  overflow: hidden;
+}
+.pad__cover img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.pad__emoji { font-size: 3rem; }
+.pad__kind { position: absolute; top: 8px; left: 8px; font-size: 0.75rem; padding: 0.2rem 0.6rem; color: var(--ink); }
+.pad__kind[data-kind="worksheet"] { background: var(--sunny); }
+.pad__kind[data-kind="snapshot"] { background: var(--sky); }
+.pad__kind[data-kind="grades"] { background: var(--mint); }
+.pad__body { display: flex; flex-direction: column; gap: 0.45rem; padding: 0.9rem 1rem 1rem; flex: 1; }
+.pad__title { margin: 0; font-size: 1.12rem; line-height: 1.25; }
+.pad__keep { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.2rem; }
+.pad__keep .paper-select { width: 100%; min-width: 0; flex: 1 1 0; padding: 0.3rem 0.5rem; font-size: 0.88rem; text-overflow: ellipsis; }
+@media (max-width: 560px) { .nav__actions [data-teacher-badge] { display: none; } }
+.pad__until { margin: 0; }
+.pad__actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: auto; padding-top: 0.4rem; }
+.pad__actions .btn { padding: 0.45rem 0.9rem; font-size: 0.92rem; }
+.pad__actions .btn--ghost { padding: 0.45rem 0.6rem; }
+.use-rooms { display: grid; gap: 0.7rem; }
+a.cp__tile { text-decoration: none; }
+.drawer-save { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.drawer-save .paper-select { width: auto; padding: 0.4rem 0.6rem; font-size: 0.9rem; }
 
 /* ---- Room: lesson pages, snapshots, class list -------------------------- */
 .template-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; flex: 1 1 420px; }

@@ -139,6 +139,7 @@
 
   /* The side menu (and links like room.html#pages) can open a tab */
   window.doodleRoomTab = showTab;
+  window.doodleRoomRender = function () { render(); };
   var hashTab = location.hash.replace("#", "");
   if (hashTab && document.querySelector('[data-cp-panel="' + hashTab + '"]')) showTab(hashTab);
 
@@ -192,6 +193,16 @@
       online + " of " + students.length + " online";
   }
 
+  /* ⭐ on a card: stars this week */
+  var Stars = window.DoodleActivities && window.DoodleActivities.stars;
+  function starCount(s) {
+    return Stars ? Stars.count(Stars.get(net, room.code), s.name) : 0;
+  }
+  function starBadge(s) {
+    var n = starCount(s);
+    return n ? '<span class="pupil__stars" title="' + n + (n === 1 ? " star" : " stars") + ' this week">⭐ ' + n + "</span>" : "";
+  }
+
   /* A little sticky note on a card: a note is waiting for that student */
   function noteBadge(s) {
     return net.getNotes(room.code, s.id).length
@@ -218,7 +229,7 @@
         '<span class="pupil__foot">' +
           '<span class="dot" data-status="' + status + '"></span>' +
           '<span class="pupil__name">' + (s.locked ? '<span title="Desk paused" aria-label="Desk paused">🔒 </span>' : "") + escape(s.name) + "</span>" +
-          noteBadge(s) +
+          noteBadge(s) + starBadge(s) +
           '<span class="pupil__marks">' + (s.marks || 0) + " marks</span>" +
         "</span>" +
         "</button>";
@@ -342,6 +353,8 @@
     var card = grid.querySelector('[data-student="' + studentId + '"]');
     if (!card || !matchesFilter(s)) return render();
     if (!!card.querySelector(".pupil__note") !== !!noteBadge(s)) return render();
+    var starEl = card.querySelector(".pupil__stars");
+    if ((starEl ? starEl.textContent : "") !== (starCount(s) ? "⭐ " + starCount(s) : "")) return render();
 
     var status = statusOf(s);
     card.setAttribute("data-status", status);
@@ -847,6 +860,7 @@
       b.setAttribute("aria-pressed", String(b.getAttribute("data-tool") === "pen"));
     });
     showFocusLock(s.locked);
+    showFocusStars(s);
 
     focus.setAttribute("data-open", "true");
     document.body.style.overflow = "hidden";
@@ -862,6 +876,22 @@
       }, 2000);
     }
   }
+
+  function showFocusStars(s) {
+    var el = document.querySelector("[data-focus-stars]");
+    var n = starCount(s);
+    el.textContent = n ? "· " + n : "";
+  }
+
+  document.querySelector("[data-focus-star]").addEventListener("click", function () {
+    var s = focusId && findStudent(focusId);
+    if (!s || !Stars) return;
+    Stars.give(net, room.code, [s], 1);
+    showFocusStars(s);
+    render();
+    window.doodleToast("⭐ Star for " + s.name + "!", "good");
+  });
+  if (!Stars) document.querySelector("[data-focus-star]").hidden = true;
 
   function closeFocus() {
     focus.setAttribute("data-open", "false");

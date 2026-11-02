@@ -30,7 +30,8 @@
   var KIND = {
     worksheet: { label: "Worksheet", icon: "📄" },
     snapshot: { label: "Snapshot", icon: "📸" },
-    grades: { label: "Grade list", icon: "📝" }
+    grades: { label: "Grade list", icon: "📝" },
+    poll: { label: "Poll", icon: "📊" }
   };
 
   function escape(text) {
@@ -60,7 +61,7 @@
 
   function render() {
     var q = search.value.trim().toLowerCase();
-    ["all", "worksheet", "snapshot", "grades"].forEach(function (k) {
+    ["all", "worksheet", "snapshot", "grades", "poll"].forEach(function (k) {
       document.querySelector('[data-count="' + k + '"]').textContent =
         pads.filter(function (p) { return k === "all" || p.kind === k; }).length;
     });
@@ -84,6 +85,7 @@
     grid.innerHTML = shown.map(function (p) {
       var k = KIND[p.kind];
       var count = p.kind === "worksheet" ? p.count + (p.count === 1 ? " page" : " pages")
+        : p.kind === "poll" ? p.count + (p.count === 1 ? " answer" : " answers")
         : p.count + (p.count === 1 ? " student" : " students");
       var actions = p.kind === "worksheet"
         ? '<button class="btn btn--primary" type="button" data-use="' + p.id + '">📤 Use in a room</button>' +
@@ -205,7 +207,7 @@
     document.querySelector("[data-pad-title]").textContent = p.title;
     document.querySelector("[data-pad-kind]").textContent = KIND[p.kind].icon + " " + KIND[p.kind].label;
     document.querySelector("[data-pad-meta]").textContent = "Saved " + day(p.createdAt) + " · " + net.keepLabel(p.keepUntil);
-    csvBtn.hidden = p.kind !== "grades";
+    csvBtn.hidden = p.kind !== "grades" && p.kind !== "poll";
     body.innerHTML = '<p class="muted">Opening…</p>';
     openFull = null;
     openDialog(view);
@@ -227,6 +229,8 @@
               (st.img ? '<img class="pupil__shot" src="' + st.img + '" alt="' + escape(st.name) + '’s desk">' : '<div class="pupil__empty">blank desk</div>') +
               '<figcaption class="pupil__foot"><span class="pupil__name">' + escape(st.name) + '</span><span class="pupil__marks">' + (st.marks || 0) + " marks</span></figcaption></figure>";
           }).join("") + "</div>";
+      } else if (r.pad.kind === "poll") {
+        body.innerHTML = pollHTML(d);
       } else {
         var run = d.run || { rows: [] };
         body.innerHTML = '<p class="small muted">Class average <strong>' + (d.average == null ? "—" : d.average + "%") + "</strong> · only you can see this</p>" +
@@ -242,13 +246,36 @@
     });
   }
 
+  /* A saved poll: the question, a bar per answer, and who said what */
+  function pollHTML(d) {
+    var answers = d.answers || [];
+    var head = "<p><strong>" + escape(d.q || "Quick poll") + "</strong></p>" +
+      '<p class="small muted">' + (d.roomName ? escape(d.roomName) + " · " : "") + (d.at ? day(d.at) + " · " : "") +
+      answers.length + (answers.length === 1 ? " answer" : " answers") + " · only you can see the names</p>";
+    if (d.type === "text") {
+      return head + '<ul class="poll-answers">' + answers.map(function (a) {
+        return "<li><strong>" + escape(a.name) + "</strong> " + escape(a.a) + "</li>";
+      }).join("") + "</ul>";
+    }
+    var total = answers.length || 1;
+    return head + '<div class="poll-results">' + (d.options || []).map(function (o) {
+      var who = answers.filter(function (a) { return a.a === o.key; });
+      return '<div class="poll-bar"><div class="poll-bar__label"><span class="poll-bar__key">' + (o.emoji ? o.emoji + " " : "") +
+        escape(o.label) + "</span>" + (o.text ? " " + escape(o.text) : "") + '<span class="poll-bar__n">' + who.length + "</span></div>" +
+        '<div class="poll-bar__track"><span style="width:' + Math.round((who.length / total) * 100) + '%"></span></div>' +
+        (who.length ? '<p class="poll-bar__who">' + who.map(function (a) { return escape(a.name); }).join(", ") + "</p>" : "") + "</div>";
+    }).join("") + "</div>";
+  }
+
   function csvCell(v) {
     var s = String(v == null ? "" : v);
     return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   }
 
   csvBtn.addEventListener("click", function () {
-    if (!openFull || openFull.kind !== "grades") return;
+    if (!openFull) return;
+    if (openFull.kind === "poll") return pollCSV(openFull);
+    if (openFull.kind !== "grades") return;
     var run = openFull.data.run;
     var qCount = run.rows.reduce(function (m, r) { return Math.max(m, (r.results || []).length); }, 0);
     var head = ["Student", "Score", "Out of", "Percent"];
@@ -270,6 +297,21 @@
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
   });
+
+  function pollCSV(pad) {
+    var d = pad.data || {};
+    var label = {};
+    (d.options || []).forEach(function (o) { label[o.key] = o.label + (o.text ? " — " + o.text : ""); });
+    var lines = [["Student", "Answer", "Time"].map(csvCell).join(",")].concat((d.answers || []).map(function (a) {
+      return [a.name, d.type === "text" ? a.a : (label[a.a] || a.a), a.at ? new Date(a.at).toLocaleString() : ""].map(csvCell).join(",");
+    }));
+    var link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }));
+    link.download = String(pad.title).replace(/[^\w\s.()-]+/g, "").replace(/\s+/g, " ").trim().slice(0, 100) + " - poll.csv";
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(function () { URL.revokeObjectURL(link.href); link.remove(); }, 1000);
+  }
 
   printBtn.addEventListener("click", function () {
     if (!openFull) return;
@@ -293,7 +335,11 @@
       doc.write("<!doctype html><html><head><meta charset='utf-8'><title>" + escape(openFull.title) + "</title><style>" +
         "body{font-family:Nunito,'Segoe UI',Arial,sans-serif;color:#241a3d;margin:16mm}h1{font-size:18pt}" +
         "table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:2.2mm;border-bottom:1px solid #ccc}" +
-        ".marks{display:flex;gap:4px}.mark{display:inline-block;min-width:16px;font-weight:800}</style></head><body><h1>" +
+        ".marks{display:flex;gap:4px}.mark{display:inline-block;min-width:16px;font-weight:800}" +
+        ".poll-bar{margin:0 0 4mm}.poll-bar__label{display:flex;gap:2mm}.poll-bar__n{margin-left:auto;font-weight:800}" +
+        ".poll-bar__track{height:3mm;background:#eee;border-radius:2mm;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact}" +
+        ".poll-bar__track span{display:block;height:100%;background:#7c3aed}.poll-bar__who{margin:1mm 0 0;color:#6b5f86;font-size:9pt}" +
+        ".poll-answers{padding-left:5mm}</style></head><body><h1>" +
         escape(openFull.title) + "</h1>" + body.innerHTML + "</body></html>");
       doc.close();
       setTimeout(function () {

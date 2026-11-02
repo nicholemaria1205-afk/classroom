@@ -105,6 +105,7 @@
       author: "student",
       onStrokeEnd: function (item, items) {
         if (ui) ui.refresh();
+        groupChanged();
         publish();
         streamToTeacher(item, items);
       },
@@ -120,7 +121,7 @@
     ui = window.DoodleBoardUI(board, document, {
       filename: me.name + "-board",
       printTitle: me.name + "'s desk — " + room.name,
-      onChange: function () { publish(); }
+      onChange: function () { groupChanged(); publish(); }
     });
     board.setTool("pen");
     showAsk();
@@ -139,6 +140,7 @@
     if (!hasPaper && room.template) board.setBackground(room.template, true);
     ui.refresh();
     if (saved.length || room.template) publish();
+    startActivities(room);
 
     /* Across devices a quiet teacher isn't a closed room — only an explicit
        "room-closed" ends the session. In one browser we can simply look. */
@@ -192,8 +194,11 @@
     var items = board.getItems();
     me.marks = board.count();
     net.setStudent(code, me.id, { thumb: thumb, marks: me.marks });
-    net.saveMyBoard(code, me.id, items);
-    keep(items);
+    /* On a partner desk, this student's own desk is put aside, not overwritten */
+    if (!group) {
+      net.saveMyBoard(code, me.id, items);
+      keep(items);
+    }
 
     var payload = { code: code, studentId: me.id, marks: me.marks, student: summary() };
     /* In one browser the thumbnail is already in shared storage; across
@@ -346,12 +351,17 @@
     /* Notes can arrive more than once (they're re-sent until we say we have
        them), so only add the ones this desk doesn't have yet */
     var have = {};
-    board.getItems().forEach(function (i) { if (i && i.nid) have[i.nid] = true; });
+    (group ? soloItems() : board.getItems()).forEach(function (i) { if (i && i.nid) have[i.nid] = true; });
     var items = p.items || [];
     var fresh = items.filter(function (i) { return !i.nid || !have[i.nid]; });
     var nids = items.map(function (i) { return i.nid; }).filter(Boolean);
     if (nids.length) net.send("teacher-mark-got", { code: code, studentId: me.id, nids: nids });
     if (!fresh.length) return;
+    if (group) {
+      /* It's for their own desk — it'll be there when partner desks end */
+      setSolo(soloItems().concat(fresh));
+      return window.doodleToast("Your teacher left a note on your own desk — you'll see it after partner time", "", { sticky: true });
+    }
     board.addItems(fresh);
     if (ui) ui.refresh();
     publish();
@@ -424,6 +434,295 @@
     if (p.code !== code || !me || p.studentId !== me.id) return;
     roomClosed(true);
   });
+
+  /* ---- Activities: timer, polls, "you're up" ----------------------------- */
+  var Act = window.DoodleActivities;
+  var deskTimer = Act ? Act.timerPill(document.querySelector("[data-desk-timer]")) : null;
+  var pollCard = document.querySelector("[data-poll-card]");
+  var pollOpts = document.querySelector("[data-poll-card-opts]");
+  var pollForm = document.querySelector("[data-poll-card-form]");
+  var pollInput = document.querySelector("[data-poll-card-input]");
+  var pollNote = document.querySelector("[data-poll-card-note]");
+  var pollResults = document.querySelector("[data-poll-card-results]");
+  var poll = null;
+  var pollHideTimer = null;
+
+  /* In one browser the room arrives with the teacher's own copy; across
+     devices it's the wire form. Either way, make it a timer on this clock. */
+  function localTimer(t) {
+    if (!t || !Act) return null;
+    if (t.endsAt != null || t.pausedLeft != null) return t;
+    return Act.timerFromWire(t);
+  }
+
+  function myAnswerKey(id) { return "doodle-poll-" + code + "-" + id; }
+  function myAnswer(id) {
+    try { return sessionStorage.getItem(myAnswerKey(id)) || ""; } catch (e) { return ""; }
+  }
+
+  function showPollCard(p, results) {
+    clearTimeout(pollHideTimer);
+    poll = p;
+    if (!p || !Act) { pollCard.hidden = true; return; }
+    pollCard.hidden = false;
+    pollCard.removeAttribute("data-closed");
+    document.querySelector("[data-poll-card-q]").textContent = p.q || "Quick poll";
+    var mine = myAnswer(p.id);
+    var isText = p.type === "text";
+    pollForm.hidden = !isText;
+    pollOpts.hidden = isText;
+    if (isText) {
+      if (document.activeElement !== pollInput) pollInput.value = mine;
+    } else {
+      pollOpts.setAttribute("data-type", p.type);
+      pollOpts.innerHTML = (p.options || []).map(function (o) {
+        return '<button class="poll-choice" type="button" data-answer="' + Act.esc(o.key) + '" aria-pressed="' + String(mine === o.key) + '">' +
+          (o.emoji ? '<span class="poll-choice__emoji" aria-hidden="true">' + o.emoji + "</span>" : "") +
+          '<span class="poll-choice__key">' + Act.esc(o.label) + "</span>" +
+          (o.text ? '<span class="poll-choice__text">' + Act.esc(o.text) + "</span>" : "") +
+          "</button>";
+      }).join("");
+    }
+    pollNote.textContent = mine ? "✓ Sent! You can change your answer until your teacher ends the poll." : "";
+    drawPollResults(results || p.results || null);
+  }
+
+  function drawPollResults(results) {
+    if (!poll || !results || poll.type === "text") { pollResults.hidden = true; return; }
+    var total = Object.keys(results).reduce(function (n, k) { return n + results[k]; }, 0) || 1;
+    pollResults.hidden = false;
+    pollResults.innerHTML = '<p class="small muted mb-0">How the class answered</p>' + poll.options.map(function (o) {
+      var n = results[o.key] || 0;
+      return '<div class="poll-bar"><div class="poll-bar__label"><span class="poll-bar__key">' + (o.emoji ? o.emoji + " " : "") +
+        Act.esc(o.label) + "</span>" + (o.text ? " " + Act.esc(o.text) : "") + '<span class="poll-bar__n">' + n + "</span></div>" +
+        '<div class="poll-bar__track"><span style="width:' + Math.round((n / total) * 100) + '%"></span></div></div>';
+    }).join("");
+  }
+
+  function answer(a) {
+    if (!poll || !me) return;
+    try { sessionStorage.setItem(myAnswerKey(poll.id), a); } catch (e) {}
+    net.send("poll-answer", { code: code, studentId: me.id, pollId: poll.id, answer: a, student: summary() });
+    showPollCard(poll);
+  }
+
+  pollOpts.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-answer]");
+    if (b) answer(b.getAttribute("data-answer"));
+  });
+  pollForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var a = pollInput.value.trim();
+    if (!a) return pollInput.focus();
+    answer(a);
+  });
+
+  net.on("timer", function (p) {
+    if (p.code !== code || !deskTimer) return;
+    deskTimer.set(localTimer(p.timer));
+  });
+
+  net.on("poll", function (p) {
+    if (p.code !== code || !me) return;
+    showPollCard(p.poll);
+    window.doodleToast("📊 Your teacher asked a question");
+  });
+
+  net.on("poll-results", function (p) {
+    if (p.code !== code || !poll || p.pollId !== poll.id) return;
+    poll.results = p.show ? p.results : null;
+    drawPollResults(poll.results);
+  });
+
+  net.on("poll-close", function (p) {
+    if (p.code !== code || !poll || p.pollId !== poll.id) return;
+    pollCard.setAttribute("data-closed", "true");
+    pollOpts.querySelectorAll("button").forEach(function (b) { b.disabled = true; });
+    pollForm.hidden = true;
+    pollNote.textContent = "Poll finished — thanks!";
+    if (p.results) drawPollResults(p.results);
+    var closed = poll;
+    pollHideTimer = setTimeout(function () { if (poll === closed) { poll = null; pollCard.hidden = true; } }, p.results ? 12000 : 4000);
+  });
+
+  var pickedBanner = document.querySelector("[data-picked-banner]");
+  var pickedTimer = null;
+  net.on("picked", function (p) {
+    if (p.code !== code || !me) return;
+    var mine = p.studentId === me.id;
+    clearTimeout(pickedTimer);
+    pickedBanner.hidden = false;
+    pickedBanner.setAttribute("data-mine", String(mine));
+    pickedBanner.innerHTML = mine
+      ? '<span aria-hidden="true">🎲</span> <strong>You\'re up, ' + Act.esc(me.name) + "!</strong>"
+      : '<span aria-hidden="true">🎲</span> <strong>' + Act.esc(p.name) + "</strong> was picked";
+    pickedTimer = setTimeout(function () { pickedBanner.hidden = true; }, mine ? 9000 : 5000);
+  });
+
+  /* ⭐ Stars: mine next to my name, and the class goal above the desk */
+  var myStarsEl = document.querySelector("[data-my-stars]");
+  var starsStrip = document.querySelector("[data-stars-strip]");
+  var lastStars = null;
+
+  function myKey() { return String((me && me.name) || "").trim().toLowerCase(); }
+
+  /* In one browser the room carries the teacher's full copy — turn it into
+     what a desk would get across devices */
+  function starsFrom(s) {
+    if (!s) return null;
+    if (s.byName) return s;
+    return Act && Act.stars ? Act.stars.wire(s.week === Act.stars.weekKey() ? s : { week: Act.stars.weekKey(), points: {}, goal: s.goal }) : null;
+  }
+
+  function showStars(s) {
+    lastStars = s;
+    var n = s && s.byName ? (s.byName[myKey()] || 0) : 0;
+    myStarsEl.hidden = !n;
+    myStarsEl.textContent = "⭐ " + n;
+    var goal = s && s.goal;
+    starsStrip.hidden = !goal;
+    if (goal) {
+      var pct = Math.min(100, Math.round((s.total / goal.n) * 100));
+      starsStrip.innerHTML = '<span class="stars-strip__text">🎯 Class goal: <strong>' + s.total + " / " + goal.n + " stars</strong>" +
+        (goal.reward ? " → " + Act.esc(goal.reward) : "") + (s.total >= goal.n ? " 🎉 <strong>You did it!</strong>" : "") + "</span>" +
+        '<span class="poll-bar__track stars-strip__track"><span style="width:' + pct + '%"></span></span>';
+    }
+  }
+
+  net.on("stars", function (p) {
+    if (p.code !== code || !me) return;
+    var before = lastStars && lastStars.byName ? (lastStars.byName[myKey()] || 0) : 0;
+    var hadGoal = lastStars && lastStars.goal && lastStars.total >= lastStars.goal.n;
+    showStars(p.stars);
+    var now = p.stars && p.stars.byName ? (p.stars.byName[myKey()] || 0) : 0;
+    if ((p.to || []).indexOf(myKey()) >= 0 && now > before) {
+      window.doodleToast(p.all ? "⭐ A star for everyone — nice work, class!" : "⭐ Your teacher gave you a star!", "good");
+      myStarsEl.classList.remove("is-new");
+      void myStarsEl.offsetWidth;
+      myStarsEl.classList.add("is-new");
+    }
+    var g = p.stars && p.stars.goal;
+    if (g && p.stars.total >= g.n && !hadGoal && lastStars && window.doodleConfetti) window.doodleConfetti(80);
+  });
+
+  /* ---- Partner desks ------------------------------------------------------
+     While partner desks are on, this desk shows the group's shared desk:
+     every mark goes up to the teacher's browser, which passes it to the
+     rest of the group. The student's own desk is put aside and comes back
+     when partner time ends. */
+  var group = null;                 /* { id, name, members: [{ id, name }] } */
+  var tracker = Act ? Act.deskTracker() : null;
+  var groupBanner = document.querySelector("[data-group-banner]");
+
+  function soloKey() { return "doodle-solo-" + code + "-" + (me && me.id); }
+  function soloItems() {
+    try { return JSON.parse(sessionStorage.getItem(soloKey()) || "[]"); } catch (e) { return []; }
+  }
+  function setSolo(items) {
+    try { sessionStorage.setItem(soloKey(), JSON.stringify(items)); } catch (e) {}
+    keep(items);
+  }
+
+  function partnersText(g) {
+    var others = (g.members || []).filter(function (m) { return m.id !== me.id && m.name.toLowerCase() !== me.name.toLowerCase(); })
+      .map(function (m) { return m.name; });
+    if (!others.length) return "your group";
+    if (others.length === 1) return others[0];
+    return others.slice(0, -1).join(", ") + " and " + others[others.length - 1];
+  }
+
+  function enterGroup(g, paper) {
+    if (!board || !tracker) return;
+    var already = group && group.id === g.id;
+    group = g;
+    groupBanner.hidden = false;
+    groupBanner.innerHTML = '<span aria-hidden="true">👥</span> <span><strong>Partner desk with ' + Act.esc(partnersText(g)) +
+      "</strong> — you're " + ((g.members || []).length === 2 ? "both" : "all") +
+      " drawing on this desk together. Your own desk comes back when partner time ends.</span>";
+    document.querySelectorAll("[data-clear]").forEach(function (b) { b.hidden = true; });
+    if (already) return;
+    /* Put my own desk aside (once) and start on the shared one */
+    if (!sessionStorage.getItem(soloKey())) setSolo(board.getItems());
+    var start = paper ? [{ type: "bg", name: paper, author: "board" }] : [];
+    board.setItems(start);
+    tracker.reset(start);
+    if (ui) ui.refresh();
+    net.send("group-sync", { code: code, group: g.id, studentId: me.id, student: summary() });
+    publish();
+    window.doodleToast("👥 Partner desk with " + partnersText(g) + "!", "good");
+  }
+
+  function leaveGroup() {
+    if (!group) return;
+    group = null;
+    groupBanner.hidden = true;
+    document.querySelectorAll("[data-clear]").forEach(function (b) { b.hidden = false; });
+    var mine = soloItems();
+    try { sessionStorage.removeItem(soloKey()); } catch (e) {}
+    board.setItems(mine);
+    if (ui) ui.refresh();
+    publish();
+    window.doodleToast("Partner time's over — here's your own desk again ✏️");
+  }
+
+  /* After any change on a partner desk: send just what changed */
+  function groupChanged() {
+    if (!group || !tracker || !board) return;
+    var ops = tracker.diff(board.getItems());
+    if (ops.length) net.send("group-op-up", { code: code, group: group.id, studentId: me.id, ops: ops, student: summary() });
+  }
+
+  function myGroup(groups) {
+    return net.groupOf(groups, me && me.id, me && me.name);
+  }
+
+  net.on("groups", function (p) {
+    if (p.code !== code || !me || !board) return;
+    var g = myGroup(p.groups);
+    if (g) enterGroup(g, p.groups.paper);
+    else leaveGroup();
+  });
+
+  net.on("group-full", function (p) {
+    if (p.code !== code || !group || p.group !== group.id || p.to !== me.id) return;
+    var items = p.items || [];
+    /* Anything drawn here while waiting is kept and shared */
+    var mine = board.getItems().filter(function (i) { return i.type !== "bg" && !items.some(function (x) { return x.gid && x.gid === i.gid; }); });
+    board.setItems(items.concat(mine));
+    tracker.reset(items);
+    if (ui) ui.refresh();
+    groupChanged();
+    publish();
+  });
+
+  net.on("group-op", function (p) {
+    if (p.code !== code || !group || p.group !== group.id || p.from === me.id) return;
+    var next = net.applyOps(board.getItems(), p.ops);
+    board.setItems(next);
+    tracker.reset(next);
+    if (ui) ui.refresh();
+    publish(true);
+  });
+
+  /* Called once the desk is on screen: anything already running in the room */
+  function startActivities(theRoom) {
+    if (!Act) return;
+    var g0 = theRoom.groups && theRoom.groups.active ? myGroup(theRoom.groups) : null;
+    if (g0) enterGroup(g0, theRoom.groups.paper);
+    else if (sessionStorage.getItem(soloKey())) {
+      /* Partner time ended while this tab was away — bring my desk back */
+      board.setItems(soloItems());
+      try { sessionStorage.removeItem(soloKey()); } catch (e) {}
+      if (ui) ui.refresh();
+    }
+    showStars(starsFrom(theRoom.stars));
+    if (deskTimer) deskTimer.set(localTimer(theRoom.timer));
+    var p = theRoom.poll;
+    if (p && !p.closed) {
+      var results = p.results || (p.showResults && p.answers ? Act.counts(p, p.answers) : null);
+      showPollCard({ id: p.id, q: p.q, type: p.type, options: p.options, showResults: p.showResults }, results);
+    }
+  }
 
   /* ---- Boot ------------------------------------------------------------- */
   function boot() {

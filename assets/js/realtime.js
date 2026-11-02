@@ -288,6 +288,46 @@ window.DoodleNet = (function () {
     });
   }
 
+  /* A running timer as it travels: time left, not the teacher's clock */
+  function timerWire(t) {
+    if (!t) return null;
+    var left = t.pausedLeft != null ? t.pausedLeft : Math.max(0, (t.endsAt || 0) - Date.now());
+    if (t.pausedLeft == null && left <= 0) return null;
+    return { id: t.id, total: t.total, left: left, running: t.pausedLeft == null, label: t.label || "" };
+  }
+
+  /* Class stars this week: the total, the goal, and counts by name */
+  function starsWire(s) {
+    if (!s) return null;
+    var d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    var week = d.getFullYear() + "-" + (d.getMonth() + 1 < 10 ? "0" : "") + (d.getMonth() + 1) + "-" + (d.getDate() < 10 ? "0" : "") + d.getDate();
+    if (s.week !== week) return { week: week, total: 0, goal: s.goal || null, byName: {} };
+    var byName = {};
+    var total = 0;
+    Object.keys(s.points || {}).forEach(function (k) { byName[k] = s.points[k].n; total += s.points[k].n; });
+    return { week: s.week, total: total, goal: s.goal || null, byName: byName };
+  }
+
+  /* The open poll as students see it — never who answered what */
+  function pollWire(p) {
+    if (!p || p.closed) return null;
+    var out = { id: p.id, q: p.q, type: p.type, options: p.options, showResults: !!p.showResults };
+    if (p.showResults) out.results = pollCounts(p);
+    return out;
+  }
+
+  function pollCounts(p) {
+    var c = {};
+    (p.options || []).forEach(function (o) { c[o.key] = 0; });
+    Object.keys(p.answers || {}).forEach(function (id) {
+      var a = p.answers[id].a;
+      if (c[a] != null) c[a]++;
+    });
+    return c;
+  }
+
   /* What a student is allowed to know about a room */
   function publicRoom(room) {
     return {
@@ -299,6 +339,10 @@ window.DoodleNet = (function () {
       template: room.template || "",
       keepUntil: room.keepUntil || null,
       allowPresent: !!room.allowPresent,
+      timer: timerWire(room.timer),
+      poll: pollWire(room.poll),
+      stars: starsWire(room.stars),
+      groups: room.groups && room.groups.active ? room.groups : null,
       teacher: room.teacher,
       createdAt: room.createdAt
     };
@@ -613,7 +657,93 @@ window.DoodleNet = (function () {
       answerQuery(msg);
     }
     if (hosting) handleNotes(msg);
+    if (hosting && msg.type === "poll-answer") recordAnswer(msg.payload || {});
+    if (hosting && (msg.type === "group-op-up" || msg.type === "group-sync")) relayGroup(msg);
     dispatch(msg);
+  }
+
+  /* ---- Partner desks ----------------------------------------------------
+     Students only hear the teacher, so a group's shared desk goes through
+     the teacher's browser: a member's change comes up, is kept here (the
+     group desk's full copy, in its own storage slot), and goes back down to
+     the whole group. A member who joins or refreshes asks for the full desk.
+
+     A change ("op") is { t: "up", item } (add or replace by item.gid),
+     { t: "rm", gid } or { t: "bg", name } (the paper). */
+  function groupKey(code, gid) { return "doodle-group-" + code + "-" + gid; }
+
+  function groupItems(code, gid) {
+    try { return JSON.parse(localStorage.getItem(groupKey(code, gid)) || "[]"); } catch (e) { return []; }
+  }
+
+  function saveGroupItems(code, gid, items) {
+    try { localStorage.setItem(groupKey(code, gid), JSON.stringify(items)); } catch (e) {}
+  }
+
+  function clearGroupItems(code, gid) {
+    try { localStorage.removeItem(groupKey(code, gid)); } catch (e) {}
+  }
+
+  function applyOps(list, ops) {
+    list = (list || []).slice();
+    (ops || []).forEach(function (op) {
+      if (!op) return;
+      if (op.t === "bg") {
+        list = list.filter(function (i) { return i.type !== "bg"; });
+        if (op.name) list.unshift({ type: "bg", name: op.name, author: "board" });
+      } else if (op.t === "rm") {
+        list = list.filter(function (i) { return i.gid !== op.gid; });
+      } else if (op.t === "up" && op.item && op.item.gid) {
+        var at = -1;
+        for (var k = 0; k < list.length; k++) if (list[k].gid === op.item.gid) { at = k; break; }
+        if (at >= 0) list[at] = op.item;
+        else list.push(op.item);
+      }
+    });
+    return list;
+  }
+
+  /* Which group a student is in (by id, or by name if they came back in a
+     new tab) */
+  function groupOf(groups, studentId, name) {
+    if (!groups || !groups.active) return null;
+    var n = String(name || "").trim().toLowerCase();
+    return (groups.list || []).filter(function (g) {
+      return (g.members || []).some(function (m) {
+        return m.id === studentId || (n && String(m.name).trim().toLowerCase() === n);
+      });
+    })[0] || null;
+  }
+
+  function relayGroup(msg) {
+    var p = msg.payload || {};
+    var room = p.code && getRoom(p.code);
+    if (!room || !room.groups || !room.groups.active) return;
+    var s = room.students[p.studentId] || p.student || {};
+    var g = groupOf(room.groups, p.studentId, s.name);
+    if (!g || g.id !== p.group) return;
+    if (msg.type === "group-sync") {
+      send("group-full", { code: room.code, group: g.id, to: p.studentId, items: groupItems(room.code, g.id) });
+      return;
+    }
+    saveGroupItems(room.code, g.id, applyOps(groupItems(room.code, g.id), p.ops));
+    send("group-op", { code: room.code, group: g.id, from: p.studentId, ops: p.ops });
+  }
+
+  /* A student's answer to the open poll, kept on the room (the page that
+     shows results reads it from there) */
+  function recordAnswer(p) {
+    var state = readStore();
+    var room = p.code && state.rooms[p.code];
+    var poll = room && room.poll;
+    if (!poll || poll.closed || poll.id !== p.pollId || !p.studentId) return;
+    if (room.removed && room.removed[p.studentId]) return;
+    var s = room.students[p.studentId] || p.student || {};
+    var a = poll.type === "text" ? String(p.answer || "").slice(0, 300) : String(p.answer || "");
+    poll.answers = poll.answers || {};
+    if (!a) delete poll.answers[p.studentId];
+    else poll.answers[p.studentId] = { a: a, name: s.name || "Student", at: Date.now() };
+    writeStore(state);
   }
 
   /* ---- Notes on a student's desk -----------------------------------------
@@ -735,7 +865,8 @@ window.DoodleNet = (function () {
 
   /* ---- Live transport (Ably) -------------------------------------------- */
   var UP_TYPES = { "join": 1, "leave": 1, "presence": 1, "board": 1, "status": 1,
-                   "full-reply": 1, "room-query": 1, "teacher-mark-got": 1,
+                   "full-reply": 1, "room-query": 1, "teacher-mark-got": 1, "poll-answer": 1,
+                   "group-op-up": 1, "group-sync": 1,
                    "present-request": 1, "present-item": 1, "present-live": 1 };
 
   var subscribed = {};
@@ -767,7 +898,7 @@ window.DoodleNet = (function () {
     var code = msg.payload && msg.payload.code;
     if (!code || !ably) return;
     var ch = ably.channels.get(channelName(code, UP_TYPES[msg.type] ? "up" : "down"));
-    if (msg.type === "full-reply") return publishInParts(ch, msg);
+    if (msg.type === "full-reply" || msg.type === "group-full") return publishInParts(ch, msg);
     publish(ch, msg);
   }
 
@@ -796,7 +927,7 @@ window.DoodleNet = (function () {
     parts.forEach(function (chunk, i) {
       publish(ch, {
         v: msg.v, type: msg.type, from: msg.from, at: msg.at,
-        payload: { code: p.code, studentId: p.studentId, items: chunk, part: i, parts: parts.length, xid: xid }
+        payload: { code: p.code, studentId: p.studentId, group: p.group, to: p.to, items: chunk, part: i, parts: parts.length, xid: xid }
       });
     });
   }
@@ -820,7 +951,7 @@ window.DoodleNet = (function () {
     delete assembling[p.xid];
     return {
       v: msg.v, type: msg.type, from: msg.from, at: msg.at,
-      payload: { code: p.code, studentId: p.studentId, items: [].concat.apply([], slot.chunks) }
+      payload: { code: p.code, studentId: p.studentId, group: p.group, to: p.to, items: [].concat.apply([], slot.chunks) }
     };
   }
 
@@ -1098,6 +1229,11 @@ window.DoodleNet = (function () {
     joinUrl: joinUrl,
     isOnline: isOnline,
     getNotes: getNotes,
+    groupItems: groupItems,
+    saveGroupItems: saveGroupItems,
+    clearGroupItems: clearGroupItems,
+    applyOps: applyOps,
+    groupOf: groupOf,
     setNotes: setNotes,
     leaveNote: leaveNote
   };

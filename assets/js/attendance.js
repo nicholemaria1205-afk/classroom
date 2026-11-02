@@ -114,6 +114,7 @@
     if (!c) return;
 
     remember(CLASS_KEY, c.id);
+    $("[data-pf-link]").href = "portfolio.html?class=" + c.id;
     $("[data-class-name]").textContent = c.name;
     var rooms = A.roomsFor(c.id);
     $("[data-class-rooms]").textContent = rooms.length

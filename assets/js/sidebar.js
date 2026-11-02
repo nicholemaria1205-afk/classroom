@@ -43,6 +43,7 @@
         item("dashboard.html", "🏠", "My rooms", { current: page === "dashboard.html" }) +
         item(teachHref, "🧑‍🏫", "Teaching desk", { current: page === "teach.html" }) +
         item("attendance.html", "📋", "Attendance", { current: page === "attendance.html" }) +
+        item("portfolio.html", "🗂️", "Portfolios", { current: page === "portfolio.html" }) +
         item("drawer.html", "🗄️", "Doodle Drawer", { current: page === "drawer.html" }) +
         item("demo.html", "🖍️", "Practice desk") +
         (room ?

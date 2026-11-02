@@ -39,7 +39,13 @@ window.DoodleTemplates = (function () {
     { id: "venn", name: "Venn diagram", group: "Organizers" },
     { id: "tchart", name: "T-chart", group: "Organizers" },
     { id: "kwl", name: "KWL chart", group: "Organizers" },
-    { id: "watercycle", name: "Water cycle (label it)", group: "Science" }
+    { id: "watercycle", name: "Water cycle (label it)", group: "Science" },
+    { id: "foodchain", name: "Food chain (fill it in)", group: "Science" },
+    { id: "matter", name: "States of matter", group: "Science" },
+    { id: "speedlab", name: "Speed investigation", group: "Science" },
+    { id: "weather", name: "Weather tracker (5 days)", group: "Science" },
+    { id: "traits", name: "Inherited or learned?", group: "Science" },
+    { id: "cells", name: "Plant & animal cells", group: "Science" }
   ];
 
   function line(c, x1, y1, x2, y2) {
@@ -245,6 +251,199 @@ window.DoodleTemplates = (function () {
       labelBox(c, 1005, 40, 170, 52);         /* condensation */
       labelBox(c, 515, 668, 200, 48);         /* collection */
       void H;
+    },
+
+    /* ---- More science pages --------------------------------------------------
+       Outlines and empty boxes only: the students do the labelling. */
+
+    /* Sun → producer → consumers, and the decomposer that returns it all */
+    foodchain: function (c) {
+      label(c, "Draw or write a living thing in each box. Arrows show where the energy goes.", 600, 50, 22);
+      c.strokeStyle = INK;
+      c.lineWidth = 4;
+      c.beginPath();
+      c.arc(120, 215, 52, 0, Math.PI * 2);
+      c.stroke();
+      for (var r = 0; r < 10; r++) {
+        var a = (Math.PI * 2 * r) / 10;
+        line(c, 120 + Math.cos(a) * 64, 215 + Math.sin(a) * 64, 120 + Math.cos(a) * 82, 215 + Math.sin(a) * 82);
+      }
+      label(c, "Sun", 120, 320, 22);
+      var xs = [250, 480, 710, 940];
+      var names = ["Producer", "Primary consumer", "Secondary consumer", "Top consumer"];
+      xs.forEach(function (x, i) {
+        c.lineWidth = 4;
+        c.strokeRect(x, 135, 200, 160);
+        label(c, names[i], x + 100, 322, 21);
+        c.lineWidth = 3.5;
+        var from = i === 0 ? 210 : xs[i - 1] + 200;
+        line(c, from + 6, 215, x - 6, 215);
+        arrowHead(c, from + 6, 215, x - 6, 215, 18);
+        /* down to the decomposer */
+        c.save();
+        c.setLineDash([9, 8]);
+        c.lineWidth = 2.5;
+        line(c, x + 100, 345, 600 + (i - 1.5) * 70, 492);
+        arrowHead(c, x + 100, 345, 600 + (i - 1.5) * 70, 492, 14);
+        c.restore();
+      });
+      c.lineWidth = 4;
+      c.strokeRect(430, 500, 340, 150);
+      label(c, "Decomposer", 600, 680, 22);
+    },
+
+    /* Solid, liquid and gas, with the four changes between them */
+    matter: function (c) {
+      label(c, "Draw the particles in each box, then label the arrows.", 600, 36, 22);
+      c.strokeStyle = INK;
+      c.lineWidth = 4;
+      c.strokeRect(150, 480, 220, 150);
+      c.strokeRect(830, 480, 220, 150);
+      c.strokeRect(490, 95, 220, 150);
+      label(c, "Solid", 260, 662, 24);
+      label(c, "Liquid", 940, 662, 24);
+      label(c, "Gas", 600, 274, 24);
+      c.lineWidth = 3.5;
+      line(c, 390, 525, 810, 525);  arrowHead(c, 390, 525, 810, 525, 18);   /* melting */
+      line(c, 810, 590, 390, 590);  arrowHead(c, 810, 590, 390, 590, 18);   /* freezing */
+      line(c, 915, 465, 745, 255);  arrowHead(c, 915, 465, 745, 255, 18);   /* evaporation */
+      line(c, 712, 275, 882, 485);  arrowHead(c, 712, 275, 882, 485, 18);   /* condensation */
+      labelBox(c, 500, 462, 200, 46);
+      labelBox(c, 500, 608, 200, 46);
+      labelBox(c, 880, 320, 200, 46);
+      labelBox(c, 545, 360, 190, 46);
+    },
+
+    /* A ramp to roll something down, and a table to work out speed */
+    speedlab: function (c) {
+      c.strokeStyle = INK;
+      c.lineWidth = 4;
+      c.beginPath();
+      c.moveTo(60, 190);
+      c.lineTo(400, 400);
+      c.lineTo(60, 400);
+      c.closePath();
+      c.stroke();
+      line(c, 400, 400, 560, 400);
+      /* a little cart near the top */
+      c.save();
+      c.translate(150, 230);
+      c.rotate(Math.atan2(210, 340));
+      c.strokeRect(-36, -50, 72, 40);
+      c.beginPath(); c.arc(-20, -4, 9, 0, Math.PI * 2); c.stroke();
+      c.beginPath(); c.arc(20, -4, 9, 0, Math.PI * 2); c.stroke();
+      c.restore();
+      /* how far it went */
+      c.lineWidth = 2.5;
+      line(c, 410, 440, 550, 440);
+      arrowHead(c, 410, 440, 550, 440, 14);
+      label(c, "distance", 480, 468, 19);
+      label(c, "What makes it go faster? My prediction:", 300, 520, 21);
+      c.strokeStyle = LINE;
+      c.lineWidth = 2;
+      [580, 640, 700].forEach(function (y) { line(c, 60, y, 545, y); });
+
+      /* the table */
+      var x0 = 610, x1 = 1160, y0 = 70, head = 70, row = 95;
+      var cols = [x0, 720, 860, 1010, x1];
+      c.strokeStyle = INK;
+      c.lineWidth = 3;
+      c.strokeRect(x0, y0, x1 - x0, head + row * 4);
+      line(c, x0, y0 + head, x1, y0 + head);
+      for (var r = 1; r < 4; r++) line(c, x0, y0 + head + row * r, x1, y0 + head + row * r);
+      for (var k = 1; k < 4; k++) line(c, cols[k], y0, cols[k], y0 + head + row * 4);
+      ["Trial", "Distance (cm)", "Time (s)", "Speed (cm/s)"].forEach(function (t, i) {
+        label(c, t, (cols[i] + cols[i + 1]) / 2, y0 + head / 2, 19);
+      });
+      for (var n = 1; n <= 4; n++) label(c, String(n), (cols[0] + cols[1]) / 2, y0 + head + row * (n - 0.5), 24);
+      label(c, "Speed = distance ÷ time", (x0 + x1) / 2, y0 + head + row * 4 + 50, 24);
+    },
+
+    /* Five days of weather — and the difference from climate */
+    weather: function (c) {
+      var x0 = 40, x1 = 1160, labelW = 200, y0 = 30;
+      var rows = [["", 70], ["Sky (draw it)", 140], ["Temperature", 100], ["Wind", 100], ["Precipitation", 100], ["Clouds", 100]];
+      var days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+      var colW = (x1 - x0 - labelW) / 5;
+      var total = rows.reduce(function (t, r) { return t + r[1]; }, 0);
+      c.strokeStyle = INK;
+      c.lineWidth = 3;
+      c.strokeRect(x0, y0, x1 - x0, total);
+      var y = y0;
+      rows.forEach(function (r, i) {
+        if (i) line(c, x0, y, x1, y);
+        if (r[0]) label(c, r[0], x0 + 14, y + r[1] / 2, 20, "left");
+        y += r[1];
+      });
+      for (var d = 0; d <= 5; d++) line(c, x0 + labelW + colW * d, y0, x0 + labelW + colW * d, y0 + total);
+      days.forEach(function (t, i) { label(c, t, x0 + labelW + colW * (i + 0.5), y0 + 35, 24); });
+      label(c, "Weather is what's happening today. Climate is the usual pattern over many years.", 600, y0 + total + 40, 20);
+    },
+
+    /* A little family tree, and sorting traits from learned behaviours */
+    traits: function (c) {
+      c.strokeStyle = INK;
+      c.lineWidth = 4;
+      [[160, 130], [380, 130], [270, 330]].forEach(function (f) {
+        c.beginPath();
+        c.arc(f[0], f[1], 58, 0, Math.PI * 2);
+        c.stroke();
+      });
+      c.lineWidth = 3;
+      line(c, 218, 130, 322, 130);
+      line(c, 270, 130, 270, 262);
+      arrowHead(c, 270, 130, 270, 266, 16);
+      label(c, "Parent", 160, 210, 20);
+      label(c, "Parent", 380, 210, 20);
+      label(c, "Offspring", 270, 410, 20);
+      label(c, "Traits passed down in this family:", 270, 470, 20);
+      c.strokeStyle = LINE;
+      c.lineWidth = 2;
+      [530, 595, 660, 720].forEach(function (yy) { line(c, 60, yy, 490, yy); });
+
+      c.strokeStyle = INK;
+      c.lineWidth = 4;
+      c.strokeRect(540, 30, 620, 680);
+      line(c, 540, 110, 1160, 110);
+      line(c, 850, 30, 850, 710);
+      label(c, "Inherited traits", 695, 70, 24);
+      label(c, "Learned behaviors", 1005, 70, 24);
+    },
+
+    /* Compare a plant cell and an animal cell, with parts to label */
+    cells: function (c) {
+      label(c, "Plant cell", 290, 50, 26);
+      label(c, "Animal cell", 915, 50, 26);
+      c.strokeStyle = INK;
+      c.lineWidth = 4;
+      /* plant: wall and membrane */
+      c.strokeRect(80, 90, 420, 470);
+      c.lineWidth = 2.5;
+      c.strokeRect(96, 106, 388, 438);
+      c.lineWidth = 3.5;
+      c.beginPath(); c.arc(220, 230, 52, 0, Math.PI * 2); c.stroke();          /* nucleus */
+      c.strokeRect(290, 300, 160, 200);                                       /* vacuole */
+      [[150, 420], [200, 480], [400, 160], [140, 330]].forEach(function (p) {  /* chloroplasts */
+        c.beginPath(); c.ellipse(p[0], p[1], 28, 15, 0.5, 0, Math.PI * 2); c.stroke();
+      });
+      /* animal: membrane, nucleus */
+      c.lineWidth = 4;
+      c.beginPath(); c.ellipse(915, 320, 215, 225, 0, 0, Math.PI * 2); c.stroke();
+      c.lineWidth = 3.5;
+      c.beginPath(); c.arc(900, 300, 58, 0, Math.PI * 2); c.stroke();
+      [[820, 430], [1010, 410], [980, 200]].forEach(function (p) {
+        c.beginPath(); c.ellipse(p[0], p[1], 24, 12, -0.4, 0, Math.PI * 2); c.stroke();
+      });
+      /* pointers down to the label boxes */
+      c.save();
+      c.setLineDash([7, 7]);
+      c.lineWidth = 2;
+      [[82, 540, 125], [220, 282, 270], [370, 500, 420]].forEach(function (p) { line(c, p[0], p[1], p[2], 640); });
+      [[760, 480, 765], [900, 358, 910], [1040, 330, 1065]].forEach(function (p) { line(c, p[0], p[1], p[2], 640); });
+      c.restore();
+      [[60, 640, 130], [205, 640, 130], [350, 640, 150], [700, 640, 130], [845, 640, 130], [990, 640, 150]].forEach(function (b) {
+        labelBox(c, b[0], b[1], b[2], 50);
+      });
     }
   };
 

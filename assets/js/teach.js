@@ -166,6 +166,89 @@
   });
   bar.addEventListener("mouseleave", wake);
 
+  /* ---- Timer and name picker (for a room) ------------------------------------
+     The same class timer as the room page — it shows on every student's desk
+     and here on the stage, so it's in the shared screen too. */
+  var Act = window.DoodleActivities;
+  if (room && Act) {
+    document.querySelectorAll("[data-teach-acts], [data-acts-only]").forEach(function (el) { el.hidden = false; });
+
+    var stagePill = Act.timerPill(document.querySelector("[data-stage-timer]"), { hideAfter: 6000 });
+    var pop = document.querySelector("[data-timer-pop]");
+    var popStart = document.querySelector("[data-pop-start]");
+    var popRunning = document.querySelector("[data-pop-running]");
+    var popPause = document.querySelector("[data-pop-pause]");
+
+    var showTeachTimer = function () {
+      var t = Act.timers.current(net, room.code);
+      stagePill.set(t);
+      var running = !!t && Act.timerLeft(t) > 0;
+      popStart.hidden = running;
+      popRunning.hidden = !running;
+      if (t) popPause.textContent = t.pausedLeft != null ? "▶️ Resume" : "⏸️ Pause";
+    };
+
+    var setPop = function (open) {
+      pop.hidden = !open;
+      document.querySelectorAll("[data-open-timer]").forEach(function (b) { b.setAttribute("aria-expanded", String(open)); });
+      if (open) showTeachTimer();
+    };
+
+    document.querySelectorAll("[data-open-timer]").forEach(function (b) {
+      b.addEventListener("click", function (e) {
+        e.stopPropagation();
+        setPop(pop.hidden);
+      });
+    });
+    pop.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var b;
+      if ((b = e.target.closest("[data-pop-min]"))) {
+        Act.timers.start(net, room.code, +b.getAttribute("data-pop-min") * 60000, "");
+        setPop(false);
+      } else if (e.target.closest("[data-pop-pause]")) {
+        Act.timers.toggle(net, room.code);
+      } else if (e.target.closest("[data-pop-add]")) {
+        Act.timers.addMinute(net, room.code);
+      } else if (e.target.closest("[data-pop-stop]")) {
+        Act.timers.stop(net, room.code);
+        setPop(false);
+      }
+      showTeachTimer();
+    });
+    document.addEventListener("click", function () { if (!pop.hidden) setPop(false); });
+    window.addEventListener("storage", function (e) { if (e.key === "doodle-rooms") showTeachTimer(); });
+    showTeachTimer();
+
+    /* The picker shows big on the stage, so the class sees the spin */
+    var pickBox = document.querySelector("[data-stage-pick]");
+    var pickName = document.querySelector("[data-stage-pick-name]");
+    var pickHide = null;
+    var picking = false;
+    document.querySelectorAll("[data-teach-pick]").forEach(function (b) {
+      b.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (picking) return;
+        var choice = Act.picker.choose(net, room.code, { onlineOnly: true, noRepeat: true });
+        if (!choice) return window.doodleToast("No students are here right now", "warn");
+        if (choice.fresh) window.doodleToast("Everyone has had a turn today — starting fresh 🔄");
+        clearTimeout(pickHide);
+        picking = true;
+        pickBox.hidden = false;
+        Act.spin(pickName, choice.names, choice.winner.name, function () {
+          picking = false;
+          Act.picker.done(net, room.code, choice.winner, true);
+          pickHide = setTimeout(function () { pickBox.hidden = true; }, 6000);
+        });
+      });
+    });
+    pickBox.addEventListener("click", function () {
+      if (picking) return;
+      clearTimeout(pickHide);
+      pickBox.hidden = true;
+    });
+  }
+
   if (params.get("present") === "1") {
     /* Browsers only allow full screen after a click, so show a big start button */
     var start = document.createElement("button");

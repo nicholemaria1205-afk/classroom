@@ -13,7 +13,8 @@
    POST { action: "delete", id }                            -> { ok: true }
 
    kind is "worksheet" (pages + answer key), "snapshot" (every board at one
-   moment) or "grades" (a grade list — teacher only, like everything here).
+   moment), "grades" (a grade list — teacher only, like everything here) or
+   "poll" (a quick poll or exit ticket and who answered what).
    ========================================================================== */
 "use strict";
 
@@ -21,7 +22,7 @@ const crypto = require("crypto");
 const { teacherFrom } = require("./_lib/teacher.js");
 
 const headers = { "Content-Type": "application/json", "Cache-Control": "no-store" };
-const KINDS = { worksheet: 1, snapshot: 1, grades: 1 };
+const KINDS = { worksheet: 1, snapshot: 1, grades: 1, poll: 1 };
 const MAX_PADS = 300;
 const MAX_PAD_BYTES = 5 * 1024 * 1024;
 

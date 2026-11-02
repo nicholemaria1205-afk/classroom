@@ -71,6 +71,7 @@
       <div style="display:flex;flex-wrap:wrap;align-items:center;gap:.8rem;margin-bottom:1rem">
         <h1 style="margin:0;font-size:clamp(1.5rem,3.5vw,2.1rem)" data-hello>My desk</h1>
         <span class="badge badge--mint" data-room-name-badge></span>
+        <span class="star-badge" data-my-stars title="Your stars this week" hidden></span>
         <div class="status-row" style="margin-left:auto">
           <button class="btn status-btn" type="button" data-status="working" aria-pressed="true">✏️ Working</button>
           <button class="btn status-btn" type="button" data-status="stuck" aria-pressed="false">🤔 I'm stuck</button>
@@ -88,6 +89,24 @@
         <span aria-hidden="true">📌</span>
         <span><strong>Today's task:</strong> <span data-prompt-text></span></span>
       </p>
+
+      <p class="picked-banner" data-picked-banner role="status" hidden></p>
+      <p class="group-banner" data-group-banner role="status" hidden></p>
+      <div class="stars-strip" data-stars-strip hidden></div>
+
+      <!-- A quick poll from the teacher -->
+      <section class="poll-card" data-poll-card aria-labelledby="poll-card-q" hidden>
+        <p class="poll-card__kicker">📊 Quick poll</p>
+        <h2 class="poll-card__q" id="poll-card-q" data-poll-card-q></h2>
+        <div class="poll-card__opts" data-poll-card-opts></div>
+        <form class="poll-card__text" data-poll-card-form hidden>
+          <label class="visually-hidden" for="poll-card-answer">Your answer</label>
+          <input class="cp__input" id="poll-card-answer" type="text" maxlength="300" placeholder="Type your answer" autocomplete="off" data-poll-card-input>
+          <button class="btn btn--primary" type="submit">Send</button>
+        </form>
+        <p class="small muted poll-card__note" data-poll-card-note aria-live="polite"></p>
+        <div class="poll-results" data-poll-card-results hidden></div>
+      </section>
 
       <div class="wb">
         <!-- Tools -->
@@ -157,6 +176,7 @@
         <!-- Canvas -->
         <div>
           <div class="wb__canvas-wrap" style="position:relative">
+            <div class="timer-pill timer-pill--desk" data-desk-timer role="timer" hidden></div>
             <canvas id="board" width="1200" height="740" aria-label="Your desk. Draw with a mouse, finger or stylus."></canvas>
             <div class="frozen-veil" data-frozen>
               <div>
@@ -205,6 +225,7 @@
 <script src="assets/js/board-engine.js"></script>
 <script src="assets/js/board-ui.js"></script>
 <script src="assets/js/realtime.js"></script>
+<script src="assets/js/activities.js"></script>
 <script src="assets/js/student.js"></script>
 </body>
 </html>

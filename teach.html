@@ -44,7 +44,13 @@
         <h1 style="margin:0;font-size:clamp(1.6rem,3.5vw,2.2rem)">🧑‍🏫 My teaching desk</h1>
         <p class="muted mb-0" data-teach-sub>Your own big desk to teach on. Press <strong>Present</strong> before you share your screen — every menu disappears.</p>
       </div>
-      <button class="btn btn--primary btn--lg" type="button" data-present>🖥️ Present</button>
+      <div class="teach__actions">
+        <span class="teach__acts" data-teach-acts hidden>
+          <button class="btn" type="button" data-open-timer aria-expanded="false">⏱️ Timer</button>
+          <button class="btn" type="button" data-teach-pick>🎲 Pick a name</button>
+        </span>
+        <button class="btn btn--primary btn--lg" type="button" data-present>🖥️ Present</button>
+      </div>
     </div>
 
     <div class="wb">
@@ -117,6 +123,31 @@
           <div class="wb__canvas-wrap teach__canvas">
             <canvas id="teach-board" width="1200" height="740" aria-label="Your teaching desk. Draw with a mouse, pen or finger."></canvas>
             <p class="wb__hint mb-0">Ctrl/⌘ + Z to undo · saved on this computer</p>
+            <div class="timer-pill timer-pill--stage" data-stage-timer role="timer" hidden></div>
+          </div>
+
+          <!-- The class timer's controls -->
+          <div class="timer-pop" data-timer-pop role="dialog" aria-label="Class timer" hidden>
+            <p class="timer-pop__title">⏱️ Timer on every desk</p>
+            <div class="chips" data-pop-start>
+              <button class="chip" type="button" data-pop-min="1">1 min</button>
+              <button class="chip" type="button" data-pop-min="2">2</button>
+              <button class="chip" type="button" data-pop-min="3">3</button>
+              <button class="chip" type="button" data-pop-min="5">5</button>
+              <button class="chip" type="button" data-pop-min="10">10</button>
+              <button class="chip" type="button" data-pop-min="15">15</button>
+            </div>
+            <div class="chips" data-pop-running hidden>
+              <button class="chip" type="button" data-pop-pause>⏸️ Pause</button>
+              <button class="chip" type="button" data-pop-add>＋1 min</button>
+              <button class="chip" type="button" data-pop-stop>⏹️ Stop</button>
+            </div>
+          </div>
+
+          <!-- The name picker, big enough for the class to see -->
+          <div class="stage-pick" data-stage-pick hidden>
+            <p class="stage-pick__kicker">🎲 Next turn goes to…</p>
+            <div class="picker picker--stage" data-stage-pick-name aria-live="polite"></div>
           </div>
 
           <!-- Present mode toolbar: fades away when the mouse is still -->
@@ -137,6 +168,9 @@
             <button class="size-btn" type="button" data-undo title="Undo" aria-label="Undo">↩️</button>
             <button class="size-btn" type="button" data-redo title="Redo" aria-label="Redo">↪️</button>
             <button class="size-btn" type="button" data-clear title="Clear" aria-label="Clear the desk">🧹</button>
+            <span class="present-bar__sep" aria-hidden="true" data-acts-only hidden></span>
+            <button class="size-btn" type="button" data-open-timer data-acts-only hidden title="Timer" aria-label="Timer" aria-expanded="false">⏱️</button>
+            <button class="size-btn" type="button" data-teach-pick data-acts-only hidden title="Pick a name" aria-label="Pick a name">🎲</button>
             <span class="present-bar__sep" aria-hidden="true"></span>
             <button class="btn btn--pink present-bar__exit" type="button" data-present-exit>✕ Exit</button>
           </div>
@@ -165,6 +199,7 @@
 <script src="assets/js/sidebar.js"></script>
 <script src="assets/js/drawer.js"></script>
 <script src="assets/js/attendance-core.js"></script>
+<script src="assets/js/activities.js"></script>
 <script src="assets/js/teach.js"></script>
 </body>
 </html>

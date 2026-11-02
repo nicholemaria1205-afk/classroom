@@ -24,6 +24,31 @@ step, no dependencies, no framework. Drop the folder on any host and it works.
 | --- | --- |
 | `dashboard.html` | The teacher's rooms: open one, copy its join link, see who's in it, close it |
 | `attendance.html` | Attendance: Present / Late / Absent per day, a dated history, spreadsheet + print |
+| `portfolio.html` | One page per student: attendance, grades, poll answers, saved desks, notes — printable |
+
+**🎯 Activities (room page tab).** All kept on the room, so late joiners get them too
+(`assets/js/activities.js` shared helpers, `assets/js/room-activities.js` the tab):
+
+- **Timer** — shows on every desk and on the teaching desk's stage; pause, +1 min,
+  stop; a soft chime at zero. Travels as "time left", so student clocks don't matter.
+- **Quick polls / exit tickets** — A–F choices, Yes/No, a 1–5 scale or a short
+  answer. Live results with names (teacher only); optionally show counts on desks.
+  Past polls, spreadsheet, and save to the Doodle Drawer (kind `poll`).
+- **Pick a name** — spins through students who are here, no repeats in a day,
+  shows "You're up!" on the picked desk. Also on the teaching desk, big, for Present.
+- **Class stars** — ⭐ from the stars list, a student's card (focus view) or for
+  everyone; weekly by name (reset each Monday), an optional class goal with a
+  progress bar on every desk.
+- **Partner desks** — groups of 2–4 share one live desk. Students only hear the
+  teacher, so the teacher's browser relays each change (`group-op-up` → stored →
+  `group-op`) and keeps each group desk's full copy; members joining late or
+  refreshing ask for it (`group-sync` → `group-full`). Each student's own desk is
+  put aside and comes back when partner time ends. Save every group's desk to the
+  Doodle Drawer as a snapshot.
+
+**More science pages:** food chain, states of matter, speed investigation, 5-day
+weather tracker, inherited or learned, plant & animal cells (outlines and empty
+label boxes — students do the labelling).
 
 **Attendance.** Each teacher has classes (names in seating order) and a mark for
 every student on every day: present, late or absent. Students take their own

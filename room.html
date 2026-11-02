@@ -78,6 +78,7 @@
           <div class="cp__tabs" role="tablist" aria-label="Room tools">
             <button class="cp__tab" type="button" role="tab" id="cp-tab-class" aria-controls="cp-class" aria-selected="true" data-cp-tab="class">📣 Class</button>
             <button class="cp__tab" type="button" role="tab" id="cp-tab-pages" aria-controls="cp-pages" aria-selected="false" data-cp-tab="pages" tabindex="-1">📄 Pages &amp; worksheets</button>
+            <button class="cp__tab" type="button" role="tab" id="cp-tab-fun" aria-controls="cp-fun" aria-selected="false" data-cp-tab="fun" tabindex="-1">🎯 Activities</button>
             <button class="cp__tab" type="button" role="tab" id="cp-tab-review" aria-controls="cp-review" aria-selected="false" data-cp-tab="review" tabindex="-1">📝 Review &amp; grades</button>
           </div>
           <button class="btn cp__freeze" type="button" data-freeze aria-pressed="false">❄️ Freeze</button>
@@ -165,6 +166,170 @@
             </button>
           </div>
         </div>
+
+        <!-- Activities -->
+        <div class="cp__panel" role="tabpanel" id="cp-fun" aria-labelledby="cp-tab-fun" data-cp-panel="fun" hidden>
+          <div class="act-grid">
+
+            <!-- Timer -->
+            <section class="act" aria-labelledby="act-timer-h">
+              <h3 class="act__title" id="act-timer-h">⏱️ Timer <span class="act__sub">on every desk</span></h3>
+              <div class="timer-pill timer-pill--big" data-timer-show hidden role="timer" aria-live="off"></div>
+              <div data-timer-setup>
+                <div class="chips act__chips" role="group" aria-label="How long">
+                  <button class="chip" type="button" data-timer-min="1">1 min</button>
+                  <button class="chip" type="button" data-timer-min="2">2</button>
+                  <button class="chip" type="button" data-timer-min="3">3</button>
+                  <button class="chip" type="button" data-timer-min="5">5</button>
+                  <button class="chip" type="button" data-timer-min="10">10</button>
+                  <button class="chip" type="button" data-timer-min="15">15</button>
+                </div>
+                <div class="act__row">
+                  <label class="visually-hidden" for="timer-mins">Minutes</label>
+                  <input class="cp__input act__num" id="timer-mins" type="number" min="0.5" max="90" step="0.5" value="5" data-timer-mins>
+                  <span class="small muted">min</span>
+                  <label class="visually-hidden" for="timer-label">What it's for</label>
+                  <input class="cp__input" id="timer-label" type="text" maxlength="30" placeholder="Work time (optional)" data-timer-label>
+                </div>
+                <button class="btn btn--primary" type="button" data-timer-start>▶️ Start timer</button>
+              </div>
+              <div class="act__row" data-timer-controls hidden>
+                <button class="btn" type="button" data-timer-pause>⏸️ Pause</button>
+                <button class="btn" type="button" data-timer-add>＋1 min</button>
+                <button class="btn btn--ghost cp__danger" type="button" data-timer-stop>⏹️ Stop</button>
+              </div>
+            </section>
+
+            <!-- Poll -->
+            <section class="act act--wide" aria-labelledby="act-poll-h">
+              <h3 class="act__title" id="act-poll-h">📊 Quick poll <span class="act__sub">or exit ticket</span></h3>
+              <div data-poll-setup>
+                <div class="chips act__chips" role="group" aria-label="Kind of question" data-poll-types></div>
+                <label class="visually-hidden" for="poll-q">Question</label>
+                <input class="cp__input" id="poll-q" type="text" maxlength="160" placeholder="e.g. Which part of a plant makes food?" data-poll-q>
+                <div class="poll-opts" data-poll-opts></div>
+                <div class="act__row">
+                  <button class="btn btn--primary" type="button" data-poll-send>📣 Ask the class</button>
+                  <button class="btn btn--ghost" type="button" data-poll-history>🗂️ Past polls</button>
+                </div>
+              </div>
+              <div data-poll-live hidden>
+                <p class="poll-live__q" data-poll-live-q></p>
+                <p class="small muted" data-poll-count aria-live="polite"></p>
+                <div class="poll-results" data-poll-results></div>
+                <div class="act__row">
+                  <label class="switch-row act__switch">
+                    <input type="checkbox" class="switch-input" data-poll-show>
+                    <span class="switch" aria-hidden="true"></span>
+                    <span class="switch-text"><strong>Show results on desks</strong><small>Counts only — never names</small></span>
+                  </label>
+                </div>
+                <div class="act__row">
+                  <button class="btn btn--primary" type="button" data-poll-end>✅ End poll</button>
+                </div>
+              </div>
+              <div data-poll-done hidden>
+                <p class="poll-live__q" data-poll-done-q></p>
+                <div class="poll-results" data-poll-done-results></div>
+                <div class="act__row">
+                  <span class="drawer-save">
+                    <select class="paper-select" data-poll-keep aria-label="Keep in your Doodle Drawer for"></select>
+                    <button class="btn" type="button" data-poll-drawer>🗄️ Save to Doodle Drawer</button>
+                  </span>
+                  <button class="btn btn--mint" type="button" data-poll-csv>⬇️ Spreadsheet</button>
+                  <button class="btn btn--primary" type="button" data-poll-new>＋ New poll</button>
+                </div>
+              </div>
+            </section>
+
+            <!-- Class stars -->
+            <section class="act act--wide" aria-labelledby="act-stars-h">
+              <h3 class="act__title" id="act-stars-h">⭐ Class stars <span class="act__sub" data-stars-week></span></h3>
+              <div class="stars-goal" data-stars-goal></div>
+              <div class="act__row">
+                <button class="btn btn--sun" type="button" data-stars-all>⭐ A star for everyone here</button>
+                <button class="btn btn--ghost" type="button" data-stars-goal-edit>🎯 Set a class goal</button>
+              </div>
+              <form class="act__row stars-goal-form" data-stars-goal-form hidden>
+                <label class="small muted" for="stars-goal-n">Goal</label>
+                <input class="cp__input act__num" id="stars-goal-n" type="number" min="1" max="9999" step="1" placeholder="50" data-stars-goal-n>
+                <span class="small muted">stars →</span>
+                <label class="visually-hidden" for="stars-goal-reward">Reward</label>
+                <input class="cp__input" id="stars-goal-reward" type="text" maxlength="60" placeholder="Pajama day 🎉" data-stars-goal-reward>
+                <button class="btn btn--primary" type="submit">Save</button>
+                <button class="btn btn--ghost" type="button" data-stars-goal-clear>No goal</button>
+              </form>
+              <ul class="stars-list" data-stars-list></ul>
+              <p class="small muted mb-0">Tap ⭐ on a student to give a star — it pops up on their desk. Stars start again each Monday. <button class="linkish" type="button" data-stars-reset>Start again now</button></p>
+            </section>
+
+            <!-- Partner desks -->
+            <section class="act act--wide" aria-labelledby="act-groups-h">
+              <h3 class="act__title" id="act-groups-h">👥 Partner desks <span class="act__sub">groups share one live desk</span></h3>
+
+              <div data-groups-idle>
+                <div class="act__row">
+                  <span class="small muted">Groups of</span>
+                  <div class="chips act__chips" role="group" aria-label="Group size">
+                    <button class="chip" type="button" data-group-size="2" aria-pressed="true">2</button>
+                    <button class="chip" type="button" data-group-size="3" aria-pressed="false">3</button>
+                    <button class="chip" type="button" data-group-size="4" aria-pressed="false">4</button>
+                  </div>
+                </div>
+                <button class="btn btn--primary" type="button" data-groups-make>👥 Make groups from students here</button>
+              </div>
+
+              <div data-groups-plan hidden>
+                <p class="small muted mb-0">Move anyone with the menu next to their name, then start.</p>
+                <div class="group-cards" data-groups-plan-list></div>
+                <div class="act__row">
+                  <label class="small muted" for="group-paper">Paper for the group desks</label>
+                  <select class="paper-select group-paper" id="group-paper" data-group-paper></select>
+                </div>
+                <div class="act__row">
+                  <button class="btn btn--primary" type="button" data-groups-start>▶️ Start partner desks</button>
+                  <button class="btn" type="button" data-groups-shuffle>🔀 Shuffle</button>
+                  <button class="btn btn--ghost" type="button" data-groups-cancel>Cancel</button>
+                </div>
+              </div>
+
+              <div data-groups-live hidden>
+                <div class="group-cards" data-groups-live-list></div>
+                <div class="act__row">
+                  <button class="btn btn--primary" type="button" data-groups-end>✅ End partner desks</button>
+                </div>
+              </div>
+
+              <div data-groups-done hidden>
+                <p class="small muted mb-0">Everyone is back on their own desk. Here's what each group made:</p>
+                <div class="group-cards" data-groups-done-list></div>
+                <div class="act__row">
+                  <span class="drawer-save">
+                    <select class="paper-select" data-groups-keep aria-label="Keep in your Doodle Drawer for"></select>
+                    <button class="btn" type="button" data-groups-drawer>🗄️ Save to Doodle Drawer</button>
+                  </span>
+                  <button class="btn btn--primary" type="button" data-groups-new>＋ New groups</button>
+                </div>
+              </div>
+            </section>
+
+            <!-- Name picker -->
+            <section class="act" aria-labelledby="act-pick-h">
+              <h3 class="act__title" id="act-pick-h">🎲 Pick a name</h3>
+              <div class="picker" data-pick-show aria-live="polite">Who's next?</div>
+              <p class="small muted act__meta" data-pick-meta></p>
+              <button class="btn btn--primary btn--block" type="button" data-pick>🎲 Pick someone</button>
+              <details class="act__more">
+                <summary>Options</summary>
+                <label class="act__check"><input type="checkbox" data-pick-online checked> Only students who are here now</label>
+                <label class="act__check"><input type="checkbox" data-pick-norepeat checked> Don't pick anyone twice today</label>
+                <label class="act__check"><input type="checkbox" data-pick-tell checked> Show the name on everyone's desk</label>
+                <button class="btn btn--ghost" type="button" data-pick-reset>↺ Start fresh for today</button>
+              </details>
+            </section>
+
+          </div>
+        </div>
       </div>
 
       <p class="upload-note" data-upload-note role="status" hidden></p>
@@ -213,7 +378,8 @@
       <span class="dot" data-focus-dot></span>
       <h3 id="focus-title" data-focus-name>Student</h3>
       <span class="badge badge--sky" data-focus-status>working</span>
-      <button class="btn" type="button" data-focus-lock style="margin-left:auto" aria-pressed="false">🔒 Pause their desk</button>
+      <button class="btn btn--sun" type="button" data-focus-star style="margin-left:auto">⭐ Give a star <b data-focus-stars></b></button>
+      <button class="btn" type="button" data-focus-lock aria-pressed="false">🔒 Pause their desk</button>
       <button class="btn" type="button" data-focus-clear>🧹 Clear their desk</button>
       <button class="btn btn--primary" type="button" data-focus-present>🖥️ Present this desk</button>
       <button class="btn btn--pink" type="button" data-focus-close>Close ✕</button>
@@ -243,6 +409,41 @@
       <button class="btn" type="button" data-save>⬇️ Save</button>
       <button class="btn" type="button" data-print>🖨️ Print</button>
     </div>
+  </div>
+</div>
+
+<!-- ============================ ONE PARTNER DESK ============================ -->
+<div class="focus" data-group-view role="dialog" aria-modal="true" aria-labelledby="group-view-title">
+  <div class="focus__panel">
+    <div class="focus__head">
+      <h3 id="group-view-title" data-group-view-title>Partner desk</h3>
+      <button class="btn btn--pink" type="button" data-group-view-close style="margin-left:auto">Close ✕</button>
+    </div>
+    <p class="small muted" style="margin-top:-.4rem">Draw here to help — the whole group sees it straight away.</p>
+    <div class="wb__canvas-wrap"><canvas id="group-board" width="1200" height="740" aria-label="The group's shared desk"></canvas></div>
+    <div class="focus__tools">
+      <span class="small muted">Mark up:</span>
+      <button class="size-btn" type="button" data-tool="pen" aria-pressed="true" title="Pen" aria-label="Pen">✏️</button>
+      <button class="size-btn tool-glyph" type="button" data-tool="arrow" aria-pressed="false" title="Arrow" aria-label="Arrow">➜</button>
+      <button class="size-btn tool-glyph" type="button" data-tool="text" aria-pressed="false" title="Text" aria-label="Text">T</button>
+      <button class="swatch" type="button" data-colour="#ff4d9d" aria-pressed="true" aria-label="Pink" style="background:#ff4d9d;width:34px;height:34px"></button>
+      <button class="swatch" type="button" data-colour="#16c79a" aria-pressed="false" aria-label="Green" style="background:#16c79a;width:34px;height:34px"></button>
+      <button class="stamp" type="button" data-stamp="⭐" aria-pressed="false" aria-label="Star stamp" style="width:38px;height:38px;font-size:1.1rem">⭐</button>
+      <button class="stamp" type="button" data-stamp="✅" aria-pressed="false" aria-label="Tick stamp" style="width:38px;height:38px;font-size:1.1rem">✅</button>
+      <button class="btn btn--sun" type="button" data-undo>↩️ Undo my mark</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ PAST POLLS ============================ -->
+<div class="focus" data-polls role="dialog" aria-modal="true" aria-labelledby="polls-title">
+  <div class="focus__panel" style="width:min(100%,760px)">
+    <div class="focus__head">
+      <h3 id="polls-title">🗂️ Past polls</h3>
+      <button class="btn btn--pink" type="button" data-polls-close style="margin-left:auto">Close ✕</button>
+    </div>
+    <p class="small muted" style="margin-top:-.4rem">The last 30 polls in this room, kept in this browser. Who answered what is only ever shown to you.</p>
+    <div class="past-polls" data-polls-list></div>
   </div>
 </div>
 
@@ -431,8 +632,10 @@
 <script src="assets/js/sidebar.js"></script>
 <script src="assets/js/drawer.js"></script>
 <script src="assets/js/attendance-core.js"></script>
+<script src="assets/js/activities.js"></script>
 <script src="assets/js/uploads.js"></script>
 <script src="assets/js/ai-maker.js"></script>
 <script src="assets/js/room.js"></script>
+<script src="assets/js/room-activities.js"></script>
 </body>
 </html>

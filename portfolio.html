@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student portfolios — Doodle Desk</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗂️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/site.css">
+<script>
+  document.documentElement.classList.add("js");
+  try {
+    var t = localStorage.getItem("doodle-theme") ||
+      (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", t);
+  } catch (e) {}
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<nav class="nav">
+  <div class="wrap nav__inner">
+    <a class="logo" href="dashboard.html"><span class="logo__mark">✏️</span> Doodle Desk</a>
+    <div class="nav__links" id="nav-links" data-open="false">
+      <a href="dashboard.html">My rooms</a>
+      <a href="attendance.html">Attendance</a>
+      <a href="portfolio.html" aria-current="page">🗂️ Portfolios</a>
+      <a href="drawer.html">Doodle Drawer</a>
+    </div>
+    <div class="nav__actions">
+      <button class="icon-btn" data-theme-toggle type="button" aria-label="Switch color mode">🌙</button>
+      <button class="icon-btn nav__burger" data-burger type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<section class="section" style="padding-top:2.5rem">
+  <div class="wrap">
+
+    <div class="drawer-head">
+      <div>
+        <h1 style="margin-bottom:.3rem">🗂️ Student portfolios</h1>
+        <p class="muted mb-0">Everything about one student on one page — attendance, grades, poll answers and saved desks. Print it for conferences or report cards.</p>
+      </div>
+    </div>
+
+    <div class="card att-empty" data-pf-empty hidden>
+      <div class="att-empty__art" aria-hidden="true">🗂️</div>
+      <h2>No classes yet</h2>
+      <p class="muted">Portfolios are built from your attendance classes. Make a class (or let students join one of your rooms), then come back.</p>
+      <a class="btn btn--primary btn--lg" href="attendance.html">📋 Go to attendance</a>
+    </div>
+
+    <div data-pf-main hidden>
+      <div class="card drawer-tools">
+        <div class="chips" role="group" aria-label="Your classes" data-pf-classes></div>
+        <label class="act__check pf-all"><input type="checkbox" data-pf-allrooms> Look in all my rooms</label>
+      </div>
+
+      <div class="pf-layout">
+        <nav class="card pf-list" aria-label="Students">
+          <label class="visually-hidden" for="pf-search">Find a student</label>
+          <input class="cp__input" id="pf-search" type="search" placeholder="🔎 Find a student" data-pf-search>
+          <ul data-pf-students></ul>
+        </nav>
+
+        <article class="card pf-sheet" data-pf-sheet aria-live="polite">
+          <p class="muted">Pick a student to see their portfolio.</p>
+        </article>
+      </div>
+    </div>
+
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__bottom" style="margin-top:0;border-top:none;padding-top:0">
+      <span>© <span data-year>2026</span> Doodle Desk</span>
+      <span><a href="attendance.html">Attendance</a> · <a href="drawer.html">Doodle Drawer</a></span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" data-toast role="status" aria-live="polite"></div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/site.js"></script>
+<script src="assets/js/board-engine.js"></script>
+<script src="assets/js/realtime.js"></script>
+<script src="assets/js/sidebar.js"></script>
+<script src="assets/js/drawer.js"></script>
+<script src="assets/js/attendance-core.js"></script>
+<script src="assets/js/activities.js"></script>
+<script src="assets/js/portfolio.js"></script>
+</body>
+</html>
